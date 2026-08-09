@@ -1,15 +1,15 @@
 import { CozoDb } from "cozo-node";
 import { mkdirSync, existsSync } from "node:fs";
 
-// 1. Ensure directory exists for RocksDB storage
+1. Ensure directory exists for RocksDB storage
 const DB_DIR = "./main.db";
 
 if (!existsSync(DB_DIR)) {
   mkdirSync(DB_DIR, { recursive: true });
 }
 
-// 2. Initialize CozoDb with RocksDB
-// Format: new CozoDb("rocksdb", path_to_directory)
+2. Initialize CozoDb with RocksDB
+Format: new CozoDb("rocksdb", path_to_directory)
 export const db = new CozoDb("rocksdb", DB_DIR);
 
 export interface CozoQueryResult<T = Record<string, unknown>> {
@@ -53,17 +53,18 @@ export async function initDb(): Promise<void> {
   console.log(`[DB] Initializing CozoDB with RocksDB engine at: ${DB_DIR}`);
 
   try {
-    // Schema placeholder: Define relations here
-    // Example:
-    // await db.run(`
-    //   :create user {
-    //     id: String
-    //     =>
-    //     name: String,
-    //     email: String,
-    //     created_at: Int
-    //   }
-    // `);
+    await db.run(`
+      :create user {
+        id: Int
+        =>
+        name: String,
+        pass_hash: String,
+        email: String,
+        last_accessed: Int,
+        data: Data,
+        created_at: Int
+      }
+    `);
     console.log("[DB] Schema initialized successfully.");
   } catch (err: unknown) {
     if (String(err).includes("already exists")) {
