@@ -9,5 +9,8 @@
   "peerDependencies": {
     "typescript": "^5"
   },
-  "version": "0.1.11"
+  "version": "0.1.12",
+  "dependencies": {
+    "cozo-node": "^0.7.6"
+  }
 }

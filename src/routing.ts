@@ -1,3 +1,4 @@
+import { createUser } from "./users/create.ts";
 import details from "../package.json" assert { type: "json" };
 import parseCookies from "./cookie_parse.ts";
 
@@ -13,6 +14,8 @@ export default async function route(request: Request): Promise<Response> {
   const path = url.pathname;
   const params = Object.fromEntries(url.searchParams.entries());
   const cookies = parseCookies(request.headers.get("cookie") || "");
+  const text = await request.text();
+  const postParams = text ? JSON.parse(text) : null;
 
   console.log("Request Received at URL: ", url);
 
@@ -22,6 +25,11 @@ export default async function route(request: Request): Promise<Response> {
 
     case "/users":
       return Response.json({ users: ["test1", "test2"] });
+
+    case "/create/user":
+      if (method != "POST")
+        return Response.json({ status: "INVALID REQUEST", id: 0 });
+      return Response.json(createUser(postParams));
 
     default:
       return new Response("Not Found", { status: 404 });
