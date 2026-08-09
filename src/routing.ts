@@ -29,7 +29,7 @@ export default async function route(request: Request): Promise<Response> {
 		case "/create/user":
 			if (method !== "POST")
 				return Response.json({ status: "INVALID REQUEST", id: 0 });
-			return Response.json(createUser(postParams));
+			return Response.json(await createUser(postParams));
 
 		default:
 			return new Response("Not Found", { status: 404 });

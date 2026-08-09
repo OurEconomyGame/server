@@ -6,7 +6,9 @@ import { query } from "../db/init.ts";
  * @param params - The user parameters.
  * @returns An object indicating the response status and user ID.
  */
-export function createUser(params: unknown): Record<string, unknown> {
+export async function createUser(
+	params: unknown,
+): Promise<Record<string, unknown>> {
 	if (!params || typeof params !== "object") {
 		return { status: "INVALID INPUT", id: 0 };
 	}
@@ -19,6 +21,11 @@ export function createUser(params: unknown): Record<string, unknown> {
 	) {
 		return { status: "INVALID INPUT", id: 0 };
 	}
+
+	const username = paramsObj.hi;
+	const password = paramsObj.secret;
+	const pass_hash = await Bun.password.hash(password);
+	const date = Math.floor(Date.now() / 1000);
 
 	return { status: "UNIMPLEMENTED", id: 0 };
 }
