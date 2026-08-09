@@ -20,6 +20,9 @@ export default async function route(request: Request): Promise<Response> {
     case "/version":
       return Response.json({ version: details.version });
 
+    case "/users":
+      return Response.json({ users: ["test1", "test2"] });
+
     default:
       return new Response("Not Found", { status: 404 });
   }
