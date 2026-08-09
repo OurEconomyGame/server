@@ -1,15 +1,15 @@
 import { CozoDb } from "cozo-node";
 import { mkdirSync, existsSync } from "node:fs";
 
-1. Ensure directory exists for RocksDB storage
+// 1. Ensure directory exists for RocksDB storage
 const DB_DIR = "./main.db";
 
 if (!existsSync(DB_DIR)) {
   mkdirSync(DB_DIR, { recursive: true });
 }
 
-2. Initialize CozoDb with RocksDB
-Format: new CozoDb("rocksdb", path_to_directory)
+// 2. Initialize CozoDb with RocksDB
+// Format: new CozoDb("rocksdb", path_to_directory)
 export const db = new CozoDb("rocksdb", DB_DIR);
 
 export interface CozoQueryResult<T = Record<string, unknown>> {

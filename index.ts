@@ -1,6 +1,9 @@
 import { serve } from "bun";
 import details from "./package.json";
 import route from "./src/routing.ts";
+import { initDb } from "./src/db/init.ts";
+
+await initDb();
 
 const server = serve({
   port: 3001,
