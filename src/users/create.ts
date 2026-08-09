@@ -1,3 +1,5 @@
+import { query } from "../db/init.ts";
+
 /**
  * Creates a new user with the given parameters.
  *
@@ -5,5 +7,5 @@
  * @returns A Response object indicating status.
  */
 export function createUser(params: unknown): Response {
-  return Response.json({ status: "UNIMPLEMENTED", id: 0 });
+	return Response.json({ status: "UNIMPLEMENTED", id: 0 });
 }
