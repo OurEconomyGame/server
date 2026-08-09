@@ -1,4 +1,5 @@
 import { query } from "../db/init.ts";
+import { insertUser } from "../db/inserts.ts";
 
 /**
  * Creates a new user with the given parameters.
@@ -26,8 +27,22 @@ export async function createUser(
 	const password = paramsObj.secret;
 	const pass_hash = await Bun.password.hash(password);
 	const date = Math.floor(Date.now() / 1000);
-
-	return { status: "UNIMPLEMENTED", id: 0 };
+	const id = await getNextUserId();
+	const success = await insertUser(
+		id,
+		username,
+		pass_hash,
+		"none",
+		date,
+		{},
+		date,
+	);
+	return {
+		status: success
+			? `${username} spontaniously materialised`
+			: `${username} is a dirty liar and cheat`,
+		id: id,
+	};
 }
 
 /**
