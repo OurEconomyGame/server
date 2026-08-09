@@ -1,6 +1,13 @@
+import details from "../package.json" assert { type: "json" };
 import parseCookies from "./cookie_parse.ts";
 
-export default async function route(request) {
+/**
+ * Handles incoming requests and routes them to the appropriate handler.
+ *
+ * @param request - The incoming HTTP Request object.
+ * @returns A promise that resolves to the HTTP Response object.
+ */
+export default async function route(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const method = request.method;
   const path = url.pathname;
