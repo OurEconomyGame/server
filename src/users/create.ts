@@ -7,8 +7,18 @@ import { query } from "../db/init.ts";
  * @returns An object indicating the response status and user ID.
  */
 export function createUser(params: unknown): Record<string, unknown> {
-	if (!params || typeof params !== "object" || Object.keys(params).length === 0) {
+	if (!params || typeof params !== "object") {
 		return { status: "INVALID INPUT", id: 0 };
 	}
+
+	const paramsObj = params as Record<string, unknown>;
+
+	if (
+		typeof paramsObj.hi !== "string" ||
+		typeof paramsObj.secret !== "string"
+	) {
+		return { status: "INVALID INPUT", id: 0 };
+	}
+
 	return { status: "UNIMPLEMENTED", id: 0 };
 }
