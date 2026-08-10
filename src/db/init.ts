@@ -61,7 +61,7 @@ export async function initDb(): Promise<void> {
         pass_hash: String,
         email: String,
         last_accessed: Int,
-        data: Data,
+        data: Json,
         created_at: Int
       }
     `);
