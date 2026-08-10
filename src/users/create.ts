@@ -64,15 +64,11 @@ export async function createUser(
  */
 export async function getNextUserId(): Promise<number> {
 	try {
-		const result = await query<{ max_id: number }>(`
-			?[max_id] := max(id), *user{id}
-		`);
-
-		if (result.length > 0 && result[0] && typeof result[0].max_id === "number") {
-			return result[0].max_id + 1;
-		}
+		const result = await query<{ id: number }>(`?[id] := *user{id}`);
+		if (result.length === 0) return 1;
+		const maxId = Math.max(...result.map((r) => r.id));
+		return Number.isFinite(maxId) ? maxId + 1 : 1;
 	} catch {
 		return 1;
 	}
-	return 1;
 }
