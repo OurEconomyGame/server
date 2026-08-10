@@ -1,0 +1,104 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OurEconomy API",
+    "description": "API documentation for the OurEconomy backend server.",
+    "version": "0.3.0"
+  },
+  "paths": {
+    "/version": {
+      "get": {
+        "summary": "Get application version",
+        "responses": {
+          "200": {
+            "description": "Returns current API version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "string",
+                      "example": "0.3.0"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Get list of users",
+        "responses": {
+          "200": {
+            "description": "Returns list of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/create/user": {
+      "post": {
+        "summary": "Create a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["hi", "secret"],
+                "properties": {
+                  "hi": {
+                    "type": "string",
+                    "description": "Username"
+                  },
+                  "secret": {
+                    "type": "string",
+                    "description": "Password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User creation status and ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -4,7 +4,10 @@ This document is written by AI, for AI. It outlines the operational protocols th
 
 ## Versioning Policy
 - Every single time an AI makes a change to the codebase, the patch version in `package.json` must be incremented by 1 (e.g., `0.1.7` to `0.1.8`), unless the prompt explicitly specifies that it is a minor or major version change.
-- Whenever a user makes a change that finalizes a working, functional API endpoint (i.e. an HTTP/API route endpoint that no longer returns an unimplemented stub response, but behaves functionally), the minor version in `package.json` must be bumped by 1 (e.g., `0.1.x` to `0.2.0`). Internal helper functions or module utilities being finalized do NOT trigger a minor version bump; they are patch version changes.
+- Whenever the user requests to commit changes (e.g., typing "Commit"):
+  - Check if `openapi.json` needs to be updated to reflect any API endpoint changes.
+  - If `openapi.json` gets updated, bump the **minor version** in `package.json` by 1 (e.g., `0.2.x` to `0.3.0`).
+  - If `openapi.json` does NOT get updated, bump the **patch version** in `package.json` by 1 (e.g., `0.2.6` to `0.2.7`).
 
 ## Commit Behavior
 - Every change made by an AI agent must be committed immediately.
@@ -16,10 +19,10 @@ This document is written by AI, for AI. It outlines the operational protocols th
 - All AI-initiated commit messages must be appended with ` - AI` to clearly distinguish machine-authored contributions from human ones.
 
 ## Handling Human-authored Commits
-- Before making any changes, the agent must check for any existing uncommitted human changes. If human changes are present, the agent must verify if they include a version bump in `package.json`. If no version bump is included, the agent must bump the patch version by 1.
+- Before making any changes, the agent must check for any existing uncommitted human changes.
 - If the user simply says the text "Commit" (or similar short commands like "commit all changes"), it must be interpreted as a request to stage and commit all human changes.
+- Always check if `openapi.json` should be updated for API changes. If `openapi.json` is updated, bump the minor version in `package.json` by 1. Otherwise, bump the patch version by 1.
 - If the user asks the AI to commit all changes or write a commit message for their changes, the agent must stage all changes and commit them.
-- The agent must ensure the patch version in `package.json` has been incremented since the last commit; if not, the agent must increment the patch version by 1.
 - The commit message must log the version followed by 2-4 words describing the change.
 - Crucially, these commit messages must **not** be appended with ` - AI`, since the changes were authored by the human user.
 

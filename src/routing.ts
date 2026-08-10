@@ -23,6 +23,9 @@ export default async function route(request: Request): Promise<Response> {
 		case "/version":
 			return Response.json({ version: details.version });
 
+		case "/openapi.json":
+			return new Response(Bun.file("./openapi.json"));
+
 		case "/users":
 			return Response.json({ users: ["test1", "test2"] });
 
