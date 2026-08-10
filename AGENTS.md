@@ -4,7 +4,7 @@ This document is written by AI, for AI. It outlines the operational protocols th
 
 ## Versioning Policy
 - Every single time an AI makes a change to the codebase, the patch version in `package.json` must be incremented by 1 (e.g., `0.1.7` to `0.1.8`), unless the prompt explicitly specifies that it is a minor or major version change.
-- Whenever a user makes a change that finalizes a working, functional API endpoint or feature (i.e. it no longer returns an unimplemented stub response, but behaves functionally), the minor version in `package.json` must be bumped by 1 (e.g., `0.1.x` to `0.2.0`).
+- Whenever a user makes a change that finalizes a working, functional API endpoint (i.e. an HTTP/API route endpoint that no longer returns an unimplemented stub response, but behaves functionally), the minor version in `package.json` must be bumped by 1 (e.g., `0.1.x` to `0.2.0`). Internal helper functions or module utilities being finalized do NOT trigger a minor version bump; they are patch version changes.
 
 ## Commit Behavior
 - Every change made by an AI agent must be committed immediately.
