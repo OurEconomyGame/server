@@ -32,7 +32,7 @@ export async function query<T = Record<string, unknown>>(
 	const result = (await db.run(datalog, params)) as CozoQueryResult<T>;
 
 	if (!result.ok) {
-		throw new Error(`Cozo Query Error`);
+		throw new Error(`Cozo Query Error: ${JSON.stringify(result)}`);
 	}
 
 	const { headers, rows } = result;
@@ -76,7 +76,8 @@ export async function initDb(): Promise<void> {
 		`);
 		console.log("[DB] Schema initialized successfully.");
 	} catch (err: unknown) {
-		if (String(err).includes("already exists")) {
+		const errStr = JSON.stringify(err) + String(err);
+		if (errStr.includes("already exists") || errStr.includes("conflicts")) {
 			console.log("[DB] RocksDB schema loaded from disk.");
 		} else {
 			console.error("[DB] Failed to initialize schema:", err);
