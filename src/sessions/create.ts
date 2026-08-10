@@ -4,12 +4,27 @@ import { insertSession } from "../db/inserts.ts";
 export async function createSession(user_id: number): Promise<string> {
   return "hello";
 }
-// Helper Functions
 export async function doesTokenExist(token: string): Promise<boolean> {
-  return true;
+  const result = await query<{ id: number }>(
+    `
+    ?[id] := *session{id, token}, token == $token
+  `,
+    { token }
+  );
+  return result.length > 0;
 }
+
 export async function doesUserIdExist(user_id: number): Promise<string> {
-  return "this would be empty for no, or contain the token if so";
+  const result = await query<{ token: string }>(
+    `
+    ?[token] := *session{user_id, token}, user_id == $user_id
+  `,
+    { user_id }
+  );
+  if (result.length > 0 && typeof result[0]?.token === "string") {
+    return result[0].token;
+  }
+  return "";
 }
 
 export async function getNextSessionId(): Promise<number> {
