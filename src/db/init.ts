@@ -69,7 +69,7 @@ export async function initDb(): Promise<void> {
 			:create session {
 				id: Int
 				=>
-				user_id: Int
+				user_id: Int,
 				created_at: Int,
 				token: String
 			}
