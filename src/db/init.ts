@@ -65,6 +65,15 @@ export async function initDb(): Promise<void> {
         created_at: Int
       }
     `);
+		await db.run(`
+			:create session {
+				id: Int
+				=>
+				user_id: Int
+				created_at: Int,
+				token: String
+			}
+		`);
 		console.log("[DB] Schema initialized successfully.");
 	} catch (err: unknown) {
 		if (String(err).includes("already exists")) {
