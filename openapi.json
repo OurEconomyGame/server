@@ -3,7 +3,7 @@
   "info": {
     "title": "OurEconomy API",
     "description": "API documentation for the OurEconomy backend server.",
-    "version": "0.3.0"
+    "version": "0.5.0"
   },
   "paths": {
     "/version": {
@@ -19,7 +19,7 @@
                   "properties": {
                     "version": {
                       "type": "string",
-                      "example": "0.3.0"
+                      "example": "0.5.0"
                     }
                   }
                 }
@@ -80,7 +80,7 @@
         },
         "responses": {
           "200": {
-            "description": "User creation status and ID",
+            "description": "User creation status, ID, and session token",
             "content": {
               "application/json": {
                 "schema": {
@@ -91,6 +91,10 @@
                     },
                     "id": {
                       "type": "number"
+                    },
+                    "random": {
+                      "type": "string",
+                      "description": "Session token generated for the created user"
                     }
                   }
                 }

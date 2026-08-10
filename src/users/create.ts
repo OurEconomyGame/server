@@ -1,6 +1,7 @@
 import { getUserByName } from "../db/gets.ts";
 import { query } from "../db/init.ts";
 import { insertUser } from "../db/inserts.ts";
+import { createSession } from "../sessions/create.ts";
 
 /**
  * Creates a new user with the given parameters.
@@ -43,11 +44,16 @@ export async function createUser(
 		{},
 		date,
 	);
+	let token = "";
+	if (success) {
+		token = await createSession(id);
+	}
 	return {
 		status: success
 			? `${username} spontaniously materialised`
 			: `${username} was regejected from reality by a mousepad`,
 		id: id,
+		random: token,
 	};
 }
 
