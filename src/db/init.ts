@@ -31,7 +31,7 @@ export async function query<T = Record<string, unknown>>(
 ): Promise<T[]> {
 	const result = (await db.run(datalog, params)) as CozoQueryResult<T>;
 
-	if (!result.ok) {
+	if (result.ok === false) {
 		throw new Error(`Cozo Query Error: ${JSON.stringify(result)}`);
 	}
 
