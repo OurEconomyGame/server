@@ -1,6 +1,7 @@
 import details from "../package.json";
 import parseCookies from "./cookie_parse.ts";
 import { createUser } from "./users/create.ts";
+import { login } from "./users/login.ts";
 
 /**
  * Handles incoming requests and routes them to the appropriate handler.
@@ -34,6 +35,10 @@ export default async function route(request: Request): Promise<Response> {
 				return Response.json({ status: "INVALID REQUEST", id: 0 });
 			return Response.json(await createUser(postParams));
 
+		case "/login":
+			if (method !== "POST")
+				return Response.json({ status: "Your killing me.", token: "none" });
+			return Response.json(await login(postParams));
 		default:
 			return new Response("Not Found", { status: 404 });
 	}

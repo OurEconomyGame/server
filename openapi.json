@@ -3,7 +3,7 @@
   "info": {
     "title": "OurEconomy API",
     "description": "API documentation for the OurEconomy backend server.",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "paths": {
     "/version": {
@@ -19,7 +19,7 @@
                   "properties": {
                     "version": {
                       "type": "string",
-                      "example": "0.5.0"
+                      "example": "0.6.0"
                     }
                   }
                 }
@@ -95,6 +95,52 @@
                     "random": {
                       "type": "string",
                       "description": "Session token generated for the created user"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "summary": "User login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["hi", "secret"],
+                "properties": {
+                  "hi": {
+                    "type": "string",
+                    "description": "Username"
+                  },
+                  "secret": {
+                    "type": "string",
+                    "description": "Password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login response status and token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "token": {
+                      "type": "string"
                     }
                   }
                 }

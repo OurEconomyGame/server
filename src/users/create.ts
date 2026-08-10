@@ -22,7 +22,7 @@ export async function createUser(
 		typeof paramsObj.hi !== "string" ||
 		typeof paramsObj.secret !== "string"
 	) {
-		return { status: "INVALID INPUT", id: 0 };
+		return { status: "are you an idiot?", id: 0 };
 	}
 
 	const username = paramsObj.hi;
