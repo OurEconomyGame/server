@@ -1,3 +1,4 @@
+import { getUserByName } from "../db/gets.ts";
 import { query } from "../db/init.ts";
 import { insertUser } from "../db/inserts.ts";
 
@@ -24,6 +25,11 @@ export async function createUser(
 	}
 
 	const username = paramsObj.hi;
+
+	const existingUser = await getUserByName(username);
+	if (existingUser !== null)
+		return { status: `${username} is convicted of identity theft`, id: 0 };
+
 	const password = paramsObj.secret;
 	const pass_hash = await Bun.password.hash(password);
 	const date = Math.floor(Date.now() / 1000);
@@ -40,7 +46,7 @@ export async function createUser(
 	return {
 		status: success
 			? `${username} spontaniously materialised`
-			: `${username} is a dirty liar and cheat`,
+			: `${username} was regejected from reality by a mousepad`,
 		id: id,
 	};
 }

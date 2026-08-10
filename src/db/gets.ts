@@ -39,32 +39,54 @@ export async function getSessionByToken(
  * Retrieves a user record by user ID.
  *
  * @param id - The numeric user ID.
- * @returns A promise that resolves to the UserRecord or null if not found.
  */
-export async function getUserById(id: number): Promise<UserRecord | null> {
-	const result = await query<UserRecord>(
-		`
-		?[id, name, pass_hash, email, last_accessed, data, created_at] := *user{id, name, pass_hash, email, last_accessed, data, created_at}, id == $id
-		`,
-		{ id },
-	);
-	return result.length > 0 && result[0] ? result[0] : null;
-}
-
+export async function getUser(id: number): Promise<UserRecord | null>;
 /**
  * Retrieves a user record by username (name).
  *
  * @param name - The username string.
+ */
+export async function getUser(name: string): Promise<UserRecord | null>;
+/**
+ * Retrieves a user record by either user ID or username.
+ *
+ * @param identifier - Numeric user ID or username string.
  * @returns A promise that resolves to the UserRecord or null if not found.
+ */
+export async function getUser(
+	identifier: number | string,
+): Promise<UserRecord | null> {
+	if (typeof identifier === "number") {
+		const result = await query<UserRecord>(
+			`
+			?[id, name, pass_hash, email, last_accessed, data, created_at] := *user{id, name, pass_hash, email, last_accessed, data, created_at}, id == $identifier
+			`,
+			{ identifier },
+		);
+		return result.length > 0 && result[0] ? result[0] : null;
+	} else {
+		const result = await query<UserRecord>(
+			`
+			?[id, name, pass_hash, email, last_accessed, data, created_at] := *user{id, name, pass_hash, email, last_accessed, data, created_at}, name == $identifier
+			`,
+			{ identifier },
+		);
+		return result.length > 0 && result[0] ? result[0] : null;
+	}
+}
+
+/**
+ * Helper to retrieve a user record by user ID.
+ */
+export async function getUserById(id: number): Promise<UserRecord | null> {
+	return getUser(id);
+}
+
+/**
+ * Helper to retrieve a user record by username.
  */
 export async function getUserByName(
 	name: string,
 ): Promise<UserRecord | null> {
-	const result = await query<UserRecord>(
-		`
-		?[id, name, pass_hash, email, last_accessed, data, created_at] := *user{id, name, pass_hash, email, last_accessed, data, created_at}, name == $name
-		`,
-		{ name },
-	);
-	return result.length > 0 && result[0] ? result[0] : null;
+	return getUser(name);
 }
