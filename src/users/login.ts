@@ -21,7 +21,7 @@ export async function login(params: unknown) {
   );
 
   if (knowsTheSecretCode) {
-    const token = createSession(user.id);
+    const token = await createSession(user.id);
     return {
       status: "wow!!! You remembered your password, cool, kudos",
       token: token,

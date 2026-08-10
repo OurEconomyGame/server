@@ -63,12 +63,16 @@ export async function createUser(
  * @returns A promise that resolves to the next sequential user ID (defaults to 1 if no users exist).
  */
 export async function getNextUserId(): Promise<number> {
-	const result = await query<{ max_id: number }>(`
-		?[max_id] := max(id), *user{id}
-	`);
+	try {
+		const result = await query<{ max_id: number }>(`
+			?[max_id] := max(id), *user{id}
+		`);
 
-	if (result.length > 0 && result[0] && typeof result[0].max_id === "number") {
-		return result[0].max_id + 1;
+		if (result.length > 0 && result[0] && typeof result[0].max_id === "number") {
+			return result[0].max_id + 1;
+		}
+	} catch {
+		return 1;
 	}
 	return 1;
 }

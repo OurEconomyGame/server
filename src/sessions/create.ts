@@ -40,12 +40,16 @@ export async function doesUserIdExist(user_id: number): Promise<string> {
 }
 
 export async function getNextSessionId(): Promise<number> {
-  const result = await query<{ max_id: number }>(`
-		?[max_id] := max(id), *session{id}
-	`);
+  try {
+    const result = await query<{ max_id: number }>(`
+      ?[max_id] := max(id), *session{id}
+    `);
 
-  if (result.length > 0 && result[0] && typeof result[0].max_id === "number") {
-    return result[0].max_id + 1;
+    if (result.length > 0 && result[0] && typeof result[0].max_id === "number") {
+      return result[0].max_id + 1;
+    }
+  } catch {
+    return 1;
   }
   return 1;
 }
