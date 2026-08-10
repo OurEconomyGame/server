@@ -22,23 +22,54 @@ export async function insertUser(
 	created_at: number,
 ): Promise<boolean> {
 	try {
-		await query(`
+		await query(
+			`
 			?[id, name, pass_hash, email, last_accessed, data, created_at] <- [
 				[$id, $name, $pass_hash, $email, $last_accessed, $data, $created_at]
 			]
 			:insert user { id => name, pass_hash, email, last_accessed, data, created_at }
-		`, {
-			id,
-			name,
-			pass_hash,
-			email,
-			last_accessed,
-			data,
-			created_at,
-		});
+		`,
+			{
+				id,
+				name,
+				pass_hash,
+				email,
+				last_accessed,
+				data,
+				created_at,
+			},
+		);
 		return true;
 	} catch (error: unknown) {
 		console.error("Failed to insert user:", error);
+		return false;
+	}
+}
+
+export async function insertSession(
+	id: number,
+	created_at: number,
+	token: string,
+	user_id: number,
+): Promise<boolean> {
+	try {
+		await query(
+			`
+			?[id, created_at, token, user_id] <- [
+				[$id, $created_at, $token, $user_id]
+			]
+			:insert session { id => created_at, token, user_id}
+		`,
+			{
+				id,
+				created_at,
+				token,
+				user_id,
+			},
+		);
+		return true;
+	} catch (error: unknown) {
+		console.error("Failed to insert session:", error);
 		return false;
 	}
 }
