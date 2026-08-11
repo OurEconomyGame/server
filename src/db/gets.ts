@@ -90,3 +90,29 @@ export async function getUserByName(
 ): Promise<UserRecord | null> {
 	return getUser(name);
 }
+
+/**
+ * Retrieves all user records.
+ *
+ * @returns A promise that resolves to an array of all UserRecords.
+ */
+export async function getAllUsers(): Promise<UserRecord[]> {
+	return query<UserRecord>(
+		`
+		?[id, name, pass_hash, email, last_accessed, data, created_at] := *user{id, name, pass_hash, email, last_accessed, data, created_at}
+		`,
+	);
+}
+
+/**
+ * Retrieves all session records.
+ *
+ * @returns A promise that resolves to an array of all SessionRecords.
+ */
+export async function getAllSessions(): Promise<SessionRecord[]> {
+	return query<SessionRecord>(
+		`
+		?[id, user_id, created_at, token] := *session{id, user_id, created_at, token}
+		`,
+	);
+}

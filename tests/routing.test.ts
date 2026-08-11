@@ -7,10 +7,6 @@ beforeAll(async () => {
 	await initDb();
 });
 
-afterAll(() => {
-	cleanupDbOnExit();
-});
-
 describe("Routing Suite - route(request)", () => {
 	describe("1. GET /version", () => {
 		test("returns current version from package.json", async () => {
