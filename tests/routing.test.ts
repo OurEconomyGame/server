@@ -1,10 +1,14 @@
-import { describe, expect, test, beforeAll } from "bun:test";
+import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import route from "../src/routing.ts";
-import { initDb } from "../src/db/init.ts";
+import { initDb, cleanupDbOnExit } from "../src/db/init.ts";
 import details from "../package.json";
 
 beforeAll(async () => {
 	await initDb();
+});
+
+afterAll(() => {
+	cleanupDbOnExit();
 });
 
 describe("Routing Suite - route(request)", () => {

@@ -1,5 +1,8 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { CozoDb } from "cozo-node";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // 1. Ensure directory exists for RocksDB storage
 const DB_DIR = "./main.db";
@@ -11,6 +14,33 @@ if (!existsSync(DB_DIR)) {
 // 2. Initialize CozoDb with RocksDB
 // Format: new CozoDb("rocksdb", path_to_directory)
 export const db = new CozoDb("rocksdb", DB_DIR);
+
+/**
+ * Clean up database directory on process close if DEBUG=true.
+ */
+export function cleanupDbOnExit(): void {
+	if (process.env.DEBUG === "true" && existsSync(DB_DIR)) {
+		try {
+			db.close();
+		} catch {}
+		try {
+			rmSync(DB_DIR, { recursive: true, force: true });
+			console.log("[DB] DEBUG=true: Database file deleted on process exit.");
+		} catch (err: unknown) {
+			console.error("[DB] Failed to delete database file on exit:", err);
+		}
+	}
+}
+
+process.on("exit", cleanupDbOnExit);
+process.on("SIGINT", () => {
+	cleanupDbOnExit();
+	process.exit(0);
+});
+process.on("SIGTERM", () => {
+	cleanupDbOnExit();
+	process.exit(0);
+});
 
 export interface CozoQueryResult<_T = Record<string, unknown>> {
 	ok: boolean;
