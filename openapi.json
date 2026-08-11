@@ -3,7 +3,7 @@
   "info": {
     "title": "OurEconomy API",
     "description": "API documentation for the OurEconomy backend server.",
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "paths": {
     "/version": {
@@ -19,7 +19,7 @@
                   "properties": {
                     "version": {
                       "type": "string",
-                      "example": "0.6.0"
+                      "example": "0.7.0"
                     }
                   }
                 }
@@ -54,7 +54,7 @@
         }
       }
     },
-    "/create/user": {
+    "/signup": {
       "post": {
         "summary": "Create a new user",
         "requestBody": {

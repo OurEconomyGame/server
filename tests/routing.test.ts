@@ -34,7 +34,7 @@ describe("Routing Suite - route(request)", () => {
 			expect(data).toHaveProperty("openapi");
 			expect(data.openapi).toBe("3.0.3");
 			expect(data.paths).toHaveProperty("/version");
-			expect(data.paths).toHaveProperty("/create/user");
+			expect(data.paths).toHaveProperty("/signup");
 			expect(data.paths).toHaveProperty("/login");
 		});
 	});
@@ -53,7 +53,7 @@ describe("Routing Suite - route(request)", () => {
 
 	describe("4. POST /create/user", () => {
 		test("rejects non-POST request method", async () => {
-			const req = new Request("http://localhost/create/user", { method: "GET" });
+			const req = new Request("http://localhost/signup", { method: "GET" });
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
@@ -63,7 +63,7 @@ describe("Routing Suite - route(request)", () => {
 		});
 
 		test("rejects request with invalid or missing body fields", async () => {
-			const req = new Request("http://localhost/create/user", {
+			const req = new Request("http://localhost/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: "incomplete_user" }),
@@ -78,7 +78,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("creates a new user successfully", async () => {
 			const uniqueName = `user_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-			const req = new Request("http://localhost/create/user", {
+			const req = new Request("http://localhost/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: uniqueName, secret: "password123!" }),
@@ -96,14 +96,14 @@ describe("Routing Suite - route(request)", () => {
 
 		test("prevents creating user with duplicate username", async () => {
 			const dupName = `dupuser_${Date.now()}`;
-			const createReq1 = new Request("http://localhost/create/user", {
+			const createReq1 = new Request("http://localhost/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: dupName, secret: "secret1" }),
 			});
 			await route(createReq1);
 
-			const createReq2 = new Request("http://localhost/create/user", {
+			const createReq2 = new Request("http://localhost/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: dupName, secret: "secret2" }),
@@ -160,7 +160,7 @@ describe("Routing Suite - route(request)", () => {
 			const username = `loginuser_${Date.now()}`;
 			const secret = "correct_secret_pass";
 
-			const createReq = new Request("http://localhost/create/user", {
+			const createReq = new Request("http://localhost/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: username, secret: secret }),
@@ -186,7 +186,7 @@ describe("Routing Suite - route(request)", () => {
 			const secret = "correct_pass";
 
 			await route(
-				new Request("http://localhost/create/user", {
+				new Request("http://localhost/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ hi: username, secret: secret }),

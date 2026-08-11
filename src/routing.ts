@@ -30,7 +30,7 @@ export default async function route(request: Request): Promise<Response> {
 		case "/users":
 			return Response.json({ users: ["test1", "test2"] });
 
-		case "/create/user":
+		case "/signup":
 			if (method !== "POST")
 				return Response.json({ status: "INVALID REQUEST", id: 0 });
 			return Response.json(await createUser(postParams));
