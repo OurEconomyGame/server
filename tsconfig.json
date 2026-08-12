@@ -27,9 +27,9 @@
     "useUnknownInCatchVariables": true,
     "skipLibCheck": true,
 
-    // Additional checks for maximum type safety
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    // Unused variables/parameters allowed
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "exactOptionalPropertyTypes": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,

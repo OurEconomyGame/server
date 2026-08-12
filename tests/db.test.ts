@@ -1,5 +1,5 @@
-import { describe, expect, test, beforeAll } from "bun:test";
-import { initDb } from "../src/db/init.ts";
+import { describe, expect, test, beforeAll, afterAll } from "bun:test";
+import { initDb, cleanupDbOnExit } from "../src/db/init.ts";
 import { insertUser, insertSession } from "../src/db/inserts.ts";
 import { getAllUsers, getAllSessions, getUserById, getSessionByToken } from "../src/db/gets.ts";
 import { updateUserById, updateSessionById } from "../src/db/updates.ts";
