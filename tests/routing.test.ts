@@ -44,6 +44,52 @@ describe("Routing Suite - route(request)", () => {
 			const data = (await res.json()) as unknown[];
 			expect(Array.isArray(data)).toBe(true);
 		});
+
+		test("sorts users by ID by default", async () => {
+			const req = new Request("http://localhost/list/users", { method: "GET" });
+			const res = await route(req);
+			const data = (await res.json()) as Array<{ id: number; username: string }>;
+			for (let i = 1; i < data.length; i++) {
+				const prev = data[i - 1];
+				const curr = data[i];
+				if (prev && curr) {
+					expect(prev.id).toBeLessThanOrEqual(curr.id);
+				}
+			}
+		});
+
+		test("sorts users by name when sortBy=name is specified", async () => {
+			// Ensure at least two users exist with distinct names
+			await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `Zebra_${Date.now()}`, secret: "pass1" }),
+				}),
+			);
+			await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `Alpha_${Date.now()}`, secret: "pass2" }),
+				}),
+			);
+
+			const req = new Request("http://localhost/list/users?sortBy=name", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ sortBy: "name" }),
+			});
+			const res = await route(req);
+			const data = (await res.json()) as Array<{ id: number; username: string }>;
+			for (let i = 1; i < data.length; i++) {
+				const prev = data[i - 1];
+				const curr = data[i];
+				if (prev && curr) {
+					expect(prev.username.localeCompare(curr.username)).toBeLessThanOrEqual(0);
+				}
+			}
+		});
 	});
 
 	describe("4. POST /create/user", () => {
