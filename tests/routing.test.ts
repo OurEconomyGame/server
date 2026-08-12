@@ -1,6 +1,6 @@
-import { describe, expect, test, beforeAll, afterAll } from "bun:test";
+import { describe, expect, test, beforeAll } from "bun:test";
 import route from "../src/routing.ts";
-import { initDb, cleanupDbOnExit } from "../src/db/init.ts";
+import { initDb } from "../src/db/init.ts";
 import details from "../package.json";
 
 beforeAll(async () => {
@@ -14,9 +14,8 @@ describe("Routing Suite - route(request)", () => {
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
-			const data = await res.json();
-			expect(data).toHaveProperty("version");
-			expect(data.version).toBe(details.version);
+			const data = (await res.json()) as Record<string, unknown>;
+			expect(data["version"]).toBe(details.version);
 		});
 	});
 
@@ -26,13 +25,13 @@ describe("Routing Suite - route(request)", () => {
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
-			const data = await res.json();
-			expect(data).toHaveProperty("openapi");
-			expect(data.openapi).toBe("3.0.3");
-			expect(data.paths).toHaveProperty("/version");
-			expect(data.paths).toHaveProperty("/list/users");
-			expect(data.paths).toHaveProperty("/signup");
-			expect(data.paths).toHaveProperty("/login");
+			const data = (await res.json()) as Record<string, unknown>;
+			expect(data["openapi"]).toBe("3.0.3");
+			const paths = data["paths"] as Record<string, unknown>;
+			expect(paths).toHaveProperty("/version");
+			expect(paths).toHaveProperty("/list/users");
+			expect(paths).toHaveProperty("/signup");
+			expect(paths).toHaveProperty("/login");
 		});
 	});
 
@@ -42,7 +41,7 @@ describe("Routing Suite - route(request)", () => {
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
-			const data = await res.json();
+			const data = (await res.json()) as unknown[];
 			expect(Array.isArray(data)).toBe(true);
 		});
 	});
@@ -53,9 +52,9 @@ describe("Routing Suite - route(request)", () => {
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
-			const data = await res.json();
-			expect(data.status).toBe("INVALID REQUEST");
-			expect(data.id).toBe(0);
+			const data = (await res.json()) as Record<string, unknown>;
+			expect(data["status"]).toBe("INVALID REQUEST");
+			expect(data["id"]).toBe(0);
 		});
 
 		test("rejects request with invalid or missing body fields", async () => {
@@ -67,9 +66,9 @@ describe("Routing Suite - route(request)", () => {
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
-			const data = await res.json();
-			expect(data.status).toBe("are you an idiot?");
-			expect(data.id).toBe(0);
+			const data = (await res.json()) as Record<string, unknown>;
+			expect(data["status"]).toBe("are you an idiot?");
+			expect(data["id"]).toBe(0);
 		});
 
 		test("creates a new user successfully", async () => {
@@ -82,12 +81,12 @@ describe("Routing Suite - route(request)", () => {
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
-			const data = await res.json();
-			expect(data.status).toContain("spontaniously materialised");
-			expect(typeof data.id).toBe("number");
-			expect(data.id).toBeGreaterThan(0);
-			expect(typeof data.random).toBe("string");
-			expect(data.random.length).toBeGreaterThan(0);
+			const data = (await res.json()) as Record<string, unknown>;
+			expect(String(data["status"])).toContain("spontaniously materialised");
+			expect(typeof data["id"]).toBe("number");
+			expect(Number(data["id"])).toBeGreaterThan(0);
+			expect(typeof data["random"]).toBe("string");
+			expect(String(data["random"]).length).toBeGreaterThan(0);
 		});
 
 		test("prevents creating user with duplicate username", async () => {
@@ -107,9 +106,9 @@ describe("Routing Suite - route(request)", () => {
 			const res = await route(createReq2);
 			expect(res.status).toBe(200);
 
-			const data = await res.json();
-			expect(data.status).toContain("convicted of identity theft");
-			expect(data.id).toBe(0);
+			const data = (await res.json()) as Record<string, unknown>;
+			expect(String(data["status"])).toContain("convicted of identity theft");
+			expect(data["id"]).toBe(0);
 		});
 	});
 
@@ -119,9 +118,9 @@ describe("Routing Suite - route(request)", () => {
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
-			const data = await res.json();
-			expect(data.status).toBe("Your killing me.");
-			expect(data.token).toBe("none");
+			const data = (await res.json()) as Record<string, unknown>;
+			expect(data["status"]).toBe("Your killing me.");
+			expect(data["token"]).toBe("none");
 		});
 
 		test("rejects request with missing parameters", async () => {
@@ -133,9 +132,9 @@ describe("Routing Suite - route(request)", () => {
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
-			const data = await res.json();
-			expect(data.status).toBe("are you an idiot?");
-			expect(data.token).toBe("none");
+			const data = (await res.json()) as Record<string, unknown>;
+			expect(data["status"]).toBe("are you an idiot?");
+			expect(data["token"]).toBe("none");
 		});
 
 		test("rejects non-existent user login", async () => {
@@ -147,9 +146,9 @@ describe("Routing Suite - route(request)", () => {
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
-			const data = await res.json();
-			expect(data.status).toBe("dont try gaslighting reality");
-			expect(data.token).toBe("none");
+			const data = (await res.json()) as Record<string, unknown>;
+			expect(data["status"]).toBe("dont try gaslighting reality");
+			expect(data["token"]).toBe("none");
 		});
 
 		test("authenticates valid user with correct password and returns token", async () => {
@@ -162,7 +161,7 @@ describe("Routing Suite - route(request)", () => {
 				body: JSON.stringify({ hi: username, secret: secret }),
 			});
 			const createRes = await route(createReq);
-			const createData = await createRes.json();
+			const createData = (await createRes.json()) as Record<string, unknown>;
 
 			const loginReq = new Request("http://localhost/login", {
 				method: "POST",
@@ -172,9 +171,9 @@ describe("Routing Suite - route(request)", () => {
 			const loginRes = await route(loginReq);
 			expect(loginRes.status).toBe(200);
 
-			const loginData = await loginRes.json();
-			expect(loginData.status).toContain("You remembered your password");
-			expect(loginData.token).toBe(createData.random);
+			const loginData = (await loginRes.json()) as Record<string, unknown>;
+			expect(String(loginData["status"])).toContain("You remembered your password");
+			expect(loginData["token"]).toBe(createData["random"]);
 		});
 
 		test("rejects valid user with incorrect password", async () => {
@@ -197,9 +196,9 @@ describe("Routing Suite - route(request)", () => {
 			const loginRes = await route(loginReq);
 			expect(loginRes.status).toBe(200);
 
-			const loginData = await loginRes.json();
-			expect(loginData.status).toContain("forget your password");
-			expect(loginData.token).toContain("robber");
+			const loginData = (await loginRes.json()) as Record<string, unknown>;
+			expect(String(loginData["status"])).toContain("forget your password");
+			expect(String(loginData["token"])).toContain("robber");
 		});
 	});
 

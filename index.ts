@@ -5,7 +5,7 @@ import { initDb } from "./src/db/init.ts";
 
 await initDb();
 
-const server = serve({
+serve({
   port: 3001,
   async fetch(request) {
     return await route(request);
