@@ -29,7 +29,7 @@ export default async function route(request: Request): Promise<Response> {
 			return new Response(Bun.file("./openapi.json"));
 
 		case "/list/users":
-			return Response.json(await getAllUsersPublicInfo());
+			return Response.json(await getAllUsersPublicInfo(postParams));
 
 		case "/signup":
 			if (method !== "POST")
