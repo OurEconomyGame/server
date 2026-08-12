@@ -30,20 +30,20 @@ describe("Routing Suite - route(request)", () => {
 			expect(data).toHaveProperty("openapi");
 			expect(data.openapi).toBe("3.0.3");
 			expect(data.paths).toHaveProperty("/version");
+			expect(data.paths).toHaveProperty("/list/users");
 			expect(data.paths).toHaveProperty("/signup");
 			expect(data.paths).toHaveProperty("/login");
 		});
 	});
 
-	describe("3. GET /users", () => {
-		test("returns user list response", async () => {
-			const req = new Request("http://localhost/users", { method: "GET" });
+	describe("3. GET /list/users", () => {
+		test("returns public user list response", async () => {
+			const req = new Request("http://localhost/list/users", { method: "GET" });
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
 			const data = await res.json();
-			expect(data).toHaveProperty("users");
-			expect(Array.isArray(data.users)).toBe(true);
+			expect(Array.isArray(data)).toBe(true);
 		});
 	});
 

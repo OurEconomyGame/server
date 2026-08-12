@@ -1,6 +1,7 @@
 import details from "../package.json";
 import parseCookies from "./cookie_parse.ts";
 import { createUser } from "./users/create.ts";
+import { getAllUsersPublicInfo } from "./users/list.ts";
 import { login } from "./users/login.ts";
 
 /**
@@ -27,8 +28,8 @@ export default async function route(request: Request): Promise<Response> {
 		case "/openapi.json":
 			return new Response(Bun.file("./openapi.json"));
 
-		case "/users":
-			return Response.json({ users: ["test1", "test2"] });
+		case "/list/users":
+			return Response.json(await getAllUsersPublicInfo());
 
 		case "/signup":
 			if (method !== "POST")
