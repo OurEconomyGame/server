@@ -76,9 +76,7 @@ describe("Routing Suite - route(request)", () => {
 			);
 
 			const req = new Request("http://localhost/list/users?sortBy=name", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ sortBy: "name" }),
+				method: "GET",
 			});
 			const res = await route(req);
 			const data = (await res.json()) as Array<{ id: number; username: string }>;

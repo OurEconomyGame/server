@@ -3,7 +3,7 @@
   "info": {
     "title": "OurEconomy API",
     "description": "API documentation for the OurEconomy backend server.",
-    "version": "0.9.0"
+    "version": "0.10.0"
   },
   "paths": {
     "/version": {
@@ -19,7 +19,7 @@
                   "properties": {
                     "version": {
                       "type": "string",
-                      "example": "0.9.0"
+                      "example": "0.10.0"
                     }
                   }
                 }
@@ -32,6 +32,17 @@
     "/list/users": {
       "get": {
         "summary": "Get list of users public info",
+        "parameters": [
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "description": "Field to sort by ('name' or 'id')",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Returns list of public user info objects",
