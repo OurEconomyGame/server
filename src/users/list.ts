@@ -5,8 +5,10 @@ interface PublicUser {
   joined: number;
   active: number;
 }
-export async function getAllUsersPublicInfo(params: Record<string, unknown>) {
-  const sortBy = params.sortBy;
+export async function getAllUsersPublicInfo(
+  params?: Record<string, unknown> | null,
+) {
+  const sortBy = params?.sortBy;
   const users = await getAllUsers();
 
   const publicInfo: PublicUser[] = [];
