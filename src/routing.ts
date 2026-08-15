@@ -43,6 +43,11 @@ export default async function route(request: Request): Promise<Response> {
 			if (method !== "POST")
 				return Response.json({ status: "Your killing me.", token: "none" });
 			return Response.json(await login(postParams));
+
+		case "/found":
+			if (method !== "POST")
+				return Response.json({ status: "I am not a mind reader.", id: 0 });
+			return Response.json({});
 		default:
 			return new Response("You are utterless and hopelessly lost. Get a GPS.", {
 				status: 404,

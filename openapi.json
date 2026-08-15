@@ -3,7 +3,7 @@
   "info": {
     "title": "OurEconomy API",
     "description": "API documentation for the OurEconomy backend server.",
-    "version": "0.10.0"
+    "version": "0.11.0"
   },
   "paths": {
     "/version": {
@@ -19,7 +19,7 @@
                   "properties": {
                     "version": {
                       "type": "string",
-                      "example": "0.10.0"
+                      "example": "0.11.0"
                     }
                   }
                 }
@@ -163,6 +163,23 @@
                       "type": "string"
                     }
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/found": {
+      "post": {
+        "summary": "Found a new company",
+        "responses": {
+          "200": {
+            "description": "Company founding response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
                 }
               }
             }
