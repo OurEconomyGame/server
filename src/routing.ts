@@ -1,5 +1,4 @@
 import details from "../package.json";
-import parseCookies from "./cookie_parse.ts";
 import { createUser } from "./users/create.ts";
 import { getAllUsersPublicInfo } from "./users/list.ts";
 import { login } from "./users/login.ts";
@@ -15,7 +14,6 @@ export default async function route(request: Request): Promise<Response> {
 	const method = request.method;
 	const path = url.pathname;
 	const params = Object.fromEntries(url.searchParams.entries());
-	const cookies = parseCookies(request.headers.get("cookie") || "");
 	const text = await request.text();
 	const postParams = text ? JSON.parse(text) : null;
 
