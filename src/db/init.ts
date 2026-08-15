@@ -114,7 +114,8 @@ export async function initDb(): Promise<void> {
 				last_accessed: Int,
 				created_at: Int,
 				ceo: Int,
-				data: Json
+				data: Json,
+				shares_outstanding: Int
 			}
 		`);
 		await db.run(`
