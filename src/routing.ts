@@ -1,3 +1,4 @@
+import { foundCompany } from "../companies/found.ts";
 import details from "../package.json";
 import parseAuthHeader from "./header_parse.ts";
 import { createUser } from "./users/create.ts";
@@ -47,7 +48,7 @@ export default async function route(request: Request): Promise<Response> {
 		case "/found":
 			if (method !== "POST")
 				return Response.json({ status: "I am not a mind reader.", id: 0 });
-			return Response.json({});
+			return Response.json(await foundCompany(postParams, auth_token));
 		default:
 			return new Response("You are utterless and hopelessly lost. Get a GPS.", {
 				status: 404,
