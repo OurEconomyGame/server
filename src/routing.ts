@@ -1,4 +1,5 @@
 import details from "../package.json";
+import parseAuthHeader from "./header_parse.ts";
 import { createUser } from "./users/create.ts";
 import { getAllUsersPublicInfo } from "./users/list.ts";
 import { login } from "./users/login.ts";
@@ -14,6 +15,7 @@ export default async function route(request: Request): Promise<Response> {
 	const method = request.method;
 	const path = url.pathname;
 	const params = Object.fromEntries(url.searchParams.entries());
+	const auth_token: string | null = parseAuthHeader(request.headers);
 	const text = await request.text();
 	const postParams = text ? JSON.parse(text) : null;
 

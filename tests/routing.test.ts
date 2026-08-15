@@ -257,11 +257,19 @@ describe("Routing Suite - route(request)", () => {
 		});
 	});
 
-	describe("7. Request Headers, Cookies & Search Parameters", () => {
-		test("parses cookie headers without error", async () => {
+	describe("7. Request Headers & Search Parameters", () => {
+		test("parses request headers and search params without error", async () => {
 			const req = new Request("http://localhost/version?debug=true", {
 				method: "GET",
-				headers: { cookie: "sessionId=xyz123; theme=dark" },
+				headers: { Auth: "test_token_123" },
+			});
+			const res = await route(req);
+			expect(res.status).toBe(200);
+		});
+
+		test("handles requests without Auth header", async () => {
+			const req = new Request("http://localhost/version", {
+				method: "GET",
 			});
 			const res = await route(req);
 			expect(res.status).toBe(200);
