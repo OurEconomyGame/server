@@ -1,4 +1,4 @@
-import { foundCompany } from "../companies/found.ts";
+import { foundCompany } from "./companies/found.ts";
 import details from "../package.json";
 import parseAuthHeader from "./header_parse.ts";
 import { createUser } from "./users/create.ts";
