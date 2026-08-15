@@ -1,9 +1,31 @@
 import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import { initDb, cleanupDbOnExit } from "../src/db/init.ts";
-import { insertUser, insertSession } from "../src/db/inserts.ts";
-import { getAllUsers, getAllSessions, getUserById, getSessionByToken } from "../src/db/gets.ts";
-import { updateUserById, updateSessionById } from "../src/db/updates.ts";
-import { deleteUserById, deleteSessionById } from "../src/db/deletes.ts";
+import { insertUser, insertSession, insertCompany, insertShare } from "../src/db/inserts.ts";
+import {
+	getAllUsers,
+	getAllSessions,
+	getAllCompanies,
+	getAllShares,
+	getUserById,
+	getSessionByToken,
+	getCompanyById,
+	getCompanyByName,
+	getShareById,
+	getSharesByOwner,
+	getSharesByOwned,
+} from "../src/db/gets.ts";
+import {
+	updateUserById,
+	updateSessionById,
+	updateCompanyById,
+	updateShareById,
+} from "../src/db/updates.ts";
+import {
+	deleteUserById,
+	deleteSessionById,
+	deleteCompanyById,
+	deleteShareById,
+} from "../src/db/deletes.ts";
 
 beforeAll(async () => {
 	await initDb();
@@ -63,5 +85,80 @@ describe("DB CRUD Operations Suite", () => {
 
 		const afterDeleteSession = await getSessionByToken("token_crud_updated");
 		expect(afterDeleteSession).toBeNull();
+	});
+
+	test("Company CRUD lifecycle: insert, getById, getByName, update, getAll, delete", async () => {
+		const companyId = 7000;
+		const companyName = "Acme_Industrial_Corp";
+		const inserted = await insertCompany(
+			companyId,
+			companyName,
+			501,
+			1,
+			1000,
+			1000,
+			501,
+			{ vault_cash: 50000 },
+			1000000,
+		);
+		expect(inserted).toBe(true);
+
+		const companyById = await getCompanyById(companyId);
+		expect(companyById).not.toBeNull();
+		expect(companyById?.name).toBe(companyName);
+		expect(companyById?.shares_outstanding).toBe(1000000);
+
+		const companyByName = await getCompanyByName(companyName);
+		expect(companyByName).not.toBeNull();
+		expect(companyByName?.id).toBe(companyId);
+
+		const updated = await updateCompanyById(companyId, {
+			ceo: 502,
+			shares_outstanding: 2000000,
+		});
+		expect(updated).not.toBeNull();
+		expect(updated?.ceo).toBe(502);
+		expect(updated?.shares_outstanding).toBe(2000000);
+
+		const allCompanies = await getAllCompanies();
+		expect(allCompanies.some((c) => c.id === companyId && c.ceo === 502)).toBe(true);
+
+		const deleted = await deleteCompanyById(companyId);
+		expect(deleted).toBe(true);
+
+		const afterDelete = await getCompanyById(companyId);
+		expect(afterDelete).toBeNull();
+	});
+
+	test("Share CRUD lifecycle: insert, getById, getByOwner, getByOwned, update, getAll, delete", async () => {
+		const shareId = 8000;
+		const ownerId = 901;
+		const ownedCompanyId = 7001;
+
+		const inserted = await insertShare(shareId, ownerId, true, 5000, ownedCompanyId);
+		expect(inserted).toBe(true);
+
+		const shareById = await getShareById(shareId);
+		expect(shareById).not.toBeNull();
+		expect(shareById?.quantity).toBe(5000);
+
+		const sharesByOwner = await getSharesByOwner(ownerId, true);
+		expect(sharesByOwner.some((s) => s.id === shareId && s.quantity === 5000)).toBe(true);
+
+		const sharesByOwned = await getSharesByOwned(ownedCompanyId);
+		expect(sharesByOwned.some((s) => s.id === shareId && s.owner_id === ownerId)).toBe(true);
+
+		const updated = await updateShareById(shareId, { quantity: 7500 });
+		expect(updated).not.toBeNull();
+		expect(updated?.quantity).toBe(7500);
+
+		const allShares = await getAllShares();
+		expect(allShares.some((s) => s.id === shareId && s.quantity === 7500)).toBe(true);
+
+		const deleted = await deleteShareById(shareId);
+		expect(deleted).toBe(true);
+
+		const afterDelete = await getShareById(shareId);
+		expect(afterDelete).toBeNull();
 	});
 });
