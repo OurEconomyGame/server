@@ -33,7 +33,10 @@ export default async function route(request: Request): Promise<Response> {
 
 		case "/signup":
 			if (method !== "POST")
-				return Response.json({ status: "INVALID REQUEST", id: 0 });
+				return Response.json({
+					status: "How can I make an acount without postage?",
+					id: 0,
+				});
 			return Response.json(await createUser(postParams));
 
 		case "/login":
@@ -41,6 +44,8 @@ export default async function route(request: Request): Promise<Response> {
 				return Response.json({ status: "Your killing me.", token: "none" });
 			return Response.json(await login(postParams));
 		default:
-			return new Response("Not Found", { status: 404 });
+			return new Response("You are utterless and hopelessly lost. Get a GPS.", {
+				status: 404,
+			});
 	}
 }

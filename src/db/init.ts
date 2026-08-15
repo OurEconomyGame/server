@@ -22,7 +22,7 @@ export function cleanupDbOnExit(): void {
 	if (process.env.DEBUG === "true" && existsSync(DB_DIR)) {
 		try {
 			db.close();
-		} catch {}
+		} catch { }
 		try {
 			rmSync(DB_DIR, { recursive: true, force: true });
 			console.log("[DB] DEBUG=true: Database file deleted on process exit.");
@@ -84,17 +84,17 @@ export async function initDb(): Promise<void> {
 
 	try {
 		await db.run(`
-      :create user {
-        id: Int
-        =>
-        name: String,
-        pass_hash: String,
-        email: String,
-        last_accessed: Int,
-        data: Json,
-        created_at: Int
-      }
-    `);
+			:create user {
+				id: Int
+				=>
+				name: String,
+				pass_hash: String,
+				email: String,
+				last_accessed: Int,
+				data: Json,
+				created_at: Int
+			}
+		`);
 		await db.run(`
 			:create session {
 				id: Int
@@ -102,6 +102,29 @@ export async function initDb(): Promise<void> {
 				user_id: Int,
 				created_at: Int,
 				token: String
+			}
+		`);
+		await db.run(`
+			:create company {
+				id: Int
+				=>
+				name: String,
+				founder_id: Int,
+				type: Int,
+				last_accessed: Int,
+				created_at: Int,
+				ceo: Int,
+				data: Json
+			}
+		`);
+		await db.run(`
+			:create shares {
+				id: Int
+				=>
+				owner_id: Int,
+				owner_user: Bool,
+				quantity: Int,
+				owned_id: Int
 			}
 		`);
 		console.log("[DB] Schema initialized successfully.");

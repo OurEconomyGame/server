@@ -97,7 +97,7 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(data["status"]).toBe("INVALID REQUEST");
+			expect(data["status"]).toBe("How can I make an acount without postage?");
 			expect(data["id"]).toBe(0);
 		});
 
@@ -253,7 +253,7 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(404);
 
 			const text = await res.text();
-			expect(text).toBe("Not Found");
+			expect(text).toBe("You are utterless and hopelessly lost. Get a GPS.");
 		});
 	});
 
