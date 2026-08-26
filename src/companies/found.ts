@@ -2,6 +2,7 @@ import { getCompanyByName } from "../db/gets.ts";
 import { query } from "../db/init.ts";
 import { insertCompany, insertShare } from "../db/inserts.ts";
 import { getUserBySessionToken } from "../sessions/check.ts";
+import { companyTypes } from "./types.ts";
 
 /**
  * Type helper that disallows empty strings (""), forcing a compile-time error
@@ -70,14 +71,23 @@ export async function foundCompany(
 	}
 	const name = rawName.trim();
 
-	// 5. Failure: Missing or invalid company classification type parameter
-	if (typeof p.the_hell_you_want !== "number" && typeof p.type !== "number") {
+	// 5. Failure: Missing or invalid company classification type parameter (must be valid companyTypes enum)
+	const rawType =
+		typeof p.type === "number"
+			? p.type
+			: typeof p.the_hell_you_want === "number"
+				? p.the_hell_you_want
+				: null;
+
+	if (
+		rawType === null ||
+		(rawType !== companyTypes.Production &&
+			rawType !== companyTypes.Holding &&
+			rawType !== companyTypes.WebStore)
+	) {
 		return respond("I still aint got any idea what you want.", 0);
 	}
-	const type =
-		typeof p.the_hell_you_want === "number"
-			? p.the_hell_you_want
-			: (p.type as number);
+	const type: companyTypes = rawType;
 
 	const data: Record<string, unknown> = {};
 
