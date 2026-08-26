@@ -25,7 +25,7 @@ function respond<S extends string>(
 /**
  * Founds a new company and grants 100% of initial shares (10k default) to the creator.
  *
- * @param params - The company creation payload (name, type, data).
+ * @param params - The company creation payload (name, type).
  * @param auth_token - Session token from request authorization header.
  * @returns An object with status and the created company ID.
  */
@@ -52,17 +52,14 @@ export async function foundCompany(
 	const p = params as Record<string, unknown>;
 
 	// 3. Failure: Missing or invalid company name parameter type
-	if (typeof p.entrepreneurerer !== "string" && typeof p.name !== "string") {
+	if (typeof p.name !== "string") {
 		return respond(
 			"Ok, um, are you thick? You didnt give me the info where I can see it.",
 			0,
 		);
 	}
 
-	const rawName =
-		typeof p.entrepreneurerer === "string"
-			? p.entrepreneurerer
-			: (p.name as string);
+	const rawName = p.name;
 
 	// 4. Failure: Empty or whitespace-only company name
 	if (rawName.trim() === "") {
@@ -82,19 +79,9 @@ export async function foundCompany(
 			? p.the_hell_you_want
 			: (p.type as number);
 
-	// 6. Failure: Invalid data object parameter
-	if (
-		p.data !== undefined &&
-		(typeof p.data !== "object" || p.data === null || Array.isArray(p.data))
-	) {
-		return respond(
-			"Still dont know what you want. Its a invalid data object and somethings broken",
-			0,
-		);
-	}
-	const data = (p.data as Record<string, unknown> | undefined) ?? {};
+	const data: Record<string, unknown> = {};
 
-	// 7. Failure: Company name already taken
+	// 6. Failure: Company name already taken
 	const existing = await getCompanyByName(name);
 	if (existing !== null) {
 		return respond(
@@ -113,7 +100,7 @@ export async function foundCompany(
 	const companyId = await getNextCompanyId();
 	const shareId = await getNextShareId();
 
-	// 8. Failure: Database insert for company failed
+	// 7. Failure: Database insert for company failed
 	const companySuccess = await insertCompany(
 		companyId,
 		name,
@@ -133,7 +120,7 @@ export async function foundCompany(
 		);
 	}
 
-	// 9. Failure: Database insert for initial shares failed
+	// 8. Failure: Database insert for initial shares failed
 	const shareSuccess = await insertShare(
 		shareId,
 		founder_id,
@@ -149,7 +136,7 @@ export async function foundCompany(
 		);
 	}
 
-	// 10. Success: Company founded and shares granted
+	// 9. Success: Company founded and shares granted
 	return respond("OMG, this actually worked!?", companyId);
 }
 
