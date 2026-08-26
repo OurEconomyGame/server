@@ -3,7 +3,7 @@
 	"info": {
 		"title": "OurEconomy API",
 		"description": "API documentation for the OurEconomy backend server.",
-		"version": "0.13.0"
+		"version": "0.14.0"
 	},
 	"paths": {
 		"/version": {
@@ -19,12 +19,25 @@
 									"properties": {
 										"version": {
 											"type": "string",
-											"example": "0.13.0"
+											"example": "0.14.0"
 										}
 									}
 								}
 							}
 						}
+					}
+				}
+			}
+		},
+		"/docs": {
+			"get": {
+				"summary": "Scalar Interactive API Documentation (Localhost only)",
+				"responses": {
+					"200": {
+						"description": "Returns Scalar HTML API explorer"
+					},
+					"403": {
+						"description": "Forbidden if accessed remotely"
 					}
 				}
 			}

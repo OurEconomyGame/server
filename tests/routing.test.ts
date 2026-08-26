@@ -40,6 +40,7 @@ describe("Routing Suite - route(request)", () => {
 			expect(paths).toHaveProperty("/signup");
 			expect(paths).toHaveProperty("/login");
 			expect(paths).toHaveProperty("/found");
+			expect(paths).toHaveProperty("/docs");
 		});
 	});
 
