@@ -4,6 +4,7 @@ import { getCompanyInfo } from "./companies/get.ts";
 import { getAllCompaniesInfo } from "./companies/list.ts";
 import { getCompanyShareholders } from "./companies/shareholders.ts";
 import parseAuthHeader from "./header_parse.ts";
+import handleOptions from "./options.ts";
 import { getUserPortfolio } from "./shares/portfolio.ts";
 import { createUser } from "./users/create.ts";
 import { getAllUsersPublicInfo } from "./users/list.ts";
@@ -16,6 +17,10 @@ import { login } from "./users/login.ts";
  * @returns A promise that resolves to the HTTP Response object.
  */
 export default async function route(request: Request): Promise<Response> {
+	if (request.method === "OPTIONS") {
+		return await handleOptions(request);
+	}
+
 	const url = new URL(request.url);
 	const method = request.method;
 	const path = url.pathname;

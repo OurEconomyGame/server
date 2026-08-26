@@ -771,4 +771,27 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 		});
 	});
+
+	describe("13. OPTIONS Requests & CORS Preflight", () => {
+		test("handles OPTIONS preflight for GET routes with 204 status", async () => {
+			const req = new Request("http://localhost/list/companies", {
+				method: "OPTIONS",
+			});
+			const res = await route(req);
+			expect(res.status).toBe(204);
+			expect(res.headers.get("Access-Control-Allow-Methods")).toContain("GET");
+			expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+			expect(res.headers.get("Access-Control-Allow-Headers")).toContain("Auth");
+		});
+
+		test("handles OPTIONS preflight for POST routes with 204 status", async () => {
+			const req = new Request("http://localhost/found", {
+				method: "OPTIONS",
+			});
+			const res = await route(req);
+			expect(res.status).toBe(204);
+			expect(res.headers.get("Access-Control-Allow-Methods")).toContain("POST");
+			expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+		});
+	});
 });
