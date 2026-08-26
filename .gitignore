@@ -36,3 +36,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Local database
 main.db
 
+# Cloudflare Tunnel credentials & configs
+cloudflared.config.yml
+.cloudflared*
+*.tunnel.json
