@@ -40,3 +40,6 @@ main.db
 cloudflared.config.yml
 .cloudflared*
 *.tunnel.json
+
+# Admin credentials & local secrets
+admin.txt
