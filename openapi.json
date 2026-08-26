@@ -1,191 +1,232 @@
 {
-  "openapi": "3.0.3",
-  "info": {
-    "title": "OurEconomy API",
-    "description": "API documentation for the OurEconomy backend server.",
-    "version": "0.11.0"
-  },
-  "paths": {
-    "/version": {
-      "get": {
-        "summary": "Get application version",
-        "responses": {
-          "200": {
-            "description": "Returns current API version",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "version": {
-                      "type": "string",
-                      "example": "0.11.0"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/list/users": {
-      "get": {
-        "summary": "Get list of users public info",
-        "parameters": [
-          {
-            "name": "sortBy",
-            "in": "query",
-            "required": false,
-            "description": "Field to sort by ('name' or 'id')",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Returns list of public user info objects",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "number"
-                      },
-                      "username": {
-                        "type": "string"
-                      },
-                      "joined": {
-                        "type": "number"
-                      },
-                      "active": {
-                        "type": "number"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/signup": {
-      "post": {
-        "summary": "Create a new user",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["hi", "secret"],
-                "properties": {
-                  "hi": {
-                    "type": "string",
-                    "description": "Username"
-                  },
-                  "secret": {
-                    "type": "string",
-                    "description": "Password"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "User creation status, ID, and session token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "number"
-                    },
-                    "random": {
-                      "type": "string",
-                      "description": "Session token generated for the created user"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/login": {
-      "post": {
-        "summary": "User login",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["hi", "secret"],
-                "properties": {
-                  "hi": {
-                    "type": "string",
-                    "description": "Username"
-                  },
-                  "secret": {
-                    "type": "string",
-                    "description": "Password"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Login response status and token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string"
-                    },
-                    "token": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/found": {
-      "post": {
-        "summary": "Found a new company",
-        "responses": {
-          "200": {
-            "description": "Company founding response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+	"openapi": "3.0.3",
+	"info": {
+		"title": "OurEconomy API",
+		"description": "API documentation for the OurEconomy backend server.",
+		"version": "0.12.0"
+	},
+	"paths": {
+		"/version": {
+			"get": {
+				"summary": "Get application version",
+				"responses": {
+					"200": {
+						"description": "Returns current API version",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"version": {
+											"type": "string",
+											"example": "0.12.0"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/list/users": {
+			"get": {
+				"summary": "Get list of users public info",
+				"parameters": [
+					{
+						"name": "sortBy",
+						"in": "query",
+						"required": false,
+						"description": "Field to sort by ('name' or 'id')",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Returns list of public user info objects",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"id": {
+												"type": "number"
+											},
+											"username": {
+												"type": "string"
+											},
+											"joined": {
+												"type": "number"
+											},
+											"active": {
+												"type": "number"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/signup": {
+			"post": {
+				"summary": "Create a new user",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["hi", "secret"],
+								"properties": {
+									"hi": {
+										"type": "string",
+										"description": "Username"
+									},
+									"secret": {
+										"type": "string",
+										"description": "Password"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "User creation status, ID, and session token",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string"
+										},
+										"id": {
+											"type": "number"
+										},
+										"random": {
+											"type": "string",
+											"description": "Session token generated for the created user"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/login": {
+			"post": {
+				"summary": "User login",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["hi", "secret"],
+								"properties": {
+									"hi": {
+										"type": "string",
+										"description": "Username"
+									},
+									"secret": {
+										"type": "string",
+										"description": "Password"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Login response status and token",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string"
+										},
+										"token": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/found": {
+			"post": {
+				"summary": "Found a new company",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token for authentication",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["name", "type"],
+								"properties": {
+									"name": {
+										"type": "string",
+										"description": "Name of the company"
+									},
+									"type": {
+										"type": "integer",
+										"enum": [0, 1, 2],
+										"description": "Company type (0: Production, 1: Holding, 2: WebStore)"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Company founding response with status and created company ID",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string"
+										},
+										"id": {
+											"type": "number"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
