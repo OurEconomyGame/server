@@ -21,17 +21,26 @@ export async function foundCompany(
 		return { status: "Unauthorized", id: 0 };
 	}
 
-	let name = params.entrepreneurerer;
-	let type = params.the_hell_you_want;
+	const p = (params && typeof params === "object" ? params : {}) as Record<
+		string,
+		unknown
+	>;
+	const name: string =
+		typeof p.entrepreneurerer === "string"
+			? p.entrepreneurerer
+			: typeof p.name === "string"
+				? p.name
+				: "";
+	const type: number =
+		typeof p.the_hell_you_want === "number"
+			? p.the_hell_you_want
+			: typeof p.type === "number"
+				? p.type
+				: 0;
 	let data: Record<string, unknown> = {};
 
-	if (params && typeof params === "object") {
-		const p = params as Record<string, unknown>;
-		if (typeof p.name === "string") name = p.name;
-		if (typeof p.type === "number") type = p.type;
-		if (p.data && typeof p.data === "object" && !Array.isArray(p.data)) {
-			data = p.data as Record<string, unknown>;
-		}
+	if (p.data && typeof p.data === "object" && !Array.isArray(p.data)) {
+		data = p.data as Record<string, unknown>;
 	}
 
 	if (!name || name.trim() === "") {
