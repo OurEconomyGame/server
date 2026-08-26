@@ -3,6 +3,7 @@ import { foundCompany } from "./companies/found.ts";
 import { getCompanyInfo } from "./companies/get.ts";
 import { getAllCompaniesInfo } from "./companies/list.ts";
 import { getCompanyShareholders } from "./companies/shareholders.ts";
+import { handleDocs } from "./docs.ts";
 import parseAuthHeader from "./header_parse.ts";
 import handleOptions from "./options.ts";
 import { getUserPortfolio } from "./shares/portfolio.ts";
@@ -45,6 +46,9 @@ async function handleRequest(request: Request): Promise<Response> {
 	switch (path) {
 		case "/version":
 			return Response.json({ version: details.version });
+
+		case "/docs":
+			return handleDocs(request);
 
 		case "/openapi.json":
 			return new Response(Bun.file("./openapi.json"));

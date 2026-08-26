@@ -18,6 +18,7 @@ export default async function handleOptions(
 
 	switch (path) {
 		case "/version":
+		case "/docs":
 		case "/openapi.json":
 		case "/list/users":
 		case "/list/companies":

@@ -801,4 +801,29 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
 		});
 	});
+
+	describe("14. GET /docs (Scalar API Reference)", () => {
+		test("serves Scalar HTML when called from localhost", async () => {
+			const req = new Request("http://localhost/docs", { method: "GET" });
+			const res = await route(req);
+			expect(res.status).toBe(200);
+			const html = await res.text();
+			expect(html).toContain("@scalar/api-reference");
+			expect(html).toContain("/openapi.json");
+		});
+
+		test("rejects remote caller / external proxy with 403 Forbidden", async () => {
+			const req = new Request("https://game.server.napp9.com/docs", {
+				method: "GET",
+				headers: {
+					Host: "game.server.napp9.com",
+					"cf-connecting-ip": "203.0.113.195",
+				},
+			});
+			const res = await route(req);
+			expect(res.status).toBe(403);
+			const text = await res.text();
+			expect(text).toContain("Forbidden");
+		});
+	});
 });
