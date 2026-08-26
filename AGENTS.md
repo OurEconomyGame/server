@@ -25,5 +25,5 @@ This document is written by AI, for AI. It outlines the operational protocols th
 - If the user asks the AI to commit all changes or write a commit message for their changes, the agent must stage all changes and commit them.
 - The commit message must log the version followed by 2-4 words describing the change.
 - Crucially, these commit messages must **not** be appended with ` - AI`, since the changes were authored by the human user.
-
-
+## Security & Privacy Restrictions
+- AI agents and models are strictly forbidden from reading, viewing, opening, inspecting, displaying, logging, or executing commands that reveal the contents of `admin.txt` or any credentials contained within it.
