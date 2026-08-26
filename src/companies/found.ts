@@ -38,19 +38,25 @@ export async function foundCompany(
 
 	// 1. Failure: Unauthorized (invalid/missing session token)
 	if (!user) {
-		return respond("", 0);
+		return respond("Sorry, ghosts cant own companies", 0);
 	}
 
 	// 2. Failure: Invalid params root (not an object)
 	if (!params || typeof params !== "object" || Array.isArray(params)) {
-		return respond("", 0);
+		return respond(
+			"I need some info, you cant just say: I will start a buisness, and ask for a building, and then wonder why you got a bakery instead of a office building.",
+			0,
+		);
 	}
 
 	const p = params as Record<string, unknown>;
 
 	// 3. Failure: Missing or invalid company name parameter type
 	if (typeof p.entrepreneurerer !== "string" && typeof p.name !== "string") {
-		return respond("", 0);
+		return respond(
+			"Ok, um, are you thick? You didnt give me the info where I can see it.",
+			0,
+		);
 	}
 
 	const rawName =
@@ -60,13 +66,16 @@ export async function foundCompany(
 
 	// 4. Failure: Empty or whitespace-only company name
 	if (rawName.trim() === "") {
-		return respond("", 0);
+		return respond(
+			"You cant have a null company, though I dont see why not zero width characters but it cant just be whitespace.",
+			0,
+		);
 	}
 	const name = rawName.trim();
 
 	// 5. Failure: Missing or invalid company classification type parameter
 	if (typeof p.the_hell_you_want !== "number" && typeof p.type !== "number") {
-		return respond("", 0);
+		return respond("I still aint got any idea what you want.", 0);
 	}
 	const type =
 		typeof p.the_hell_you_want === "number"
@@ -78,14 +87,20 @@ export async function foundCompany(
 		p.data !== undefined &&
 		(typeof p.data !== "object" || p.data === null || Array.isArray(p.data))
 	) {
-		return respond("", 0);
+		return respond(
+			"Still dont know what you want. Its a invalid data object and somethings broken",
+			0,
+		);
 	}
 	const data = (p.data as Record<string, unknown> | undefined) ?? {};
 
 	// 7. Failure: Company name already taken
 	const existing = await getCompanyByName(name);
 	if (existing !== null) {
-		return respond("", 0);
+		return respond(
+			"Sorry, maybe add some zero width characters, if you want to commit fraud, be smart about it.",
+			0,
+		);
 	}
 
 	const founder_id = user.id;
@@ -112,7 +127,10 @@ export async function foundCompany(
 	);
 
 	if (!companySuccess) {
-		return respond("", 0);
+		return respond(
+			"The server is broken, the db is broken. YOU ARE BROKEN!",
+			0,
+		);
 	}
 
 	// 9. Failure: Database insert for initial shares failed
@@ -125,11 +143,14 @@ export async function foundCompany(
 	);
 
 	if (!shareSuccess) {
-		return respond("", companyId);
+		return respond(
+			"Your shares surprisingly dont exist and so the company is owned by the void.",
+			companyId,
+		);
 	}
 
 	// 10. Success: Company founded and shares granted
-	return respond("", companyId);
+	return respond("OMG, this actually worked!?", companyId);
 }
 
 /**
