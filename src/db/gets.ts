@@ -105,9 +105,7 @@ export async function getUserById(id: number): Promise<UserRecord | null> {
 /**
  * Helper to retrieve a user record by username.
  */
-export async function getUserByName(
-	name: string,
-): Promise<UserRecord | null> {
+export async function getUserByName(name: string): Promise<UserRecord | null> {
 	return getUser(name);
 }
 
@@ -180,14 +178,18 @@ export async function getCompany(
 /**
  * Helper to retrieve a company record by company ID.
  */
-export async function getCompanyById(id: number): Promise<CompanyRecord | null> {
+export async function getCompanyById(
+	id: number,
+): Promise<CompanyRecord | null> {
 	return getCompany(id);
 }
 
 /**
  * Helper to retrieve a company record by company name.
  */
-export async function getCompanyByName(name: string): Promise<CompanyRecord | null> {
+export async function getCompanyByName(
+	name: string,
+): Promise<CompanyRecord | null> {
 	return getCompany(name);
 }
 
@@ -266,7 +268,9 @@ export async function getSharesByOwner(
  * @param owned_id - The numeric ID of the company whose shares are owned.
  * @returns A promise that resolves to an array of matching ShareRecords.
  */
-export async function getSharesByOwned(owned_id: number): Promise<ShareRecord[]> {
+export async function getSharesByOwned(
+	owned_id: number,
+): Promise<ShareRecord[]> {
 	return query<ShareRecord>(
 		`
 		?[id, owner_id, owner_user, quantity, owned_id] := *shares{id, owner_id, owner_user, quantity, owned_id}, owned_id == $owned_id

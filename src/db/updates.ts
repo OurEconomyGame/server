@@ -1,13 +1,13 @@
-import { query } from "./init.ts";
 import {
-	getUserById,
+	type CompanyRecord,
 	getCompanyById,
 	getShareById,
-	type UserRecord,
+	getUserById,
 	type SessionRecord,
-	type CompanyRecord,
 	type ShareRecord,
+	type UserRecord,
 } from "./gets.ts";
+import { query } from "./init.ts";
 
 /**
  * Updates a user record by user ID.

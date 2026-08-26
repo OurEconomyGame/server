@@ -1,31 +1,36 @@
-import { describe, expect, test, beforeAll, afterAll } from "bun:test";
-import { initDb, cleanupDbOnExit } from "../src/db/init.ts";
-import { insertUser, insertSession, insertCompany, insertShare } from "../src/db/inserts.ts";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import {
-	getAllUsers,
-	getAllSessions,
+	deleteCompanyById,
+	deleteSessionById,
+	deleteShareById,
+	deleteUserById,
+} from "../src/db/deletes.ts";
+import {
 	getAllCompanies,
+	getAllSessions,
 	getAllShares,
-	getUserById,
-	getSessionByToken,
+	getAllUsers,
 	getCompanyById,
 	getCompanyByName,
+	getSessionByToken,
 	getShareById,
-	getSharesByOwner,
 	getSharesByOwned,
+	getSharesByOwner,
+	getUserById,
 } from "../src/db/gets.ts";
+import { cleanupDbOnExit, initDb } from "../src/db/init.ts";
 import {
-	updateUserById,
-	updateSessionById,
+	insertCompany,
+	insertSession,
+	insertShare,
+	insertUser,
+} from "../src/db/inserts.ts";
+import {
 	updateCompanyById,
+	updateSessionById,
 	updateShareById,
+	updateUserById,
 } from "../src/db/updates.ts";
-import {
-	deleteUserById,
-	deleteSessionById,
-	deleteCompanyById,
-	deleteShareById,
-} from "../src/db/deletes.ts";
 
 beforeAll(async () => {
 	await initDb();
@@ -54,7 +59,9 @@ describe("DB CRUD Operations Suite", () => {
 		expect(updated?.name).toBe("updated_crud_user");
 
 		const allUsers = await getAllUsers();
-		expect(allUsers.some((u) => u.id === userId && u.name === "updated_crud_user")).toBe(true);
+		expect(
+			allUsers.some((u) => u.id === userId && u.name === "updated_crud_user"),
+		).toBe(true);
 
 		const deleted = await deleteUserById(userId);
 		expect(deleted).toBe(true);
@@ -73,12 +80,18 @@ describe("DB CRUD Operations Suite", () => {
 		expect(session).not.toBeNull();
 		expect(session?.id).toBe(sessionId);
 
-		const updated = await updateSessionById(sessionId, { token: "token_crud_updated" });
+		const updated = await updateSessionById(sessionId, {
+			token: "token_crud_updated",
+		});
 		expect(updated).not.toBeNull();
 		expect(updated?.token).toBe("token_crud_updated");
 
 		const allSessions = await getAllSessions();
-		expect(allSessions.some((s) => s.id === sessionId && s.token === "token_crud_updated")).toBe(true);
+		expect(
+			allSessions.some(
+				(s) => s.id === sessionId && s.token === "token_crud_updated",
+			),
+		).toBe(true);
 
 		const deleted = await deleteSessionById(sessionId);
 		expect(deleted).toBe(true);
@@ -121,7 +134,9 @@ describe("DB CRUD Operations Suite", () => {
 		expect(updated?.shares_outstanding).toBe(2000000);
 
 		const allCompanies = await getAllCompanies();
-		expect(allCompanies.some((c) => c.id === companyId && c.ceo === 502)).toBe(true);
+		expect(allCompanies.some((c) => c.id === companyId && c.ceo === 502)).toBe(
+			true,
+		);
 
 		const deleted = await deleteCompanyById(companyId);
 		expect(deleted).toBe(true);
@@ -135,7 +150,13 @@ describe("DB CRUD Operations Suite", () => {
 		const ownerId = 901;
 		const ownedCompanyId = 7001;
 
-		const inserted = await insertShare(shareId, ownerId, true, 5000, ownedCompanyId);
+		const inserted = await insertShare(
+			shareId,
+			ownerId,
+			true,
+			5000,
+			ownedCompanyId,
+		);
 		expect(inserted).toBe(true);
 
 		const shareById = await getShareById(shareId);
@@ -143,17 +164,23 @@ describe("DB CRUD Operations Suite", () => {
 		expect(shareById?.quantity).toBe(5000);
 
 		const sharesByOwner = await getSharesByOwner(ownerId, true);
-		expect(sharesByOwner.some((s) => s.id === shareId && s.quantity === 5000)).toBe(true);
+		expect(
+			sharesByOwner.some((s) => s.id === shareId && s.quantity === 5000),
+		).toBe(true);
 
 		const sharesByOwned = await getSharesByOwned(ownedCompanyId);
-		expect(sharesByOwned.some((s) => s.id === shareId && s.owner_id === ownerId)).toBe(true);
+		expect(
+			sharesByOwned.some((s) => s.id === shareId && s.owner_id === ownerId),
+		).toBe(true);
 
 		const updated = await updateShareById(shareId, { quantity: 7500 });
 		expect(updated).not.toBeNull();
 		expect(updated?.quantity).toBe(7500);
 
 		const allShares = await getAllShares();
-		expect(allShares.some((s) => s.id === shareId && s.quantity === 7500)).toBe(true);
+		expect(allShares.some((s) => s.id === shareId && s.quantity === 7500)).toBe(
+			true,
+		);
 
 		const deleted = await deleteShareById(shareId);
 		expect(deleted).toBe(true);

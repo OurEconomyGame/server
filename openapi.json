@@ -3,7 +3,7 @@
 	"info": {
 		"title": "OurEconomy API",
 		"description": "API documentation for the OurEconomy backend server.",
-		"version": "0.12.0"
+		"version": "0.13.0"
 	},
 	"paths": {
 		"/version": {
@@ -19,7 +19,7 @@
 									"properties": {
 										"version": {
 											"type": "string",
-											"example": "0.12.0"
+											"example": "0.13.0"
 										}
 									}
 								}
@@ -64,6 +64,254 @@
 											},
 											"active": {
 												"type": "number"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/list/companies": {
+			"get": {
+				"summary": "Get list of companies with public info and optional CEO data",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": false,
+						"description": "Optional session token to expose private company data if caller is CEO",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "sortBy",
+						"in": "query",
+						"required": false,
+						"description": "Field to sort by ('name', 'created_at', or 'id')",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "type",
+						"in": "query",
+						"required": false,
+						"description": "Filter by company type enum",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "founder_id",
+						"in": "query",
+						"required": false,
+						"description": "Filter by founder user ID",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "ceo",
+						"in": "query",
+						"required": false,
+						"description": "Filter by CEO user ID",
+						"schema": {
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Returns list of companies",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"id": { "type": "number" },
+											"name": { "type": "string" },
+											"founder_id": { "type": "number" },
+											"type": { "type": "number" },
+											"last_accessed": { "type": "number" },
+											"created_at": { "type": "number" },
+											"ceo": { "type": "number" },
+											"shares_outstanding": { "type": "number" },
+											"data": {
+												"type": "object",
+												"description": "Included only if caller is the CEO"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/company": {
+			"get": {
+				"summary": "Get single company details by ID or Name",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": false,
+						"description": "Optional session token to expose private data if caller is CEO",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "id",
+						"in": "query",
+						"required": false,
+						"description": "Company ID",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "name",
+						"in": "query",
+						"required": false,
+						"description": "Company Name",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Returns company profile",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"company": {
+											"type": "object",
+											"properties": {
+												"id": { "type": "number" },
+												"name": { "type": "string" },
+												"founder_id": { "type": "number" },
+												"type": { "type": "number" },
+												"last_accessed": { "type": "number" },
+												"created_at": { "type": "number" },
+												"ceo": { "type": "number" },
+												"shares_outstanding": { "type": "number" },
+												"data": {
+													"type": "object",
+													"description": "Included only if caller is the CEO"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/company/shareholders": {
+			"get": {
+				"summary": "Get cap table / shareholder distribution for a company",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "query",
+						"required": false,
+						"description": "Company ID",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "name",
+						"in": "query",
+						"required": false,
+						"description": "Company Name",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Returns cap table",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"company_id": { "type": "number" },
+										"shares_outstanding": { "type": "number" },
+										"shareholders": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"share_id": { "type": "number" },
+													"owner_id": { "type": "number" },
+													"owner_user": { "type": "boolean" },
+													"quantity": { "type": "number" },
+													"percentage": { "type": "number" }
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/portfolio": {
+			"get": {
+				"summary": "Get authenticated user's portfolio of shares across all companies",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token for authentication",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Returns array of share holdings",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"portfolio": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"share_id": { "type": "number" },
+													"company_id": { "type": "number" },
+													"company_name": { "type": "string" },
+													"company_type": { "type": "number" },
+													"quantity": { "type": "number" },
+													"shares_outstanding": { "type": "number" },
+													"ownership_percentage": { "type": "number" }
+												}
 											}
 										}
 									}

@@ -1,5 +1,5 @@
+import { getCompanyById, getShareById, getUserById } from "./gets.ts";
 import { query } from "./init.ts";
-import { getUserById, getCompanyById, getShareById } from "./gets.ts";
 
 /**
  * Deletes a user record by user ID.

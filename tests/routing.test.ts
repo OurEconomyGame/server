@@ -16,12 +16,12 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(data["version"]).toBe(details.version);
+			expect(data.version).toBe(details.version);
 		});
 	});
 
 	describe("2. GET /openapi.json", () => {
-		test("serves openapi specification file", async () => {
+		test("serves openapi specification file with all endpoints", async () => {
 			const req = new Request("http://localhost/openapi.json", {
 				method: "GET",
 			});
@@ -29,10 +29,14 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(data["openapi"]).toBe("3.0.3");
-			const paths = data["paths"] as Record<string, unknown>;
+			expect(data.openapi).toBe("3.0.3");
+			const paths = data.paths as Record<string, unknown>;
 			expect(paths).toHaveProperty("/version");
 			expect(paths).toHaveProperty("/list/users");
+			expect(paths).toHaveProperty("/list/companies");
+			expect(paths).toHaveProperty("/company");
+			expect(paths).toHaveProperty("/company/shareholders");
+			expect(paths).toHaveProperty("/portfolio");
 			expect(paths).toHaveProperty("/signup");
 			expect(paths).toHaveProperty("/login");
 			expect(paths).toHaveProperty("/found");
@@ -66,7 +70,6 @@ describe("Routing Suite - route(request)", () => {
 		});
 
 		test("sorts users by name when sortBy=name is specified", async () => {
-			// Ensure at least two users exist with distinct names
 			await route(
 				new Request("http://localhost/signup", {
 					method: "POST",
@@ -109,8 +112,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(data["status"]).toBe("How can I make an acount without postage?");
-			expect(data["id"]).toBe(0);
+			expect(data.status).toBe("How can I make an acount without postage?");
+			expect(data.id).toBe(0);
 		});
 
 		test("rejects request with invalid or missing body fields", async () => {
@@ -123,8 +126,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(data["status"]).toBe("are you an idiot?");
-			expect(data["id"]).toBe(0);
+			expect(data.status).toBe("are you an idiot?");
+			expect(data.id).toBe(0);
 		});
 
 		test("creates a new user successfully", async () => {
@@ -138,11 +141,11 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(String(data["status"])).toContain("spontaniously materialised");
-			expect(typeof data["id"]).toBe("number");
-			expect(Number(data["id"])).toBeGreaterThan(0);
-			expect(typeof data["random"]).toBe("string");
-			expect(String(data["random"]).length).toBeGreaterThan(0);
+			expect(String(data.status)).toContain("spontaniously materialised");
+			expect(typeof data.id).toBe("number");
+			expect(Number(data.id)).toBeGreaterThan(0);
+			expect(typeof data.random).toBe("string");
+			expect(String(data.random).length).toBeGreaterThan(0);
 		});
 
 		test("prevents creating user with duplicate username", async () => {
@@ -163,8 +166,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(String(data["status"])).toContain("convicted of identity theft");
-			expect(data["id"]).toBe(0);
+			expect(String(data.status)).toContain("convicted of identity theft");
+			expect(data.id).toBe(0);
 		});
 	});
 
@@ -175,8 +178,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(data["status"]).toBe("Your killing me.");
-			expect(data["token"]).toBe("none");
+			expect(data.status).toBe("Your killing me.");
+			expect(data.token).toBe("none");
 		});
 
 		test("rejects request with missing parameters", async () => {
@@ -189,8 +192,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(data["status"]).toBe("are you an idiot?");
-			expect(data["token"]).toBe("none");
+			expect(data.status).toBe("are you an idiot?");
+			expect(data.token).toBe("none");
 		});
 
 		test("rejects non-existent user login", async () => {
@@ -203,8 +206,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(data["status"]).toBe("dont try gaslighting reality");
-			expect(data["token"]).toBe("none");
+			expect(data.status).toBe("dont try gaslighting reality");
+			expect(data.token).toBe("none");
 		});
 
 		test("authenticates valid user with correct password and returns token", async () => {
@@ -228,10 +231,10 @@ describe("Routing Suite - route(request)", () => {
 			expect(loginRes.status).toBe(200);
 
 			const loginData = (await loginRes.json()) as Record<string, unknown>;
-			expect(String(loginData["status"])).toContain(
+			expect(String(loginData.status)).toContain(
 				"You remembered your password",
 			);
-			expect(loginData["token"]).toBe(createData["random"]);
+			expect(loginData.token).toBe(createData.random);
 		});
 
 		test("rejects valid user with incorrect password", async () => {
@@ -255,8 +258,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(loginRes.status).toBe(200);
 
 			const loginData = (await loginRes.json()) as Record<string, unknown>;
-			expect(String(loginData["status"])).toContain("forget your password");
-			expect(String(loginData["token"])).toContain("robber");
+			expect(String(loginData.status)).toContain("forget your password");
+			expect(String(loginData.token)).toContain("robber");
 		});
 	});
 
@@ -267,8 +270,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(data["status"]).toBe("I am not a mind reader.");
-			expect(data["id"]).toBe(0);
+			expect(data.status).toBe("I am not a mind reader.");
+			expect(data.id).toBe(0);
 		});
 
 		test("rejects unauthorized request without valid Auth token", async () => {
@@ -284,8 +287,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(data["status"]).toBe("Sorry, ghosts cant own companies");
-			expect(data["id"]).toBe(0);
+			expect(data.status).toBe("Sorry, ghosts cant own companies");
+			expect(data.id).toBe(0);
 		});
 
 		test("rejects request with invalid or non-object body", async () => {
@@ -300,7 +303,7 @@ describe("Routing Suite - route(request)", () => {
 				}),
 			);
 			const userData = (await userRes.json()) as Record<string, unknown>;
-			const token = userData["random"] as string;
+			const token = userData.random as string;
 
 			const req = new Request("http://localhost/found", {
 				method: "POST",
@@ -314,8 +317,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(String(data["status"])).toContain("I need some info");
-			expect(data["id"]).toBe(0);
+			expect(String(data.status)).toContain("I need some info");
+			expect(data.id).toBe(0);
 		});
 
 		test("rejects request with missing or non-string company name", async () => {
@@ -330,7 +333,7 @@ describe("Routing Suite - route(request)", () => {
 				}),
 			);
 			const userData = (await userRes.json()) as Record<string, unknown>;
-			const token = userData["random"] as string;
+			const token = userData.random as string;
 
 			const req = new Request("http://localhost/found", {
 				method: "POST",
@@ -344,8 +347,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(String(data["status"])).toContain("are you thick");
-			expect(data["id"]).toBe(0);
+			expect(String(data.status)).toContain("are you thick");
+			expect(data.id).toBe(0);
 		});
 
 		test("rejects request with whitespace-only company name", async () => {
@@ -360,7 +363,7 @@ describe("Routing Suite - route(request)", () => {
 				}),
 			);
 			const userData = (await userRes.json()) as Record<string, unknown>;
-			const token = userData["random"] as string;
+			const token = userData.random as string;
 
 			const req = new Request("http://localhost/found", {
 				method: "POST",
@@ -374,8 +377,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(String(data["status"])).toContain("null company");
-			expect(data["id"]).toBe(0);
+			expect(String(data.status)).toContain("null company");
+			expect(data.id).toBe(0);
 		});
 
 		test("rejects request with invalid company type", async () => {
@@ -390,7 +393,7 @@ describe("Routing Suite - route(request)", () => {
 				}),
 			);
 			const userData = (await userRes.json()) as Record<string, unknown>;
-			const token = userData["random"] as string;
+			const token = userData.random as string;
 
 			const req = new Request("http://localhost/found", {
 				method: "POST",
@@ -404,8 +407,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(String(data["status"])).toContain("aint got any idea");
-			expect(data["id"]).toBe(0);
+			expect(String(data.status)).toContain("aint got any idea");
+			expect(data.id).toBe(0);
 		});
 
 		test("founds a company successfully and allocates 10k shares to creator", async () => {
@@ -420,8 +423,8 @@ describe("Routing Suite - route(request)", () => {
 				}),
 			);
 			const userData = (await userRes.json()) as Record<string, unknown>;
-			const token = userData["random"] as string;
-			const userId = userData["id"] as number;
+			const token = userData.random as string;
+			const userId = userData.id as number;
 
 			const compName = `Acme_Success_${Date.now()}`;
 			const req = new Request("http://localhost/found", {
@@ -436,11 +439,11 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(200);
 
 			const data = (await res.json()) as Record<string, unknown>;
-			expect(String(data["status"])).toContain("OMG, this actually worked!?");
-			expect(typeof data["id"]).toBe("number");
-			expect(Number(data["id"])).toBeGreaterThan(0);
+			expect(String(data.status)).toContain("OMG, this actually worked!?");
+			expect(typeof data.id).toBe("number");
+			expect(Number(data.id)).toBeGreaterThan(0);
 
-			const companyId = Number(data["id"]);
+			const companyId = Number(data.id);
 			const shares = await getSharesByOwner(userId, true);
 			expect(
 				shares.some((s) => s.owned_id === companyId && s.quantity === 10000),
@@ -459,7 +462,7 @@ describe("Routing Suite - route(request)", () => {
 				}),
 			);
 			const userData = (await userRes.json()) as Record<string, unknown>;
-			const token = userData["random"] as string;
+			const token = userData.random as string;
 
 			const compName = `Acme_Dup_${Date.now()}`;
 			const req1 = new Request("http://localhost/found", {
@@ -485,12 +488,259 @@ describe("Routing Suite - route(request)", () => {
 			expect(res2.status).toBe(200);
 
 			const data2 = (await res2.json()) as Record<string, unknown>;
-			expect(String(data2["status"])).toContain("fraud");
-			expect(data2["id"]).toBe(0);
+			expect(String(data2.status)).toContain("fraud");
+			expect(data2.id).toBe(0);
 		});
 	});
 
-	describe("7. 404 Not Found & Unknown Routes", () => {
+	describe("7. GET /list/companies", () => {
+		test("lists companies and hides private data for unauthenticated callers", async () => {
+			const founderName = `ceo_user_${Date.now()}`;
+			const userRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: founderName, secret: "pass" }),
+				}),
+			);
+			const userData = (await userRes.json()) as Record<string, unknown>;
+			const token = userData.random as string;
+
+			const compName = `Data_Priv_Corp_${Date.now()}`;
+			await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: token },
+					body: JSON.stringify({ name: compName, type: 0 }),
+				}),
+			);
+
+			// Unauthenticated request
+			const publicReq = new Request("http://localhost/list/companies", {
+				method: "GET",
+			});
+			const publicRes = await route(publicReq);
+			expect(publicRes.status).toBe(200);
+
+			const publicList = (await publicRes.json()) as Array<{
+				id: number;
+				name: string;
+				data?: unknown;
+			}>;
+			const targetCompanyPublic = publicList.find((c) => c.name === compName);
+			expect(targetCompanyPublic).toBeDefined();
+			expect(targetCompanyPublic?.data).toBeUndefined();
+
+			// Authenticated as CEO
+			const ceoReq = new Request("http://localhost/list/companies", {
+				method: "GET",
+				headers: { Auth: token },
+			});
+			const ceoRes = await route(ceoReq);
+			expect(ceoRes.status).toBe(200);
+
+			const ceoList = (await ceoRes.json()) as Array<{
+				id: number;
+				name: string;
+				data?: unknown;
+			}>;
+			const targetCompanyCeo = ceoList.find((c) => c.name === compName);
+			expect(targetCompanyCeo).toBeDefined();
+			expect(targetCompanyCeo?.data).toBeDefined();
+		});
+
+		test("filters companies by type and sorting", async () => {
+			const req = new Request(
+				"http://localhost/list/companies?type=0&sortBy=name",
+				{
+					method: "GET",
+				},
+			);
+			const res = await route(req);
+			expect(res.status).toBe(200);
+
+			const list = (await res.json()) as Array<{ type: number; name: string }>;
+			for (const c of list) {
+				expect(c.type).toBe(0);
+			}
+		});
+	});
+
+	describe("8. GET /company", () => {
+		test("retrieves single company by id and name with CEO data protection", async () => {
+			const founderName = `single_ceo_${Date.now()}`;
+			const userRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: founderName, secret: "pass" }),
+				}),
+			);
+			const userData = (await userRes.json()) as Record<string, unknown>;
+			const token = userData.random as string;
+
+			const compName = `Single_Corp_${Date.now()}`;
+			const foundRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: token },
+					body: JSON.stringify({ name: compName, type: 2 }),
+				}),
+			);
+			const foundData = (await foundRes.json()) as Record<string, unknown>;
+			const compId = Number(foundData.id);
+
+			// Public query by name (no data)
+			const pubReq = new Request(
+				`http://localhost/company?name=${encodeURIComponent(compName)}`,
+				{ method: "GET" },
+			);
+			const pubRes = await route(pubReq);
+			expect(pubRes.status).toBe(200);
+			const pubData = (await pubRes.json()) as {
+				status: string;
+				company: { id: number; data?: unknown };
+			};
+			expect(pubData.status).toBe("Success");
+			expect(pubData.company.id).toBe(compId);
+			expect(pubData.company.data).toBeUndefined();
+
+			// CEO query by ID (includes data)
+			const ceoReq = new Request(`http://localhost/company?id=${compId}`, {
+				method: "GET",
+				headers: { Auth: token },
+			});
+			const ceoRes = await route(ceoReq);
+			expect(ceoRes.status).toBe(200);
+			const ceoData = (await ceoRes.json()) as {
+				status: string;
+				company: { id: number; data?: unknown };
+			};
+			expect(ceoData.status).toBe("Success");
+			expect(ceoData.company.data).toBeDefined();
+
+			// Non-existent company
+			const notFoundReq = new Request("http://localhost/company?id=99999999", {
+				method: "GET",
+			});
+			const notFoundRes = await route(notFoundReq);
+			const notFoundData = (await notFoundRes.json()) as { status: string };
+			expect(notFoundData.status).toBe("Company not found");
+		});
+	});
+
+	describe("9. GET /company/shareholders", () => {
+		test("retrieves shareholder distribution for a company", async () => {
+			const founderName = `shareholder_ceo_${Date.now()}`;
+			const userRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: founderName, secret: "pass" }),
+				}),
+			);
+			const userData = (await userRes.json()) as Record<string, unknown>;
+			const token = userData.random as string;
+			const userId = userData.id as number;
+
+			const compName = `CapTable_Corp_${Date.now()}`;
+			const foundRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: token },
+					body: JSON.stringify({ name: compName, type: 0 }),
+				}),
+			);
+			const foundData = (await foundRes.json()) as Record<string, unknown>;
+			const compId = Number(foundData.id);
+
+			const capReq = new Request(
+				`http://localhost/company/shareholders?id=${compId}`,
+				{
+					method: "GET",
+				},
+			);
+			const capRes = await route(capReq);
+			expect(capRes.status).toBe(200);
+
+			const capData = (await capRes.json()) as {
+				status: string;
+				company_id: number;
+				shares_outstanding: number;
+				shareholders: Array<{
+					owner_id: number;
+					quantity: number;
+					percentage: number;
+				}>;
+			};
+			expect(capData.status).toBe("Success");
+			expect(capData.company_id).toBe(compId);
+			expect(capData.shares_outstanding).toBe(10000);
+			expect(capData.shareholders.length).toBeGreaterThan(0);
+			expect(capData.shareholders[0]?.owner_id).toBe(userId);
+			expect(capData.shareholders[0]?.quantity).toBe(10000);
+			expect(capData.shareholders[0]?.percentage).toBe(100);
+		});
+	});
+
+	describe("10. GET /portfolio", () => {
+		test("rejects unauthorized portfolio access", async () => {
+			const req = new Request("http://localhost/portfolio", {
+				method: "GET",
+			});
+			const res = await route(req);
+			expect(res.status).toBe(200);
+
+			const data = (await res.json()) as { status: string };
+			expect(data.status).toBe("Unauthorized");
+		});
+
+		test("returns holdings for authenticated user", async () => {
+			const username = `port_user_${Date.now()}`;
+			const userRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: username, secret: "pass" }),
+				}),
+			);
+			const userData = (await userRes.json()) as Record<string, unknown>;
+			const token = userData.random as string;
+
+			const compName = `Port_Corp_${Date.now()}`;
+			await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: token },
+					body: JSON.stringify({ name: compName, type: 1 }),
+				}),
+			);
+
+			const portReq = new Request("http://localhost/portfolio", {
+				method: "GET",
+				headers: { Auth: token },
+			});
+			const portRes = await route(portReq);
+			expect(portRes.status).toBe(200);
+
+			const portData = (await portRes.json()) as {
+				status: string;
+				portfolio: Array<{
+					company_name: string;
+					quantity: number;
+					ownership_percentage: number;
+				}>;
+			};
+			expect(portData.status).toBe("Success");
+			expect(
+				portData.portfolio.some(
+					(h) => h.company_name === compName && h.quantity === 10000,
+				),
+			).toBe(true);
+		});
+	});
+
+	describe("11. 404 Not Found & Unknown Routes", () => {
 		test("returns 404 for undefined paths", async () => {
 			const req = new Request("http://localhost/unknown_route_path", {
 				method: "GET",
@@ -503,7 +753,7 @@ describe("Routing Suite - route(request)", () => {
 		});
 	});
 
-	describe("8. Request Headers & Search Parameters", () => {
+	describe("12. Request Headers & Search Parameters", () => {
 		test("parses request headers and search params without error", async () => {
 			const req = new Request("http://localhost/version?debug=true", {
 				method: "GET",

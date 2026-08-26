@@ -1,6 +1,10 @@
-import { foundCompany } from "./companies/found.ts";
 import details from "../package.json";
+import { foundCompany } from "./companies/found.ts";
+import { getCompanyInfo } from "./companies/get.ts";
+import { getAllCompaniesInfo } from "./companies/list.ts";
+import { getCompanyShareholders } from "./companies/shareholders.ts";
 import parseAuthHeader from "./header_parse.ts";
+import { getUserPortfolio } from "./shares/portfolio.ts";
 import { createUser } from "./users/create.ts";
 import { getAllUsersPublicInfo } from "./users/list.ts";
 import { login } from "./users/login.ts";
@@ -32,6 +36,18 @@ export default async function route(request: Request): Promise<Response> {
 		case "/list/users":
 			return Response.json(await getAllUsersPublicInfo(params));
 
+		case "/list/companies":
+			return Response.json(await getAllCompaniesInfo(params, auth_token));
+
+		case "/company":
+			return Response.json(await getCompanyInfo(params, auth_token));
+
+		case "/company/shareholders":
+			return Response.json(await getCompanyShareholders(params));
+
+		case "/portfolio":
+			return Response.json(await getUserPortfolio(auth_token));
+
 		case "/signup":
 			if (method !== "POST")
 				return Response.json({
@@ -49,6 +65,7 @@ export default async function route(request: Request): Promise<Response> {
 			if (method !== "POST")
 				return Response.json({ status: "I am not a mind reader.", id: 0 });
 			return Response.json(await foundCompany(postParams, auth_token));
+
 		default:
 			return new Response("You are utterless and hopelessly lost. Get a GPS.", {
 				status: 404,
