@@ -793,5 +793,12 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.headers.get("Access-Control-Allow-Methods")).toContain("POST");
 			expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
 		});
+
+		test("attaches Access-Control-Allow-Origin to GET/POST responses", async () => {
+			const req = new Request("http://localhost/version", { method: "GET" });
+			const res = await route(req);
+			expect(res.status).toBe(200);
+			expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+		});
 	});
 });

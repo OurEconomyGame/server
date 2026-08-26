@@ -11,16 +11,27 @@ import { getAllUsersPublicInfo } from "./users/list.ts";
 import { login } from "./users/login.ts";
 
 /**
- * Handles incoming requests and routes them to the appropriate handler.
+ * Attaches standard CORS headers to any outgoing HTTP response.
+ *
+ * @param response - The HTTP Response object.
+ * @returns The HTTP Response object with CORS headers attached.
+ */
+function withCors(response: Response): Response {
+	response.headers.set("Access-Control-Allow-Origin", "*");
+	response.headers.set(
+		"Access-Control-Allow-Headers",
+		"Content-Type, Auth, Authorization",
+	);
+	return response;
+}
+
+/**
+ * Internal route handler for processing request business logic.
  *
  * @param request - The incoming HTTP Request object.
  * @returns A promise that resolves to the HTTP Response object.
  */
-export default async function route(request: Request): Promise<Response> {
-	if (request.method === "OPTIONS") {
-		return await handleOptions(request);
-	}
-
+async function handleRequest(request: Request): Promise<Response> {
 	const url = new URL(request.url);
 	const method = request.method;
 	const path = url.pathname;
@@ -76,4 +87,19 @@ export default async function route(request: Request): Promise<Response> {
 				status: 404,
 			});
 	}
+}
+
+/**
+ * Handles incoming requests, routes OPTIONS preflights, and wraps responses with CORS headers.
+ *
+ * @param request - The incoming HTTP Request object.
+ * @returns A promise that resolves to the HTTP Response object with CORS headers.
+ */
+export default async function route(request: Request): Promise<Response> {
+	if (request.method === "OPTIONS") {
+		return await handleOptions(request);
+	}
+
+	const response = await handleRequest(request);
+	return withCors(response);
 }
