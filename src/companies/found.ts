@@ -4,6 +4,25 @@ import { insertCompany, insertShare } from "../db/inserts.ts";
 import { getUserBySessionToken } from "../sessions/check.ts";
 
 /**
+ * Type helper that disallows empty strings (""), forcing a compile-time error
+ * until a non-empty status message is provided.
+ */
+type NonEmptyString<T extends string> = "" extends T ? never : T;
+
+/**
+ * Constructs a standardized response object while enforcing non-blank status messages.
+ */
+function respond<S extends string>(
+	status: NonEmptyString<S>,
+	id = 0,
+): { status: S; id: number } {
+	if ((status as string) === "") {
+		throw new Error("Status message cannot be blank");
+	}
+	return { status, id };
+}
+
+/**
  * Founds a new company and grants 100% of initial shares (10k default) to the creator.
  *
  * @param params - The company creation payload (name, type, data).
@@ -17,39 +36,56 @@ export async function foundCompany(
 	const token: string = auth_token ?? "";
 	const user = await getUserBySessionToken(token);
 
+	// 1. Failure: Unauthorized (invalid/missing session token)
 	if (!user) {
-		return { status: "Unauthorized", id: 0 };
+		return respond("", 0);
 	}
 
-	const p = (params && typeof params === "object" ? params : {}) as Record<
-		string,
-		unknown
-	>;
-	const name: string =
+	// 2. Failure: Invalid params root (not an object)
+	if (!params || typeof params !== "object" || Array.isArray(params)) {
+		return respond("", 0);
+	}
+
+	const p = params as Record<string, unknown>;
+
+	// 3. Failure: Missing or invalid company name parameter type
+	if (typeof p.entrepreneurerer !== "string" && typeof p.name !== "string") {
+		return respond("", 0);
+	}
+
+	const rawName =
 		typeof p.entrepreneurerer === "string"
 			? p.entrepreneurerer
-			: typeof p.name === "string"
-				? p.name
-				: "";
-	const type: number =
+			: (p.name as string);
+
+	// 4. Failure: Empty or whitespace-only company name
+	if (rawName.trim() === "") {
+		return respond("", 0);
+	}
+	const name = rawName.trim();
+
+	// 5. Failure: Missing or invalid company classification type parameter
+	if (typeof p.the_hell_you_want !== "number" && typeof p.type !== "number") {
+		return respond("", 0);
+	}
+	const type =
 		typeof p.the_hell_you_want === "number"
 			? p.the_hell_you_want
-			: typeof p.type === "number"
-				? p.type
-				: 0;
-	let data: Record<string, unknown> = {};
+			: (p.type as number);
 
-	if (p.data && typeof p.data === "object" && !Array.isArray(p.data)) {
-		data = p.data as Record<string, unknown>;
+	// 6. Failure: Invalid data object parameter
+	if (
+		p.data !== undefined &&
+		(typeof p.data !== "object" || p.data === null || Array.isArray(p.data))
+	) {
+		return respond("", 0);
 	}
+	const data = (p.data as Record<string, unknown> | undefined) ?? {};
 
-	if (!name || name.trim() === "") {
-		return { status: "Company name cannot be empty", id: 0 };
-	}
-
+	// 7. Failure: Company name already taken
 	const existing = await getCompanyByName(name);
 	if (existing !== null) {
-		return { status: `Company ${name} already exists`, id: 0 };
+		return respond("", 0);
 	}
 
 	const founder_id = user.id;
@@ -62,6 +98,7 @@ export async function foundCompany(
 	const companyId = await getNextCompanyId();
 	const shareId = await getNextShareId();
 
+	// 8. Failure: Database insert for company failed
 	const companySuccess = await insertCompany(
 		companyId,
 		name,
@@ -75,9 +112,10 @@ export async function foundCompany(
 	);
 
 	if (!companySuccess) {
-		return { status: "Failed to found company", id: 0 };
+		return respond("", 0);
 	}
 
+	// 9. Failure: Database insert for initial shares failed
 	const shareSuccess = await insertShare(
 		shareId,
 		founder_id,
@@ -87,13 +125,11 @@ export async function foundCompany(
 	);
 
 	if (!shareSuccess) {
-		return { status: "Failed to allocate founder shares", id: companyId };
+		return respond("", companyId);
 	}
 
-	return {
-		status: `Company ${name} founded successfully`,
-		id: companyId,
-	};
+	// 10. Success: Company founded and shares granted
+	return respond("", companyId);
 }
 
 /**
