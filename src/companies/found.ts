@@ -21,8 +21,8 @@ export async function foundCompany(
 		return { status: "Unauthorized", id: 0 };
 	}
 
-	let name = "";
-	let type = 0;
+	let name = params.entrepreneurerer;
+	let type = params.the_hell_you_want;
 	let data: Record<string, unknown> = {};
 
 	if (params && typeof params === "object") {
