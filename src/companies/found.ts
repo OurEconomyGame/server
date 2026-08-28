@@ -1,27 +1,9 @@
 import { getCompanyByName } from "../db/gets.ts";
-import { query } from "../db/init.ts";
 import { insertCompany, insertShare } from "../db/inserts.ts";
 import { getUserBySessionToken } from "../sessions/check.ts";
-import { companyTypes } from "./types.ts";
-
-/**
- * Type helper that disallows empty strings (""), forcing a compile-time error
- * until a non-empty status message is provided.
- */
-type NonEmptyString<T extends string> = "" extends T ? never : T;
-
-/**
- * Constructs a standardized response object while enforcing non-blank status messages.
- */
-function respond<S extends string>(
-	status: NonEmptyString<S>,
-	id = 0,
-): { status: S; id: number } {
-	if ((status as string) === "") {
-		throw new Error("Status message cannot be blank");
-	}
-	return { status, id };
-}
+import { getNextCompanyId, getNextShareId } from "./ids.ts";
+import { respond } from "./response.ts";
+import { validateFoundingParams } from "./validate.ts";
 
 /**
  * Founds a new company and grants 100% of initial shares (10k default) to the creator.
@@ -42,56 +24,15 @@ export async function foundCompany(
 		return respond("Sorry, ghosts cant own companies", 0);
 	}
 
-	// 2. Failure: Invalid params root (not an object)
-	if (!params || typeof params !== "object" || Array.isArray(params)) {
-		return respond(
-			"I need some info, you cant just say: I will start a buisness, and ask for a building, and then wonder why you got a bakery instead of a office building.",
-			0,
-		);
+	// 2. Failure: Parameter format/field validation
+	const validated = validateFoundingParams(params);
+	if (!validated.ok) {
+		return respond(validated.status, 0);
 	}
 
-	const p = params as Record<string, unknown>;
+	const { name, type, data } = validated;
 
-	// 3. Failure: Missing or invalid company name parameter type
-	if (typeof p.name !== "string") {
-		return respond(
-			"Ok, um, are you thick? You didnt give me the info where I can see it.",
-			0,
-		);
-	}
-
-	const rawName = p.name;
-
-	// 4. Failure: Empty or whitespace-only company name
-	if (rawName.trim() === "") {
-		return respond(
-			"You cant have a null company, though I dont see why not zero width characters but it cant just be whitespace.",
-			0,
-		);
-	}
-	const name = rawName.trim();
-
-	// 5. Failure: Missing or invalid company classification type parameter (must be valid companyTypes enum)
-	const rawType =
-		typeof p.type === "number"
-			? p.type
-			: typeof p.the_hell_you_want === "number"
-				? p.the_hell_you_want
-				: null;
-
-	if (
-		rawType === null ||
-		(rawType !== companyTypes.Production &&
-			rawType !== companyTypes.Holding &&
-			rawType !== companyTypes.WebStore)
-	) {
-		return respond("I still aint got any idea what you want.", 0);
-	}
-	const type: companyTypes = rawType;
-
-	const data: Record<string, unknown> = {};
-
-	// 6. Failure: Company name already taken
+	// 3. Failure: Company name already taken
 	const existing = await getCompanyByName(name);
 	if (existing !== null) {
 		return respond(
@@ -110,7 +51,7 @@ export async function foundCompany(
 	const companyId = await getNextCompanyId();
 	const shareId = await getNextShareId();
 
-	// 7. Failure: Database insert for company failed
+	// 4. Failure: Database insert for company failed
 	const companySuccess = await insertCompany(
 		companyId,
 		name,
@@ -130,7 +71,7 @@ export async function foundCompany(
 		);
 	}
 
-	// 8. Failure: Database insert for initial shares failed
+	// 5. Failure: Database insert for initial shares failed
 	const shareSuccess = await insertShare(
 		shareId,
 		founder_id,
@@ -146,38 +87,8 @@ export async function foundCompany(
 		);
 	}
 
-	// 9. Success: Company founded and shares granted
+	// 6. Success: Company founded and shares granted
 	return respond("OMG, this actually worked!?", companyId);
 }
 
-/**
- * Retrieves the next sequential company ID from the database.
- *
- * @returns The next available numeric ID for a company.
- */
-export async function getNextCompanyId(): Promise<number> {
-	try {
-		const result = await query<{ id: number }>(`?[id] := *company{id}`);
-		if (result.length === 0) return 1;
-		const maxId = Math.max(...result.map((r) => r.id));
-		return Number.isFinite(maxId) ? maxId + 1 : 1;
-	} catch {
-		return 1;
-	}
-}
-
-/**
- * Retrieves the next sequential share ID from the database.
- *
- * @returns The next available numeric ID for a share record.
- */
-export async function getNextShareId(): Promise<number> {
-	try {
-		const result = await query<{ id: number }>(`?[id] := *shares{id}`);
-		if (result.length === 0) return 1;
-		const maxId = Math.max(...result.map((r) => r.id));
-		return Number.isFinite(maxId) ? maxId + 1 : 1;
-	} catch {
-		return 1;
-	}
-}
+export { getNextCompanyId, getNextShareId };
