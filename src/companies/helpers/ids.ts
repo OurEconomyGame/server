@@ -1,4 +1,4 @@
-import { query } from "../db/init.ts";
+import { query } from "../../db/init.ts";
 
 /**
  * Retrieves the next sequential company ID from the database.

@@ -2,8 +2,8 @@ import {
 	type CompanyRecord,
 	getCompanyById,
 	getCompanyByName,
-} from "../db/gets.ts";
-import { getUserBySessionToken } from "../sessions/check.ts";
+} from "../../db/gets.ts";
+import { getUserBySessionToken } from "../../sessions/check.ts";
 import type { CompanyPublicInfo } from "./list.ts";
 
 /**

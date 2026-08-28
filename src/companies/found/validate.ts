@@ -1,4 +1,4 @@
-import { companyTypes } from "./types.ts";
+import { companyTypes } from "../helpers/types.ts";
 
 export type ValidationResult =
 	| {

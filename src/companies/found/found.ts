@@ -1,8 +1,8 @@
-import { getCompanyByName } from "../db/gets.ts";
-import { insertCompany, insertShare } from "../db/inserts.ts";
-import { getUserBySessionToken } from "../sessions/check.ts";
-import { getNextCompanyId, getNextShareId } from "./ids.ts";
-import { respond } from "./response.ts";
+import { getCompanyByName } from "../../db/gets.ts";
+import { insertCompany, insertShare } from "../../db/inserts.ts";
+import { getUserBySessionToken } from "../../sessions/check.ts";
+import { getNextCompanyId, getNextShareId } from "../helpers/ids.ts";
+import { respond } from "../helpers/response.ts";
 import { validateFoundingParams } from "./validate.ts";
 
 /**

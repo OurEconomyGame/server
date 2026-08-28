@@ -1,5 +1,5 @@
-import { getAllCompanies } from "../db/gets.ts";
-import { getUserBySessionToken } from "../sessions/check.ts";
+import { getAllCompanies } from "../../db/gets.ts";
+import { getUserBySessionToken } from "../../sessions/check.ts";
 
 export interface CompanyPublicInfo {
 	id: number;

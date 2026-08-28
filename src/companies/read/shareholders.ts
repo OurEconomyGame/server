@@ -3,7 +3,7 @@ import {
 	getCompanyById,
 	getCompanyByName,
 	getSharesByOwned,
-} from "../db/gets.ts";
+} from "../../db/gets.ts";
 
 export interface ShareholderInfo {
 	share_id: number;

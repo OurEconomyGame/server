@@ -1,8 +1,8 @@
 import details from "../package.json";
-import { foundCompany } from "./companies/found.ts";
-import { getCompanyInfo } from "./companies/get.ts";
-import { getAllCompaniesInfo } from "./companies/list.ts";
-import { getCompanyShareholders } from "./companies/shareholders.ts";
+import { foundCompany } from "./companies/found/found.ts";
+import { getCompanyInfo } from "./companies/read/get.ts";
+import { getAllCompaniesInfo } from "./companies/read/list.ts";
+import { getCompanyShareholders } from "./companies/read/shareholders.ts";
 import { handleDocs } from "./docs.ts";
 import parseAuthHeader from "./header_parse.ts";
 import handleOptions from "./options.ts";
