@@ -3,6 +3,7 @@ import details from "../package.json";
 import { getSharesByOwner } from "../src/db/gets.ts";
 import { initDb } from "../src/db/init.ts";
 import { updateCompanyCash, updateUserCash } from "../src/db/updates.ts";
+import { addCompanyResource } from "../src/market/index.ts";
 import route from "../src/routing.ts";
 
 beforeAll(async () => {
@@ -1088,6 +1089,164 @@ describe("Routing Suite - route(request)", () => {
 			expect(compDetails.company.data.facilities[0]?.recipe.name).toBe(
 				"Geothermal Power Plant",
 			);
+		});
+	});
+
+	describe("16. Market HTTP Endpoints (/market/depth, /market/buy, /market/sell, /market/cancel)", () => {
+		test("GET /market/depth returns orderbook depth for a resource", async () => {
+			const req = new Request("http://localhost/market/depth?resource=1", {
+				method: "GET",
+			});
+			const res = await route(req);
+			expect(res.status).toBe(200);
+			const data = (await res.json()) as {
+				status: string;
+				resource: number;
+				orders: unknown[];
+				offers: unknown[];
+			};
+			expect(data.status).toBe("Success");
+			expect(data.resource).toBe(1);
+			expect(Array.isArray(data.orders)).toBe(true);
+			expect(Array.isArray(data.offers)).toBe(true);
+		});
+
+		test("POST /market/buy and POST /market/sell execute trades with CEO auth and cancel orders", async () => {
+			// Create CEO 1 & Company 1 (Seller)
+			const sUserRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `mkt_seller_${Date.now()}`,
+						secret: "pass",
+					}),
+				}),
+			);
+			const sUserData = (await sUserRes.json()) as Record<string, unknown>;
+			const sToken = sUserData.random as string;
+			const sUserId = sUserData.id as number;
+			await updateUserCash(sUserId, 10000);
+
+			const sCompRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: sToken },
+					body: JSON.stringify({
+						name: `Mkt_Seller_Co_${Date.now()}`,
+						type: 0,
+					}),
+				}),
+			);
+			const sCompData = (await sCompRes.json()) as Record<string, unknown>;
+			const sCompId = Number(sCompData.id);
+			await addCompanyResource(sCompId, 1, 100); // 100 units of Water (resource: 1)
+
+			// Create CEO 2 & Company 2 (Buyer)
+			const bUserRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `mkt_buyer_${Date.now()}`,
+						secret: "pass",
+					}),
+				}),
+			);
+			const bUserData = (await bUserRes.json()) as Record<string, unknown>;
+			const bToken = bUserData.random as string;
+			const bUserId = bUserData.id as number;
+			await updateUserCash(bUserId, 10000);
+
+			const bCompRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: bToken },
+					body: JSON.stringify({
+						name: `Mkt_Buyer_Co_${Date.now()}`,
+						type: 0,
+					}),
+				}),
+			);
+			const bCompData = (await bCompRes.json()) as Record<string, unknown>;
+			const bCompId = Number(bCompData.id);
+			await updateCompanyCash(bCompId, 5000);
+
+			// Non-CEO attempt to sell -> Rejected
+			const badSell = await route(
+				new Request("http://localhost/market/sell", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: bToken }, // wrong CEO
+					body: JSON.stringify({
+						company_id: sCompId,
+						resource: 1,
+						quantity: 50,
+						unitPrice: 2.5,
+					}),
+				}),
+			);
+			const badSellData = (await badSell.json()) as { status: string };
+			expect(badSellData.status).toContain("Only the CEO");
+
+			// Seller places sell offer: 50 units @ $2.50
+			const sellRes = await route(
+				new Request("http://localhost/market/sell", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: sToken },
+					body: JSON.stringify({
+						company_id: sCompId,
+						resource: 1,
+						quantity: 50,
+						unitPrice: 2.5,
+					}),
+				}),
+			);
+			const sellData = (await sellRes.json()) as {
+				status: string;
+				resting_offer_id?: number;
+			};
+			expect(sellData.status).toBe("Success");
+			expect(sellData.resting_offer_id).toBeDefined();
+
+			// Buyer buys 20 units @ max $3.00 -> Fills 20 units @ $2.50
+			const buyRes = await route(
+				new Request("http://localhost/market/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: bToken },
+					body: JSON.stringify({
+						company_id: bCompId,
+						resource: 1,
+						quantity: 20,
+						unitPrice: 3.0,
+					}),
+				}),
+			);
+			const buyData = (await buyRes.json()) as {
+				status: string;
+				filled_quantity: number;
+				remaining_quantity: number;
+			};
+			expect(buyData.status).toBe("Success");
+			expect(buyData.filled_quantity).toBe(20);
+			expect(buyData.remaining_quantity).toBe(0);
+
+			// Seller cancels remaining resting offer (30 units)
+			const cancelRes = await route(
+				new Request("http://localhost/market/cancel", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: sToken },
+					body: JSON.stringify({
+						company_id: sCompId,
+						offer_id: sellData.resting_offer_id,
+					}),
+				}),
+			);
+			const cancelData = (await cancelRes.json()) as {
+				status: string;
+				refunded_resource_qty: number;
+			};
+			expect(cancelData.status).toBe("Success");
+			expect(cancelData.refunded_resource_qty).toBe(30);
 		});
 	});
 });

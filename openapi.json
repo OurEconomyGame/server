@@ -3,7 +3,7 @@
 	"info": {
 		"title": "OurEconomy API",
 		"description": "API documentation for the OurEconomy backend server.",
-		"version": "0.16.0"
+		"version": "0.17.0"
 	},
 	"paths": {
 		"/version": {
@@ -556,6 +556,193 @@
 										"balance": {
 											"type": "number"
 										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/market/depth": {
+			"get": {
+				"summary": "Get orderbook depth (all buy orders and sell offers) for a resource",
+				"parameters": [
+					{
+						"name": "resource",
+						"in": "query",
+						"required": true,
+						"description": "Resource enum ID",
+						"schema": {
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Orderbook depth sorted by price priority",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"resource": { "type": "number" },
+										"orders": {
+											"type": "array",
+											"description": "Buy orders sorted highest to lowest price"
+										},
+										"offers": {
+											"type": "array",
+											"description": "Sell offers sorted lowest to highest price"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/market/buy": {
+			"post": {
+				"summary": "Place and execute a market buy order for a company (CEO only)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of company CEO",
+						"schema": { "type": "string" }
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["company_id", "resource", "quantity", "unitPrice"],
+								"properties": {
+									"company_id": { "type": "integer" },
+									"resource": { "type": "integer" },
+									"quantity": { "type": "number" },
+									"unitPrice": { "type": "number" }
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Buy execution result with filled and resting quantities",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"filled_quantity": { "type": "number" },
+										"remaining_quantity": { "type": "number" },
+										"resting_order_id": { "type": "number" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/market/sell": {
+			"post": {
+				"summary": "Place and execute a market sell offer for a company (CEO only)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of company CEO",
+						"schema": { "type": "string" }
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["company_id", "resource", "quantity", "unitPrice"],
+								"properties": {
+									"company_id": { "type": "integer" },
+									"resource": { "type": "integer" },
+									"quantity": { "type": "number" },
+									"unitPrice": { "type": "number" }
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Sell execution result with filled and resting quantities",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"filled_quantity": { "type": "number" },
+										"remaining_quantity": { "type": "number" },
+										"resting_offer_id": { "type": "number" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/market/cancel": {
+			"post": {
+				"summary": "Cancel an open market order or offer and release escrowed cash or resources (CEO only)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of company CEO",
+						"schema": { "type": "string" }
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["company_id"],
+								"properties": {
+									"company_id": { "type": "integer" },
+									"order_id": { "type": "integer" },
+									"offer_id": { "type": "integer" }
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Cancellation confirmation with refunded amount",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"cancelled": { "type": "string" },
+										"id": { "type": "number" },
+										"refunded_cash": { "type": "number" },
+										"refunded_resource_qty": { "type": "number" }
 									}
 								}
 							}

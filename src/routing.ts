@@ -6,6 +6,12 @@ import { getAllCompaniesInfo } from "./companies/read/list.ts";
 import { getCompanyShareholders } from "./companies/read/shareholders.ts";
 import { handleDocs } from "./docs.ts";
 import parseAuthHeader from "./header_parse.ts";
+import {
+	handleMarketBuy,
+	handleMarketCancel,
+	handleMarketDepth,
+	handleMarketSell,
+} from "./market/index.ts";
 import handleOptions from "./options.ts";
 import { getUserPortfolio } from "./shares/portfolio.ts";
 import { createUser } from "./users/create.ts";
@@ -93,6 +99,30 @@ async function handleRequest(request: Request): Promise<Response> {
 					status: "You cannot purchase facilities with carrier pigeons.",
 				});
 			return Response.json(await buyFacility(postParams, auth_token));
+
+		case "/market/depth":
+			return Response.json(await handleMarketDepth(params));
+
+		case "/market/buy":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required for market orders",
+				});
+			return Response.json(await handleMarketBuy(postParams, auth_token));
+
+		case "/market/sell":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required for market offers",
+				});
+			return Response.json(await handleMarketSell(postParams, auth_token));
+
+		case "/market/cancel":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to cancel market orders",
+				});
+			return Response.json(await handleMarketCancel(postParams, auth_token));
 
 		default:
 			return new Response("You are utterless and hopelessly lost. Get a GPS.", {

@@ -25,6 +25,7 @@ export default async function handleOptions(
 		case "/company":
 		case "/company/shareholders":
 		case "/portfolio":
+		case "/market/depth":
 			headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
 			return new Response(null, { status: 204, headers });
 
@@ -32,6 +33,9 @@ export default async function handleOptions(
 		case "/login":
 		case "/found":
 		case "/facility/buy":
+		case "/market/buy":
+		case "/market/sell":
+		case "/market/cancel":
 			headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
 			return new Response(null, { status: 204, headers });
 
