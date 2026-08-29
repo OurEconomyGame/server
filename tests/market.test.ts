@@ -2,13 +2,14 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { Resources } from "../src/companies/production/resources.ts";
 import { deleteOfferById, deleteOrderById } from "../src/db/deletes.ts";
 import { initDb } from "../src/db/init.ts";
+import { insertOffer, insertOrder } from "../src/db/inserts.ts";
 import {
-	createOffer,
-	createOrder,
 	getAllOffersByCompany,
 	getAllOffersByResource,
 	getAllOrdersByCompany,
 	getAllOrdersByResource,
+	getNextOfferId,
+	getNextOrderId,
 } from "../src/market/index.ts";
 
 beforeAll(async () => {
@@ -18,13 +19,12 @@ beforeAll(async () => {
 describe("Market Orders & Offers Suite", () => {
 	test("getAllOrdersByResource sorts buy orders from highest to lowest price", async () => {
 		const compId = 888;
-		const o1 = await createOrder(compId, Resources.Water, 100, 1.5);
-		const o2 = await createOrder(compId, Resources.Water, 50, 4.0);
-		const o3 = await createOrder(compId, Resources.Water, 200, 2.25);
-
-		expect(o1).not.toBeNull();
-		expect(o2).not.toBeNull();
-		expect(o3).not.toBeNull();
+		const id1 = await getNextOrderId();
+		await insertOrder(id1, compId, Resources.Water, 100, 1.5);
+		const id2 = id1 + 1;
+		await insertOrder(id2, compId, Resources.Water, 50, 4.0);
+		const id3 = id2 + 1;
+		await insertOrder(id3, compId, Resources.Water, 200, 2.25);
 
 		const orders = await getAllOrdersByResource(Resources.Water);
 		expect(orders.length).toBeGreaterThanOrEqual(3);
@@ -38,20 +38,19 @@ describe("Market Orders & Offers Suite", () => {
 			}
 		}
 
-		if (o1) await deleteOrderById(o1.id);
-		if (o2) await deleteOrderById(o2.id);
-		if (o3) await deleteOrderById(o3.id);
+		await deleteOrderById(id1);
+		await deleteOrderById(id2);
+		await deleteOrderById(id3);
 	});
 
 	test("getAllOffersByResource sorts sell offers from lowest to highest price", async () => {
 		const compId = 999;
-		const f1 = await createOffer(compId, Resources.Electricity, 500, 10.0);
-		const f2 = await createOffer(compId, Resources.Electricity, 300, 2.5);
-		const f3 = await createOffer(compId, Resources.Electricity, 1000, 5.75);
-
-		expect(f1).not.toBeNull();
-		expect(f2).not.toBeNull();
-		expect(f3).not.toBeNull();
+		const id1 = await getNextOfferId();
+		await insertOffer(id1, compId, Resources.Electricity, 500, 10.0);
+		const id2 = id1 + 1;
+		await insertOffer(id2, compId, Resources.Electricity, 300, 2.5);
+		const id3 = id2 + 1;
+		await insertOffer(id3, compId, Resources.Electricity, 1000, 5.75);
 
 		const offers = await getAllOffersByResource(Resources.Electricity);
 		expect(offers.length).toBeGreaterThanOrEqual(3);
@@ -65,50 +64,40 @@ describe("Market Orders & Offers Suite", () => {
 			}
 		}
 
-		if (f1) await deleteOfferById(f1.id);
-		if (f2) await deleteOfferById(f2.id);
-		if (f3) await deleteOfferById(f3.id);
+		await deleteOfferById(id1);
+		await deleteOfferById(id2);
+		await deleteOfferById(id3);
 	});
 
 	test("getAllOrdersByCompany and getAllOffersByCompany filter correctly by company ID", async () => {
 		const targetCompanyId = 7771;
 		const otherCompanyId = 7772;
 
-		const order1 = await createOrder(
-			targetCompanyId,
-			Resources.Grain,
-			500,
-			3.0,
-		);
-		const order2 = await createOrder(otherCompanyId, Resources.Grain, 200, 3.5);
-		const offer1 = await createOffer(
-			targetCompanyId,
-			Resources.Cement,
-			100,
-			8.0,
-		);
-		const offer2 = await createOffer(
-			otherCompanyId,
-			Resources.Cement,
-			400,
-			7.5,
-		);
+		const oId1 = await getNextOrderId();
+		await insertOrder(oId1, targetCompanyId, Resources.Grain, 500, 3.0);
+		const oId2 = oId1 + 1;
+		await insertOrder(oId2, otherCompanyId, Resources.Grain, 200, 3.5);
+
+		const fId1 = await getNextOfferId();
+		await insertOffer(fId1, targetCompanyId, Resources.Cement, 100, 8.0);
+		const fId2 = fId1 + 1;
+		await insertOffer(fId2, otherCompanyId, Resources.Cement, 400, 7.5);
 
 		const companyOrders = await getAllOrdersByCompany(targetCompanyId);
-		expect(companyOrders.some((o) => o.id === order1?.id)).toBe(true);
+		expect(companyOrders.some((o) => o.id === oId1)).toBe(true);
 		expect(companyOrders.every((o) => o.company_id === targetCompanyId)).toBe(
 			true,
 		);
 
 		const companyOffers = await getAllOffersByCompany(targetCompanyId);
-		expect(companyOffers.some((f) => f.id === offer1?.id)).toBe(true);
+		expect(companyOffers.some((f) => f.id === fId1)).toBe(true);
 		expect(companyOffers.every((f) => f.company_id === targetCompanyId)).toBe(
 			true,
 		);
 
-		if (order1) await deleteOrderById(order1.id);
-		if (order2) await deleteOrderById(order2.id);
-		if (offer1) await deleteOfferById(offer1.id);
-		if (offer2) await deleteOfferById(offer2.id);
+		await deleteOrderById(oId1);
+		await deleteOrderById(oId2);
+		await deleteOfferById(fId1);
+		await deleteOfferById(fId2);
 	});
 });
