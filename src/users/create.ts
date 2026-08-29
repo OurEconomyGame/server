@@ -45,6 +45,7 @@ export async function createUser(
 		pass_hash,
 		"none",
 		date,
+		0,
 		data,
 		date,
 	);

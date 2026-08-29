@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // 1. Ensure directory exists for RocksDB storage
-const DB_DIR = "./main.db";
+const DB_DIR = process.env.DB_DIR ?? "./main.db";
 
 if (!existsSync(DB_DIR)) {
 	mkdirSync(DB_DIR, { recursive: true });
@@ -91,6 +91,7 @@ export async function initDb(): Promise<void> {
 				pass_hash: String,
 				email: String,
 				last_accessed: Int,
+				cash: Int,
 				data: Json,
 				created_at: Int
 			}
@@ -112,6 +113,7 @@ export async function initDb(): Promise<void> {
 				founder_id: Int,
 				type: Int,
 				last_accessed: Int,
+				cash: Int,
 				created_at: Int,
 				ceo: Int,
 				data: Json,

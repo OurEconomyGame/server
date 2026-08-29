@@ -7,6 +7,7 @@ export interface CompanyPublicInfo {
 	founder_id: number;
 	type: number;
 	last_accessed: number;
+	cash: number;
 	created_at: number;
 	ceo: number;
 	shares_outstanding: number;
@@ -59,6 +60,7 @@ export async function getAllCompaniesInfo(
 			founder_id: c.founder_id,
 			type: c.type,
 			last_accessed: c.last_accessed,
+			cash: c.cash,
 			created_at: c.created_at,
 			ceo: c.ceo,
 			shares_outstanding: c.shares_outstanding,

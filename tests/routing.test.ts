@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import details from "../package.json";
 import { getSharesByOwner } from "../src/db/gets.ts";
 import { initDb } from "../src/db/init.ts";
+import { updateUserCash } from "../src/db/updates.ts";
 import route from "../src/routing.ts";
 
 beforeAll(async () => {
@@ -412,6 +413,36 @@ describe("Routing Suite - route(request)", () => {
 			expect(data.id).toBe(0);
 		});
 
+		test("rejects founding request when user has insufficient cash", async () => {
+			const userRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `founder_broke_${Date.now()}`,
+						secret: "pass",
+					}),
+				}),
+			);
+			const userData = (await userRes.json()) as Record<string, unknown>;
+			const token = userData.random as string;
+
+			const req = new Request("http://localhost/found", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Auth: token,
+				},
+				body: JSON.stringify({ name: `Broke_Corp_${Date.now()}`, type: 0 }),
+			});
+			const res = await route(req);
+			expect(res.status).toBe(200);
+
+			const data = (await res.json()) as Record<string, unknown>;
+			expect(String(data.status)).toContain("cant afford");
+			expect(data.id).toBe(0);
+		});
+
 		test("founds a company successfully and allocates 10k shares to creator", async () => {
 			const userRes = await route(
 				new Request("http://localhost/signup", {
@@ -426,6 +457,8 @@ describe("Routing Suite - route(request)", () => {
 			const userData = (await userRes.json()) as Record<string, unknown>;
 			const token = userData.random as string;
 			const userId = userData.id as number;
+
+			await updateUserCash(userId, 50000);
 
 			const compName = `Acme_Success_${Date.now()}`;
 			const req = new Request("http://localhost/found", {
@@ -464,6 +497,9 @@ describe("Routing Suite - route(request)", () => {
 			);
 			const userData = (await userRes.json()) as Record<string, unknown>;
 			const token = userData.random as string;
+			const userId = userData.id as number;
+
+			await updateUserCash(userId, 50000);
 
 			const compName = `Acme_Dup_${Date.now()}`;
 			const req1 = new Request("http://localhost/found", {
@@ -506,6 +542,9 @@ describe("Routing Suite - route(request)", () => {
 			);
 			const userData = (await userRes.json()) as Record<string, unknown>;
 			const token = userData.random as string;
+			const userId = userData.id as number;
+
+			await updateUserCash(userId, 50000);
 
 			const compName = `Data_Priv_Corp_${Date.now()}`;
 			await route(
@@ -582,6 +621,9 @@ describe("Routing Suite - route(request)", () => {
 			);
 			const userData = (await userRes.json()) as Record<string, unknown>;
 			const token = userData.random as string;
+			const userId = userData.id as number;
+
+			await updateUserCash(userId, 50000);
 
 			const compName = `Single_Corp_${Date.now()}`;
 			const foundRes = await route(
@@ -647,6 +689,8 @@ describe("Routing Suite - route(request)", () => {
 			const token = userData.random as string;
 			const userId = userData.id as number;
 
+			await updateUserCash(userId, 50000);
+
 			const compName = `CapTable_Corp_${Date.now()}`;
 			const foundRes = await route(
 				new Request("http://localhost/found", {
@@ -710,6 +754,9 @@ describe("Routing Suite - route(request)", () => {
 			);
 			const userData = (await userRes.json()) as Record<string, unknown>;
 			const token = userData.random as string;
+			const userId = userData.id as number;
+
+			await updateUserCash(userId, 50000);
 
 			const compName = `Port_Corp_${Date.now()}`;
 			await route(

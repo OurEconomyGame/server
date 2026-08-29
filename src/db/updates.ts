@@ -34,10 +34,10 @@ export async function updateUserById(
 	try {
 		await query(
 			`
-			?[id, name, pass_hash, email, last_accessed, data, created_at] <- [
-				[$id, $name, $pass_hash, $email, $last_accessed, $data, $created_at]
+			?[id, name, pass_hash, email, last_accessed, cash, data, created_at] <- [
+				[$id, $name, $pass_hash, $email, $last_accessed, $cash, $data, $created_at]
 			]
-			:put user { id => name, pass_hash, email, last_accessed, data, created_at }
+			:put user { id => name, pass_hash, email, last_accessed, cash, data, created_at }
 			`,
 			{
 				id: updated.id,
@@ -45,6 +45,7 @@ export async function updateUserById(
 				pass_hash: updated.pass_hash,
 				email: updated.email,
 				last_accessed: updated.last_accessed,
+				cash: updated.cash,
 				data: updated.data,
 				created_at: updated.created_at,
 			},
@@ -54,6 +55,20 @@ export async function updateUserById(
 		console.error(`Failed to update user by ID ${id}:`, error);
 		return null;
 	}
+}
+
+/**
+ * Updates a user's cash balance.
+ *
+ * @param id - The numeric user ID.
+ * @param cash - The new cash balance.
+ * @returns A promise that resolves to the updated UserRecord or null.
+ */
+export async function updateUserCash(
+	id: number,
+	cash: number,
+): Promise<UserRecord | null> {
+	return updateUserById(id, { cash });
 }
 
 /**
@@ -132,10 +147,10 @@ export async function updateCompanyById(
 	try {
 		await query(
 			`
-			?[id, name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding] <- [
-				[$id, $name, $founder_id, $type, $last_accessed, $created_at, $ceo, $data, $shares_outstanding]
+			?[id, name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding] <- [
+				[$id, $name, $founder_id, $type, $last_accessed, $cash, $created_at, $ceo, $data, $shares_outstanding]
 			]
-			:put company { id => name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding }
+			:put company { id => name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding }
 			`,
 			{
 				id: updated.id,
@@ -143,6 +158,7 @@ export async function updateCompanyById(
 				founder_id: updated.founder_id,
 				type: updated.type,
 				last_accessed: updated.last_accessed,
+				cash: updated.cash,
 				created_at: updated.created_at,
 				ceo: updated.ceo,
 				data: updated.data,
@@ -154,6 +170,20 @@ export async function updateCompanyById(
 		console.error(`Failed to update company by ID ${id}:`, error);
 		return null;
 	}
+}
+
+/**
+ * Updates a company's cash treasury balance.
+ *
+ * @param id - The numeric company ID.
+ * @param cash - The new cash balance.
+ * @returns A promise that resolves to the updated CompanyRecord or null.
+ */
+export async function updateCompanyCash(
+	id: number,
+	cash: number,
+): Promise<CompanyRecord | null> {
+	return updateCompanyById(id, { cash });
 }
 
 /**

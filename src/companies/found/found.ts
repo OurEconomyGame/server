@@ -1,9 +1,20 @@
 import { getCompanyByName } from "../../db/gets.ts";
 import { insertCompany, insertShare } from "../../db/inserts.ts";
+import { updateUserCash } from "../../db/updates.ts";
 import { getUserBySessionToken } from "../../sessions/check.ts";
 import { getNextCompanyId, getNextShareId } from "../helpers/ids.ts";
 import { respond } from "../helpers/response.ts";
+import { companyTypes } from "../helpers/types.ts";
 import { validateFoundingParams } from "./validate.ts";
+
+/**
+ * Founding capital costs required from the user's cash balance based on company type.
+ */
+export const COMPANY_FOUNDING_COSTS: Record<companyTypes, number> = {
+	[companyTypes.Production]: 500,
+	[companyTypes.Holding]: 2000,
+	[companyTypes.WebStore]: 750,
+};
 
 /**
  * Founds a new company and grants 100% of initial shares (10k default) to the creator.
@@ -32,7 +43,13 @@ export async function foundCompany(
 
 	const { name, type, data } = validated;
 
-	// 3. Failure: Company name already taken
+	// 3. Failure: Insufficient funds
+	const cost = COMPANY_FOUNDING_COSTS[type] ?? 500;
+	if (user.cash < cost) {
+		return respond("You cant afford to start a company. Get your money up.", 0);
+	}
+
+	// 4. Failure: Company name already taken
 	const existing = await getCompanyByName(name);
 	if (existing !== null) {
 		return respond(
@@ -48,16 +65,20 @@ export async function foundCompany(
 	const created_at = now;
 	const last_accessed = now;
 
+	// Deduct founding cost from user cash balance
+	await updateUserCash(user.id, user.cash - cost);
+
 	const companyId = await getNextCompanyId();
 	const shareId = await getNextShareId();
 
-	// 4. Failure: Database insert for company failed
+	// 5. Failure: Database insert for company failed
 	const companySuccess = await insertCompany(
 		companyId,
 		name,
 		founder_id,
 		type,
 		last_accessed,
+		0, // Company cash initialized to 0
 		created_at,
 		ceo,
 		data,
@@ -65,13 +86,15 @@ export async function foundCompany(
 	);
 
 	if (!companySuccess) {
+		// Refund user on unexpected DB error
+		await updateUserCash(user.id, user.cash);
 		return respond(
 			"The server is broken, the db is broken. YOU ARE BROKEN!",
 			0,
 		);
 	}
 
-	// 5. Failure: Database insert for initial shares failed
+	// 6. Failure: Database insert for initial shares failed
 	const shareSuccess = await insertShare(
 		shareId,
 		founder_id,
@@ -87,7 +110,7 @@ export async function foundCompany(
 		);
 	}
 
-	// 6. Success: Company founded and shares granted
+	// 7. Success: Company founded and shares granted
 	return respond("OMG, this actually worked!?", companyId);
 }
 

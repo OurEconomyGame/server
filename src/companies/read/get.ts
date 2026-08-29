@@ -45,6 +45,7 @@ export async function getCompanyInfo(
 		founder_id: company.founder_id,
 		type: company.type,
 		last_accessed: company.last_accessed,
+		cash: company.cash,
 		created_at: company.created_at,
 		ceo: company.ceo,
 		shares_outstanding: company.shares_outstanding,

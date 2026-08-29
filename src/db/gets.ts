@@ -6,6 +6,7 @@ export interface UserRecord {
 	pass_hash: string;
 	email: string;
 	last_accessed: number;
+	cash: number;
 	data: Record<string, unknown>;
 	created_at: number;
 }
@@ -23,6 +24,7 @@ export interface CompanyRecord {
 	founder_id: number;
 	type: number;
 	last_accessed: number;
+	cash: number;
 	created_at: number;
 	ceo: number;
 	data: Record<string, unknown>;
@@ -79,7 +81,7 @@ export async function getUser(
 	if (typeof identifier === "number") {
 		const result = await query<UserRecord>(
 			`
-			?[id, name, pass_hash, email, last_accessed, data, created_at] := *user{id, name, pass_hash, email, last_accessed, data, created_at}, id == $identifier
+			?[id, name, pass_hash, email, last_accessed, cash, data, created_at] := *user{id, name, pass_hash, email, last_accessed, cash, data, created_at}, id == $identifier
 			`,
 			{ identifier },
 		);
@@ -87,7 +89,7 @@ export async function getUser(
 	} else {
 		const result = await query<UserRecord>(
 			`
-			?[id, name, pass_hash, email, last_accessed, data, created_at] := *user{id, name, pass_hash, email, last_accessed, data, created_at}, name == $identifier
+			?[id, name, pass_hash, email, last_accessed, cash, data, created_at] := *user{id, name, pass_hash, email, last_accessed, cash, data, created_at}, name == $identifier
 			`,
 			{ identifier },
 		);
@@ -117,7 +119,7 @@ export async function getUserByName(name: string): Promise<UserRecord | null> {
 export async function getAllUsers(): Promise<UserRecord[]> {
 	return query<UserRecord>(
 		`
-		?[id, name, pass_hash, email, last_accessed, data, created_at] := *user{id, name, pass_hash, email, last_accessed, data, created_at}
+		?[id, name, pass_hash, email, last_accessed, cash, data, created_at] := *user{id, name, pass_hash, email, last_accessed, cash, data, created_at}
 		`,
 	);
 }
@@ -159,7 +161,7 @@ export async function getCompany(
 	if (typeof identifier === "number") {
 		const result = await query<CompanyRecord>(
 			`
-			?[id, name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding] := *company{id, name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding}, id == $identifier
+			?[id, name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding] := *company{id, name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding}, id == $identifier
 			`,
 			{ identifier },
 		);
@@ -167,7 +169,7 @@ export async function getCompany(
 	} else {
 		const result = await query<CompanyRecord>(
 			`
-			?[id, name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding] := *company{id, name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding}, name == $identifier
+			?[id, name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding] := *company{id, name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding}, name == $identifier
 			`,
 			{ identifier },
 		);
@@ -201,7 +203,7 @@ export async function getCompanyByName(
 export async function getAllCompanies(): Promise<CompanyRecord[]> {
 	return query<CompanyRecord>(
 		`
-		?[id, name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding] := *company{id, name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding}
+		?[id, name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding] := *company{id, name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding}
 		`,
 	);
 }
@@ -223,50 +225,29 @@ export async function getShareById(id: number): Promise<ShareRecord | null> {
 }
 
 /**
- * Retrieves all share records.
+ * Retrieves all share records owned by a specific user or company.
  *
- * @returns A promise that resolves to an array of all ShareRecords.
- */
-export async function getAllShares(): Promise<ShareRecord[]> {
-	return query<ShareRecord>(
-		`
-		?[id, owner_id, owner_user, quantity, owned_id] := *shares{id, owner_id, owner_user, quantity, owned_id}
-		`,
-	);
-}
-
-/**
- * Retrieves share records owned by a specific owner (user or company).
- *
- * @param owner_id - The numeric ID of the owner entity.
- * @param owner_user - Optional boolean to filter by owner type (true for user, false for company).
- * @returns A promise that resolves to an array of matching ShareRecords.
+ * @param owner_id - Numeric owner ID.
+ * @param owner_user - Boolean flag: true if owner is a user, false if company.
+ * @returns A promise resolving to an array of matching ShareRecords.
  */
 export async function getSharesByOwner(
 	owner_id: number,
-	owner_user?: boolean,
+	owner_user: boolean,
 ): Promise<ShareRecord[]> {
-	if (typeof owner_user === "boolean") {
-		return query<ShareRecord>(
-			`
-			?[id, owner_id, owner_user, quantity, owned_id] := *shares{id, owner_id, owner_user, quantity, owned_id}, owner_id == $owner_id, owner_user == $owner_user
-			`,
-			{ owner_id, owner_user },
-		);
-	}
 	return query<ShareRecord>(
 		`
-		?[id, owner_id, owner_user, quantity, owned_id] := *shares{id, owner_id, owner_user, quantity, owned_id}, owner_id == $owner_id
+		?[id, owner_id, owner_user, quantity, owned_id] := *shares{id, owner_id, owner_user, quantity, owned_id}, owner_id == $owner_id, owner_user == $owner_user
 		`,
-		{ owner_id },
+		{ owner_id, owner_user },
 	);
 }
 
 /**
- * Retrieves share records for a specific owned company.
+ * Retrieves all share records issued by a specific company (owned_id).
  *
- * @param owned_id - The numeric ID of the company whose shares are owned.
- * @returns A promise that resolves to an array of matching ShareRecords.
+ * @param owned_id - The numeric company ID whose shares are queried.
+ * @returns A promise resolving to an array of matching ShareRecords.
  */
 export async function getSharesByOwned(
 	owned_id: number,
@@ -276,5 +257,18 @@ export async function getSharesByOwned(
 		?[id, owner_id, owner_user, quantity, owned_id] := *shares{id, owner_id, owner_user, quantity, owned_id}, owned_id == $owned_id
 		`,
 		{ owned_id },
+	);
+}
+
+/**
+ * Retrieves all share records in the database.
+ *
+ * @returns A promise that resolves to an array of all ShareRecords.
+ */
+export async function getAllShares(): Promise<ShareRecord[]> {
+	return query<ShareRecord>(
+		`
+		?[id, owner_id, owner_user, quantity, owned_id] := *shares{id, owner_id, owner_user, quantity, owned_id}
+		`,
 	);
 }

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
 import {
 	deleteCompanyById,
 	deleteSessionById,
@@ -18,7 +18,7 @@ import {
 	getSharesByOwner,
 	getUserById,
 } from "../src/db/gets.ts";
-import { cleanupDbOnExit, initDb } from "../src/db/init.ts";
+import { initDb } from "../src/db/init.ts";
 import {
 	insertCompany,
 	insertSession,
@@ -45,6 +45,7 @@ describe("DB CRUD Operations Suite", () => {
 			"hash123",
 			"test@example.com",
 			1000,
+			5000,
 			{ role: "admin" },
 			1000,
 		);
@@ -53,10 +54,15 @@ describe("DB CRUD Operations Suite", () => {
 		const user = await getUserById(userId);
 		expect(user).not.toBeNull();
 		expect(user?.name).toBe("test_crud_user");
+		expect(user?.cash).toBe(5000);
 
-		const updated = await updateUserById(userId, { name: "updated_crud_user" });
+		const updated = await updateUserById(userId, {
+			name: "updated_crud_user",
+			cash: 6000,
+		});
 		expect(updated).not.toBeNull();
 		expect(updated?.name).toBe("updated_crud_user");
+		expect(updated?.cash).toBe(6000);
 
 		const allUsers = await getAllUsers();
 		expect(
@@ -109,6 +115,7 @@ describe("DB CRUD Operations Suite", () => {
 			501,
 			1,
 			1000,
+			10000,
 			1000,
 			501,
 			{ vault_cash: 50000 },

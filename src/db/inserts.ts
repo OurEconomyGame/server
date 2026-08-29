@@ -8,6 +8,7 @@ import { query } from "./init.ts";
  * @param pass_hash - The hashed password of the user.
  * @param email - The user's email address.
  * @param last_accessed - Unix timestamp of the last access.
+ * @param cash - Initial cash balance of the user.
  * @param data - Extra metadata associated with the user.
  * @param created_at - Unix timestamp of creation.
  * @returns A promise that resolves to true if successful, or false if the insert failed.
@@ -18,16 +19,17 @@ export async function insertUser(
 	pass_hash: string,
 	email: string,
 	last_accessed: number,
+	cash: number,
 	data: Record<string, unknown>,
 	created_at: number,
 ): Promise<boolean> {
 	try {
 		await query(
 			`
-			?[id, name, pass_hash, email, last_accessed, data, created_at] <- [
-				[$id, $name, $pass_hash, $email, $last_accessed, $data, $created_at]
+			?[id, name, pass_hash, email, last_accessed, cash, data, created_at] <- [
+				[$id, $name, $pass_hash, $email, $last_accessed, $cash, $data, $created_at]
 			]
-			:insert user { id => name, pass_hash, email, last_accessed, data, created_at }
+			:insert user { id => name, pass_hash, email, last_accessed, cash, data, created_at }
 			`,
 			{
 				id,
@@ -35,6 +37,7 @@ export async function insertUser(
 				pass_hash,
 				email,
 				last_accessed,
+				cash,
 				data,
 				created_at,
 			},
@@ -91,6 +94,7 @@ export async function insertSession(
  * @param founder_id - User ID of the founder.
  * @param type - Numeric industry/company classification type.
  * @param last_accessed - Unix timestamp of last access.
+ * @param cash - Initial cash balance of the company treasury.
  * @param created_at - Unix timestamp of company creation.
  * @param ceo - User ID of current CEO.
  * @param data - Extra metadata/state associated with the company.
@@ -103,6 +107,7 @@ export async function insertCompany(
 	founder_id: number,
 	type: number,
 	last_accessed: number,
+	cash: number,
 	created_at: number,
 	ceo: number,
 	data: Record<string, unknown>,
@@ -111,10 +116,10 @@ export async function insertCompany(
 	try {
 		await query(
 			`
-			?[id, name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding] <- [
-				[$id, $name, $founder_id, $type, $last_accessed, $created_at, $ceo, $data, $shares_outstanding]
+			?[id, name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding] <- [
+				[$id, $name, $founder_id, $type, $last_accessed, $cash, $created_at, $ceo, $data, $shares_outstanding]
 			]
-			:insert company { id => name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding }
+			:insert company { id => name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding }
 			`,
 			{
 				id,
@@ -122,6 +127,7 @@ export async function insertCompany(
 				founder_id,
 				type,
 				last_accessed,
+				cash,
 				created_at,
 				ceo,
 				data,

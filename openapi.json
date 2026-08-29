@@ -3,7 +3,7 @@
 	"info": {
 		"title": "OurEconomy API",
 		"description": "API documentation for the OurEconomy backend server.",
-		"version": "0.14.0"
+		"version": "0.15.0"
 	},
 	"paths": {
 		"/version": {
@@ -19,7 +19,7 @@
 									"properties": {
 										"version": {
 											"type": "string",
-											"example": "0.14.0"
+											"example": "0.15.0"
 										}
 									}
 								}
@@ -152,6 +152,10 @@
 											"founder_id": { "type": "number" },
 											"type": { "type": "number" },
 											"last_accessed": { "type": "number" },
+											"cash": {
+												"type": "integer",
+												"description": "Company treasury cash balance"
+											},
 											"created_at": { "type": "number" },
 											"ceo": { "type": "number" },
 											"shares_outstanding": { "type": "number" },
@@ -217,6 +221,10 @@
 												"founder_id": { "type": "number" },
 												"type": { "type": "number" },
 												"last_accessed": { "type": "number" },
+												"cash": {
+													"type": "integer",
+													"description": "Company treasury cash balance"
+												},
 												"created_at": { "type": "number" },
 												"ceo": { "type": "number" },
 												"shares_outstanding": { "type": "number" },
@@ -433,7 +441,7 @@
 		},
 		"/found": {
 			"post": {
-				"summary": "Found a new company",
+				"summary": "Found a new company (Costs: Production: $500, WebStore: $750, Holding: $2000)",
 				"parameters": [
 					{
 						"name": "Auth",
@@ -460,7 +468,7 @@
 									"type": {
 										"type": "integer",
 										"enum": [0, 1, 2],
-										"description": "Company type (0: Production, 1: Holding, 2: WebStore)"
+										"description": "Company type (0: Production - $500, 1: Holding - $2000, 2: WebStore - $750)"
 									}
 								}
 							}
