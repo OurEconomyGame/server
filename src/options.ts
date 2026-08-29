@@ -1,46 +1,71 @@
+import { isNapp9Domain, isNapp9Request } from "./users/domain.ts";
+
 /**
  * Handles incoming HTTP OPTIONS requests with CORS preflight headers.
- *
- * @param request - The incoming HTTP Request object.
- * @returns A promise resolving to a Response object with appropriate CORS headers.
+ * Restricts /signup preflights strictly to *.napp9.com domains with status 666 if disallowed.
  */
 export default async function handleOptions(
 	request: Request,
 ): Promise<Response> {
-	const url = new URL(request.url);
-	const path = url.pathname;
-
+	const path = new URL(request.url).pathname;
 	const headers = new Headers({
 		"Access-Control-Allow-Origin": "*",
 		"Access-Control-Allow-Headers": "Content-Type, Auth, Authorization",
 		"Access-Control-Max-Age": "86400",
 	});
 
-	switch (path) {
-		case "/version":
-		case "/docs":
-		case "/openapi.json":
-		case "/list/users":
-		case "/list/companies":
-		case "/company":
-		case "/company/shareholders":
-		case "/portfolio":
-		case "/market/depth":
-			headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-			return new Response(null, { status: 204, headers });
-
-		case "/signup":
-		case "/login":
-		case "/found":
-		case "/facility/buy":
-		case "/market/buy":
-		case "/market/sell":
-		case "/market/cancel":
-			headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-			return new Response(null, { status: 204, headers });
-
-		default:
-			headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-			return new Response(null, { status: 204, headers });
+	if (path === "/signup") {
+		if (!isNapp9Request(request)) {
+			const body = JSON.stringify({
+				code: 666,
+				error: 666,
+				status:
+					"Forbidden: /signup is only available to *.napp9.com domains (Error Code 666)",
+			});
+			return new Response(body, {
+				status: 403,
+				headers: {
+					"Content-Type": "application/json",
+					"Access-Control-Allow-Origin": "https://napp9.com",
+					"X-Error-Code": "666",
+				},
+			});
+		}
+		const origin = request.headers.get("origin");
+		headers.set(
+			"Access-Control-Allow-Origin",
+			origin && isNapp9Domain(origin) ? origin : "https://napp9.com",
+		);
+		headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+		return new Response(null, { status: 204, headers });
 	}
+
+	const getRoutes = [
+		"/version",
+		"/docs",
+		"/openapi.json",
+		"/list/users",
+		"/list/companies",
+		"/company",
+		"/company/shareholders",
+		"/portfolio",
+		"/market/depth",
+	];
+	const postRoutes = [
+		"/login",
+		"/found",
+		"/facility/buy",
+		"/market/buy",
+		"/market/sell",
+		"/market/cancel",
+	];
+
+	if (getRoutes.includes(path)) {
+		headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+	} else if (postRoutes.includes(path)) {
+		headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+	} else {
+		headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+	}
+	return new Response(null, { status: 204, headers });
 }

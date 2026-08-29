@@ -15,6 +15,7 @@ import {
 import handleOptions from "./options.ts";
 import { getUserPortfolio } from "./shares/portfolio.ts";
 import { createUser } from "./users/create.ts";
+import { isNapp9Request } from "./users/domain.ts";
 import { getAllUsersPublicInfo } from "./users/list.ts";
 import { login } from "./users/login.ts";
 
@@ -76,6 +77,20 @@ async function handleRequest(request: Request): Promise<Response> {
 			return Response.json(await getUserPortfolio(auth_token));
 
 		case "/signup":
+			if (!isNapp9Request(request)) {
+				return Response.json(
+					{
+						code: 666,
+						error: 666,
+						status:
+							"Forbidden: /signup is only available to *.napp9.com domains (Error Code 666)",
+					},
+					{
+						status: 403,
+						headers: { "X-Error-Code": "666" },
+					},
+				);
+			}
 			if (method !== "POST")
 				return Response.json({
 					status: "How can I make an acount without postage?",

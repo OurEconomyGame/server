@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import details from "../package.json";
+import { deleteCompanyById, deleteUserById } from "../src/db/deletes.ts";
 import { getSharesByOwner } from "../src/db/gets.ts";
 import { initDb } from "../src/db/init.ts";
 import { updateCompanyCash, updateUserCash } from "../src/db/updates.ts";
@@ -74,14 +75,14 @@ describe("Routing Suite - route(request)", () => {
 
 		test("sorts users by name when sortBy=name is specified", async () => {
 			await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ hi: `Zebra_${Date.now()}`, secret: "pass1" }),
 				}),
 			);
 			await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ hi: `Alpha_${Date.now()}`, secret: "pass2" }),
@@ -108,9 +109,34 @@ describe("Routing Suite - route(request)", () => {
 		});
 	});
 
-	describe("4. POST /create/user", () => {
-		test("rejects non-POST request method", async () => {
-			const req = new Request("http://localhost/signup", { method: "GET" });
+	describe("4. POST /create/user (/signup)", () => {
+		test("rejects signup request from non-napp9.com domains with error code 666", async () => {
+			const req = new Request("http://localhost/signup", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Host: "localhost",
+					Origin: "http://localhost",
+				},
+				body: JSON.stringify({ hi: "some_user", secret: "pass" }),
+			});
+			const res = await route(req);
+			expect(res.status).toBe(403);
+			expect(res.headers.get("X-Error-Code")).toBe("666");
+			const data = (await res.json()) as {
+				status: string;
+				code: number;
+				error: number;
+			};
+			expect(data.code).toBe(666);
+			expect(data.error).toBe(666);
+			expect(data.status).toContain("*.napp9.com");
+		});
+
+		test("rejects non-POST request method on *.napp9.com domain", async () => {
+			const req = new Request("https://app.napp9.com/signup", {
+				method: "GET",
+			});
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
@@ -120,7 +146,7 @@ describe("Routing Suite - route(request)", () => {
 		});
 
 		test("rejects request with invalid or missing body fields", async () => {
-			const req = new Request("http://localhost/signup", {
+			const req = new Request("https://app.napp9.com/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: "incomplete_user" }),
@@ -135,7 +161,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("creates a new user successfully", async () => {
 			const uniqueName = `user_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-			const req = new Request("http://localhost/signup", {
+			const req = new Request("https://app.napp9.com/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: uniqueName, secret: "password123!" }),
@@ -153,14 +179,14 @@ describe("Routing Suite - route(request)", () => {
 
 		test("prevents creating user with duplicate username", async () => {
 			const dupName = `dupuser_${Date.now()}`;
-			const createReq1 = new Request("http://localhost/signup", {
+			const createReq1 = new Request("https://app.napp9.com/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: dupName, secret: "secret1" }),
 			});
 			await route(createReq1);
 
-			const createReq2 = new Request("http://localhost/signup", {
+			const createReq2 = new Request("https://app.napp9.com/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: dupName, secret: "secret2" }),
@@ -217,7 +243,7 @@ describe("Routing Suite - route(request)", () => {
 			const username = `loginuser_${Date.now()}`;
 			const secret = "correct_secret_pass";
 
-			const createReq = new Request("http://localhost/signup", {
+			const createReq = new Request("https://app.napp9.com/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: username, secret: secret }),
@@ -245,7 +271,7 @@ describe("Routing Suite - route(request)", () => {
 			const secret = "correct_pass";
 
 			await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ hi: username, secret: secret }),
@@ -296,7 +322,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("rejects request with invalid or non-object body", async () => {
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -326,7 +352,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("rejects request with missing or non-string company name", async () => {
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -356,7 +382,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("rejects request with whitespace-only company name", async () => {
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -386,7 +412,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("rejects request with invalid company type", async () => {
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -416,7 +442,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("rejects founding request when user has insufficient cash", async () => {
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -446,7 +472,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("founds a company successfully and allocates 10k shares to creator", async () => {
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -487,7 +513,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("prevents creating company with duplicate name", async () => {
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -535,7 +561,7 @@ describe("Routing Suite - route(request)", () => {
 		test("lists companies and hides private data for unauthenticated callers", async () => {
 			const founderName = `ceo_user_${Date.now()}`;
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ hi: founderName, secret: "pass" }),
@@ -614,7 +640,7 @@ describe("Routing Suite - route(request)", () => {
 		test("retrieves single company by id and name with CEO data protection", async () => {
 			const founderName = `single_ceo_${Date.now()}`;
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ hi: founderName, secret: "pass" }),
@@ -680,7 +706,7 @@ describe("Routing Suite - route(request)", () => {
 		test("retrieves shareholder distribution for a company", async () => {
 			const founderName = `shareholder_ceo_${Date.now()}`;
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ hi: founderName, secret: "pass" }),
@@ -747,7 +773,7 @@ describe("Routing Suite - route(request)", () => {
 		test("returns holdings for authenticated user", async () => {
 			const username = `port_user_${Date.now()}`;
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ hi: username, secret: "pass" }),
@@ -846,6 +872,42 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
 		});
 
+		test("handles OPTIONS preflight for /signup: 204 on *.napp9.com, 666 on other domains", async () => {
+			// Valid napp9 domain
+			const reqAllowed = new Request("https://game.napp9.com/signup", {
+				method: "OPTIONS",
+				headers: {
+					Origin: "https://game.napp9.com",
+				},
+			});
+			const resAllowed = await route(reqAllowed);
+			expect(resAllowed.status).toBe(204);
+			expect(resAllowed.headers.get("Access-Control-Allow-Origin")).toBe(
+				"https://game.napp9.com",
+			);
+			expect(resAllowed.headers.get("Access-Control-Allow-Methods")).toContain(
+				"POST",
+			);
+
+			// Disallowed domain
+			const reqDisallowed = new Request("http://localhost/signup", {
+				method: "OPTIONS",
+				headers: {
+					Origin: "http://localhost",
+					Host: "localhost",
+				},
+			});
+			const resDisallowed = await route(reqDisallowed);
+			expect(resDisallowed.status).toBe(403);
+			expect(resDisallowed.headers.get("X-Error-Code")).toBe("666");
+			const disData = (await resDisallowed.json()) as {
+				status: string;
+				code: number;
+			};
+			expect(disData.code).toBe(666);
+			expect(disData.status).toContain("*.napp9.com");
+		});
+
 		test("attaches Access-Control-Allow-Origin to GET/POST responses", async () => {
 			const req = new Request("http://localhost/version", { method: "GET" });
 			const res = await route(req);
@@ -894,7 +956,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("rejects when non-CEO attempts to purchase facility", async () => {
 			const ceoRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ hi: `fac_ceo_${Date.now()}`, secret: "pass" }),
@@ -917,7 +979,7 @@ describe("Routing Suite - route(request)", () => {
 
 			// Other user tries to buy
 			const otherRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ hi: `other_${Date.now()}`, secret: "pass" }),
@@ -938,7 +1000,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("rejects when company is not a Production company", async () => {
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -975,7 +1037,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("rejects when company has insufficient cash", async () => {
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -1011,7 +1073,7 @@ describe("Routing Suite - route(request)", () => {
 
 		test("successfully purchases a facility, deducts company cash, and stores facility in data", async () => {
 			const userRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -1114,7 +1176,7 @@ describe("Routing Suite - route(request)", () => {
 		test("POST /market/buy and POST /market/sell execute trades with CEO auth and cancel orders", async () => {
 			// Create CEO 1 & Company 1 (Seller)
 			const sUserRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -1144,7 +1206,7 @@ describe("Routing Suite - route(request)", () => {
 
 			// Create CEO 2 & Company 2 (Buyer)
 			const bUserRes = await route(
-				new Request("http://localhost/signup", {
+				new Request("https://app.napp9.com/signup", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -1247,6 +1309,11 @@ describe("Routing Suite - route(request)", () => {
 			};
 			expect(cancelData.status).toBe("Success");
 			expect(cancelData.refunded_resource_qty).toBe(30);
+
+			await deleteCompanyById(sCompId);
+			await deleteCompanyById(bCompId);
+			await deleteUserById(sUserId);
+			await deleteUserById(bUserId);
 		});
 	});
 });

@@ -1,6 +1,11 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { Resources } from "../src/companies/production/resources.ts";
-import { deleteCompanyById, deleteUserById } from "../src/db/deletes.ts";
+import {
+	deleteCompanyById,
+	deleteOfferById,
+	deleteOrderById,
+	deleteUserById,
+} from "../src/db/deletes.ts";
 import { getCompanyById, getOfferById, getOrderById } from "../src/db/gets.ts";
 import { initDb } from "../src/db/init.ts";
 import { insertCompany, insertUser } from "../src/db/inserts.ts";
@@ -95,7 +100,7 @@ describe("Market Buy and Sell Execution Engine", () => {
 		const s2Id = s2.restingOfferId ?? 0;
 		const s2Offer = await getOfferById(s2Id);
 		expect(s2Offer?.quantity).toBe(20);
-
+		if (s2Id) await deleteOfferById(s2Id);
 		await deleteCompanyById(buyerCompId);
 		await deleteCompanyById(seller1CompId);
 		await deleteCompanyById(seller2CompId);
@@ -191,6 +196,7 @@ describe("Market Buy and Sell Execution Engine", () => {
 		const lowOrder = await getOrderById(lowOrderId);
 		expect(lowOrder?.quantity).toBe(15);
 
+		if (lowOrderId) await deleteOrderById(lowOrderId);
 		await deleteCompanyById(sellerCompId);
 		await deleteCompanyById(buyerHighId);
 		await deleteCompanyById(buyerLowId);
@@ -250,6 +256,7 @@ describe("Market Buy and Sell Execution Engine", () => {
 		const sOffer = await getOfferById(sRes.restingOfferId ?? 0);
 		expect(sOffer?.quantity).toBeCloseTo(2.25); // 4.75 - 2.5
 
+		if (sRes.restingOfferId) await deleteOfferById(sRes.restingOfferId);
 		await deleteCompanyById(sellerId);
 		await deleteCompanyById(buyerId);
 		await deleteUserById(userId);
