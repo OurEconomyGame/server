@@ -1,6 +1,7 @@
 import { getCompanyById } from "../../db/gets.ts";
 import { updateCompanyById } from "../../db/updates.ts";
 import { getUserBySessionToken } from "../../sessions/check.ts";
+import { isCompanyCeo } from "../auth.ts";
 import { companyTypes } from "../helpers/types.ts";
 import { BASE_RECIPIES } from "./base-recipies.ts";
 import { Facility, type IFacility } from "./facilities.ts";
@@ -92,13 +93,14 @@ export async function buyFacility(
 		return { status: `Unknown facility recipe: ${recipeKey}` };
 	}
 
+	const isCeo = await isCompanyCeo(auth_token, companyId);
+	if (!isCeo) {
+		return { status: "Only the CEO can purchase facilities for this company" };
+	}
+
 	const company = await getCompanyById(companyId);
 	if (!company) {
 		return { status: "Company not found" };
-	}
-
-	if (company.ceo !== user.id) {
-		return { status: "Only the CEO can purchase facilities for this company" };
 	}
 
 	if (company.type !== companyTypes.Production) {

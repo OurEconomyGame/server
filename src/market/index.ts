@@ -1,3 +1,4 @@
+export * from "./auth.ts";
 export * from "./buy.ts";
 export * from "./ids.ts";
 export * from "./match.ts";
