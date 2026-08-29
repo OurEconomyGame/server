@@ -45,4 +45,9 @@ export const prePackedFood = new BaseRecipe(
  */
 export const BASE_RECIPIES: Record<string, BaseRecipe> = {
 	null: nullRecipe,
+	manual_grain_farm: grainRecipe,
+	water_pump: waterPump,
+	geothermal_plant: geothermalPlant,
+	electric_water_pump: electricWaterPump,
+	pre_packaged_food: prePackedFood,
 };

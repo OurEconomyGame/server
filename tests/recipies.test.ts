@@ -91,4 +91,17 @@ describe("BaseRecipe & Resources Production Model", () => {
 		expect(inventory[Resources.Cement]).toBe(7); // 5 - 2 + 4 = 7
 		expect(inventory[Resources.Water]).toBe(2); // 3 - 1 = 2
 	});
+
+	test("BASE_RECIPIES exports all defined production recipes", async () => {
+		const { BASE_RECIPIES } = await import(
+			"../src/companies/production/base-recipies.ts"
+		);
+		expect(BASE_RECIPIES.null).toBeDefined();
+		expect(BASE_RECIPIES.manual_grain_farm).toBeDefined();
+		expect(BASE_RECIPIES.water_pump).toBeDefined();
+		expect(BASE_RECIPIES.geothermal_plant).toBeDefined();
+		expect(BASE_RECIPIES.electric_water_pump).toBeDefined();
+		expect(BASE_RECIPIES.pre_packaged_food).toBeDefined();
+		expect(BASE_RECIPIES.water_pump?.outputQuant).toBe(500);
+	});
 });
