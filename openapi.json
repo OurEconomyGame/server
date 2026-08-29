@@ -153,7 +153,7 @@
 											"type": { "type": "number" },
 											"last_accessed": { "type": "number" },
 											"cash": {
-												"type": "integer",
+												"type": "number",
 												"description": "Company treasury cash balance"
 											},
 											"created_at": { "type": "number" },
@@ -222,7 +222,7 @@
 												"type": { "type": "number" },
 												"last_accessed": { "type": "number" },
 												"cash": {
-													"type": "integer",
+													"type": "number",
 													"description": "Company treasury cash balance"
 												},
 												"created_at": { "type": "number" },

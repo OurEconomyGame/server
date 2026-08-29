@@ -91,7 +91,7 @@ export async function initDb(): Promise<void> {
 				pass_hash: String,
 				email: String,
 				last_accessed: Int,
-				cash: Int,
+				cash: Float,
 				data: Json,
 				created_at: Int
 			}
@@ -113,7 +113,7 @@ export async function initDb(): Promise<void> {
 				founder_id: Int,
 				type: Int,
 				last_accessed: Int,
-				cash: Int,
+				cash: Float,
 				created_at: Int,
 				ceo: Int,
 				data: Json,
@@ -136,7 +136,7 @@ export async function initDb(): Promise<void> {
 				=>
 				company_id: Int,
 				resource: Int,
-				quantity: Int,
+				quantity: Float,
 				unitPrice: Float
 			}
 		`);
@@ -146,7 +146,7 @@ export async function initDb(): Promise<void> {
 				=>
 				company_id: Int,
 				resource: Int,
-				quantity: Int,
+				quantity: Float,
 				unitPrice: Float
 			}
 		`);

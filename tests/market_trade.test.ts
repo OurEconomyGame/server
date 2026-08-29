@@ -196,4 +196,62 @@ describe("Market Buy and Sell Execution Engine", () => {
 		await deleteCompanyById(buyerLowId);
 		await deleteUserById(userId);
 	});
+
+	test("executes fractional purchase and selling with floating point quantities and cash", async () => {
+		const userId = 9003;
+		const sellerId = 7001;
+		const buyerId = 7002;
+
+		await insertUser(userId, "u9003", "p", "e3", 0, 125.5, {}, 0);
+		await insertCompany(
+			sellerId,
+			"Fractional Seller",
+			userId,
+			0,
+			0,
+			10.25,
+			0,
+			userId,
+			{ inventory: { [Resources.Grain]: 10.5 } },
+			100,
+		);
+		await insertCompany(
+			buyerId,
+			"Fractional Buyer",
+			userId,
+			0,
+			0,
+			50.75,
+			0,
+			userId,
+			{ inventory: { [Resources.Grain]: 0.5 } },
+			100,
+		);
+
+		// Seller sells 4.75 units of Grain @ $3.20
+		const sRes = await executeSell(sellerId, Resources.Grain, 4.75, 3.2);
+		expect(sRes.success).toBe(true);
+
+		// Buyer buys 2.5 units of Grain @ max $3.50
+		// Match: 2.5 units @ $3.20 = $8.00
+		const bRes = await executeBuy(buyerId, Resources.Grain, 2.5, 3.5);
+		expect(bRes.success).toBe(true);
+		expect(bRes.filledQuantity).toBe(2.5);
+
+		// Buyer paid $8.00 (initial 50.75 - 8.00 = 42.75)
+		const buyerAfter = await getCompanyById(buyerId);
+		expect(buyerAfter?.cash).toBeCloseTo(42.75);
+		const buyerInv = buyerAfter?.data.inventory as Record<number, number>;
+		expect(buyerInv[Resources.Grain]).toBeCloseTo(3.0); // 0.5 + 2.5
+
+		// Seller received $8.00 (initial 10.25 + 8.00 = 18.25)
+		const sellerAfter = await getCompanyById(sellerId);
+		expect(sellerAfter?.cash).toBeCloseTo(18.25);
+		const sOffer = await getOfferById(sRes.restingOfferId ?? 0);
+		expect(sOffer?.quantity).toBeCloseTo(2.25); // 4.75 - 2.5
+
+		await deleteCompanyById(sellerId);
+		await deleteCompanyById(buyerId);
+		await deleteUserById(userId);
+	});
 });

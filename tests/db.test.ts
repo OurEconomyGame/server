@@ -1,17 +1,23 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import {
 	deleteCompanyById,
+	deleteOfferById,
+	deleteOrderById,
 	deleteSessionById,
 	deleteShareById,
 	deleteUserById,
 } from "../src/db/deletes.ts";
 import {
 	getAllCompanies,
+	getAllOffers,
+	getAllOrders,
 	getAllSessions,
 	getAllShares,
 	getAllUsers,
 	getCompanyById,
 	getCompanyByName,
+	getOfferById,
+	getOrderById,
 	getSessionByToken,
 	getShareById,
 	getSharesByOwned,
@@ -21,12 +27,16 @@ import {
 import { initDb } from "../src/db/init.ts";
 import {
 	insertCompany,
+	insertOffer,
+	insertOrder,
 	insertSession,
 	insertShare,
 	insertUser,
 } from "../src/db/inserts.ts";
 import {
 	updateCompanyById,
+	updateOfferById,
+	updateOrderById,
 	updateSessionById,
 	updateShareById,
 	updateUserById,
@@ -194,5 +204,49 @@ describe("DB CRUD Operations Suite", () => {
 
 		const afterDelete = await getShareById(shareId);
 		expect(afterDelete).toBeNull();
+	});
+
+	test("Order and Offer CRUD lifecycle with floating point quantities and prices", async () => {
+		const orderId = 9101;
+		const offerId = 9201;
+		const companyId = 6500;
+
+		const orderInserted = await insertOrder(orderId, companyId, 1, 15.5, 3.25);
+		expect(orderInserted).toBe(true);
+
+		const order = await getOrderById(orderId);
+		expect(order).not.toBeNull();
+		expect(order?.quantity).toBeCloseTo(15.5);
+		expect(order?.unitPrice).toBeCloseTo(3.25);
+
+		const orderUpdated = await updateOrderById(orderId, { quantity: 8.25 });
+		expect(orderUpdated).not.toBeNull();
+		expect(orderUpdated?.quantity).toBeCloseTo(8.25);
+
+		const allOrders = await getAllOrders();
+		expect(allOrders.some((o) => o.id === orderId)).toBe(true);
+
+		const orderDeleted = await deleteOrderById(orderId);
+		expect(orderDeleted).toBe(true);
+		expect(await getOrderById(orderId)).toBeNull();
+
+		const offerInserted = await insertOffer(offerId, companyId, 2, 20.75, 4.5);
+		expect(offerInserted).toBe(true);
+
+		const offer = await getOfferById(offerId);
+		expect(offer).not.toBeNull();
+		expect(offer?.quantity).toBeCloseTo(20.75);
+		expect(offer?.unitPrice).toBeCloseTo(4.5);
+
+		const offerUpdated = await updateOfferById(offerId, { unitPrice: 4.25 });
+		expect(offerUpdated).not.toBeNull();
+		expect(offerUpdated?.unitPrice).toBeCloseTo(4.25);
+
+		const allOffers = await getAllOffers();
+		expect(allOffers.some((f) => f.id === offerId)).toBe(true);
+
+		const offerDeleted = await deleteOfferById(offerId);
+		expect(offerDeleted).toBe(true);
+		expect(await getOfferById(offerId)).toBeNull();
 	});
 });
