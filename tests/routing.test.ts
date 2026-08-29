@@ -543,13 +543,14 @@ describe("Routing Suite - route(request)", () => {
 			const ceoList = (await ceoRes.json()) as Array<{
 				id: number;
 				name: string;
-				data?: { inventory?: Record<number, number> };
+				data?: { inventory?: Record<number, number>; facilities?: unknown[] };
 			}>;
 			const targetCompanyCeo = ceoList.find((c) => c.name === compName);
 			expect(targetCompanyCeo).toBeDefined();
 			expect(targetCompanyCeo?.data).toBeDefined();
 			expect(targetCompanyCeo?.data?.inventory).toBeDefined();
 			expect(targetCompanyCeo?.data?.inventory?.[0]).toBe(0);
+			expect(targetCompanyCeo?.data?.facilities).toEqual([]);
 		});
 
 		test("filters companies by type and sorting", async () => {

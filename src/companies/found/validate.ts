@@ -70,6 +70,7 @@ export function validateFoundingParams(params: unknown): ValidationResult {
 	const type: companyTypes = rawType;
 	const data: Record<string, unknown> = {
 		inventory: createEmptyInventory(),
+		facilities: [],
 	};
 
 	return {
