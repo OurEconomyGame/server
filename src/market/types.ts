@@ -19,3 +19,19 @@ export interface OfferRecord {
 	quantity: number;
 	unitPrice: number;
 }
+
+export interface BuyResult {
+	success: boolean;
+	error?: string | undefined;
+	filledQuantity: number;
+	remainingQuantity: number;
+	restingOrderId?: number | undefined;
+}
+
+export interface SellResult {
+	success: boolean;
+	error?: string | undefined;
+	filledQuantity: number;
+	remainingQuantity: number;
+	restingOfferId?: number | undefined;
+}
