@@ -1,5 +1,6 @@
 import details from "../package.json";
 import { foundCompany } from "./companies/found/found.ts";
+import { buyFacility } from "./companies/production/buy.ts";
 import { getCompanyInfo } from "./companies/read/get.ts";
 import { getAllCompaniesInfo } from "./companies/read/list.ts";
 import { getCompanyShareholders } from "./companies/read/shareholders.ts";
@@ -85,6 +86,13 @@ async function handleRequest(request: Request): Promise<Response> {
 			if (method !== "POST")
 				return Response.json({ status: "I am not a mind reader.", id: 0 });
 			return Response.json(await foundCompany(postParams, auth_token));
+
+		case "/facility/buy":
+			if (method !== "POST")
+				return Response.json({
+					status: "You cannot purchase facilities with carrier pigeons.",
+				});
+			return Response.json(await buyFacility(postParams, auth_token));
 
 		default:
 			return new Response("You are utterless and hopelessly lost. Get a GPS.", {

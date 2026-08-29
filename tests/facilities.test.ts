@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { waterPump } from "../src/companies/production/base-recipies.ts";
+import {
+	electricWaterPump,
+	geothermalPlant,
+	grainRecipe,
+	prePackedFood,
+	waterPump,
+} from "../src/companies/production/base-recipies.ts";
+import { calculateFacilityCost } from "../src/companies/production/buy.ts";
 import { Facility } from "../src/companies/production/facilities.ts";
 import { BaseRecipe } from "../src/companies/production/recipies.ts";
 import { Resources } from "../src/companies/production/resources.ts";
@@ -93,5 +100,21 @@ describe("Production Facility Model", () => {
 		expect(deserialized.recipe).toBeInstanceOf(BaseRecipe);
 		expect(deserialized.recipe.name).toBe("Power Generator");
 		expect(deserialized.recipe.outputQuant).toBe(300);
+	});
+
+	describe("calculateFacilityCost", () => {
+		test("calculates $200 for facility with no inputs", () => {
+			expect(calculateFacilityCost(waterPump)).toBe(200);
+		});
+
+		test("calculates $500 for facility with non-electric inputs", () => {
+			expect(calculateFacilityCost(geothermalPlant)).toBe(500);
+			expect(calculateFacilityCost(grainRecipe)).toBe(500);
+		});
+
+		test("calculates $2000 for facility taking electricity as an input", () => {
+			expect(calculateFacilityCost(electricWaterPump)).toBe(2000);
+			expect(calculateFacilityCost(prePackedFood)).toBe(2000);
+		});
 	});
 });

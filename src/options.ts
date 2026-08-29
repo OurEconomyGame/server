@@ -31,6 +31,7 @@ export default async function handleOptions(
 		case "/signup":
 		case "/login":
 		case "/found":
+		case "/facility/buy":
 			headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
 			return new Response(null, { status: 204, headers });
 

@@ -3,7 +3,7 @@
 	"info": {
 		"title": "OurEconomy API",
 		"description": "API documentation for the OurEconomy backend server.",
-		"version": "0.15.0"
+		"version": "0.16.0"
 	},
 	"paths": {
 		"/version": {
@@ -487,6 +487,73 @@
 											"type": "string"
 										},
 										"id": {
+											"type": "number"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/facility/buy": {
+			"post": {
+				"summary": "Purchase a facility for a production company (Costs: $200 no inputs, $500 with inputs, $2000 with electricity input)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of company CEO",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["company_id", "recipe"],
+								"properties": {
+									"company_id": {
+										"type": "integer",
+										"description": "ID of the Production company"
+									},
+									"recipe": {
+										"type": "string",
+										"description": "Recipe key identifier (e.g. 'water_pump', 'geothermal_plant')"
+									},
+									"name": {
+										"type": "string",
+										"description": "Optional custom name for the facility"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Facility purchase response with status, facility ID, cost, and remaining company balance",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string"
+										},
+										"facility_id": {
+											"type": "string"
+										},
+										"cost": {
+											"type": "number"
+										},
+										"balance": {
 											"type": "number"
 										}
 									}

@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import details from "../package.json";
 import { getSharesByOwner } from "../src/db/gets.ts";
 import { initDb } from "../src/db/init.ts";
-import { updateUserCash } from "../src/db/updates.ts";
+import { updateCompanyCash, updateUserCash } from "../src/db/updates.ts";
 import route from "../src/routing.ts";
 
 beforeAll(async () => {
@@ -875,6 +875,219 @@ describe("Routing Suite - route(request)", () => {
 			expect(res.status).toBe(403);
 			const text = await res.text();
 			expect(text).toContain("Forbidden");
+		});
+	});
+
+	describe("15. POST /facility/buy", () => {
+		test("rejects unauthenticated requests", async () => {
+			const req = new Request("http://localhost/facility/buy", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ company_id: 1, recipe: "water_pump" }),
+			});
+			const res = await route(req);
+			expect(res.status).toBe(200);
+			const data = (await res.json()) as { status: string };
+			expect(data.status).toContain("ghosts");
+		});
+
+		test("rejects when non-CEO attempts to purchase facility", async () => {
+			const ceoRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `fac_ceo_${Date.now()}`, secret: "pass" }),
+				}),
+			);
+			const ceoData = (await ceoRes.json()) as Record<string, unknown>;
+			const ceoToken = ceoData.random as string;
+			const ceoId = ceoData.id as number;
+			await updateUserCash(ceoId, 10000);
+
+			const foundRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ name: `Fac_Corp_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const foundData = (await foundRes.json()) as Record<string, unknown>;
+			const compId = Number(foundData.id);
+
+			// Other user tries to buy
+			const otherRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `other_${Date.now()}`, secret: "pass" }),
+				}),
+			);
+			const otherData = (await otherRes.json()) as Record<string, unknown>;
+			const otherToken = otherData.random as string;
+
+			const buyReq = new Request("http://localhost/facility/buy", {
+				method: "POST",
+				headers: { "Content-Type": "application/json", Auth: otherToken },
+				body: JSON.stringify({ company_id: compId, recipe: "water_pump" }),
+			});
+			const buyRes = await route(buyReq);
+			const buyData = (await buyRes.json()) as { status: string };
+			expect(buyData.status).toContain("Only the CEO");
+		});
+
+		test("rejects when company is not a Production company", async () => {
+			const userRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `store_ceo_${Date.now()}`,
+						secret: "pass",
+					}),
+				}),
+			);
+			const userData = (await userRes.json()) as Record<string, unknown>;
+			const token = userData.random as string;
+			const userId = userData.id as number;
+			await updateUserCash(userId, 10000);
+
+			const foundRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: token },
+					body: JSON.stringify({ name: `WebStore_${Date.now()}`, type: 2 }),
+				}),
+			);
+			const foundData = (await foundRes.json()) as Record<string, unknown>;
+			const compId = Number(foundData.id);
+			await updateCompanyCash(compId, 5000);
+
+			const buyReq = new Request("http://localhost/facility/buy", {
+				method: "POST",
+				headers: { "Content-Type": "application/json", Auth: token },
+				body: JSON.stringify({ company_id: compId, recipe: "water_pump" }),
+			});
+			const buyRes = await route(buyReq);
+			const buyData = (await buyRes.json()) as { status: string };
+			expect(buyData.status).toContain("Only Production companies");
+		});
+
+		test("rejects when company has insufficient cash", async () => {
+			const userRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `broke_comp_ceo_${Date.now()}`,
+						secret: "pass",
+					}),
+				}),
+			);
+			const userData = (await userRes.json()) as Record<string, unknown>;
+			const token = userData.random as string;
+			const userId = userData.id as number;
+			await updateUserCash(userId, 10000);
+
+			const foundRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: token },
+					body: JSON.stringify({ name: `Broke_Prod_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const foundData = (await foundRes.json()) as Record<string, unknown>;
+			const compId = Number(foundData.id);
+			// Company starts with $0 cash, water_pump costs $200
+			const buyReq = new Request("http://localhost/facility/buy", {
+				method: "POST",
+				headers: { "Content-Type": "application/json", Auth: token },
+				body: JSON.stringify({ company_id: compId, recipe: "water_pump" }),
+			});
+			const buyRes = await route(buyReq);
+			const buyData = (await buyRes.json()) as { status: string };
+			expect(buyData.status).toContain("Insufficient company funds");
+		});
+
+		test("successfully purchases a facility, deducts company cash, and stores facility in data", async () => {
+			const userRes = await route(
+				new Request("http://localhost/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `rich_prod_ceo_${Date.now()}`,
+						secret: "pass",
+					}),
+				}),
+			);
+			const userData = (await userRes.json()) as Record<string, unknown>;
+			const token = userData.random as string;
+			const userId = userData.id as number;
+			await updateUserCash(userId, 10000);
+
+			const compName = `Rich_Prod_${Date.now()}`;
+			const foundRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: token },
+					body: JSON.stringify({ name: compName, type: 0 }),
+				}),
+			);
+			const foundData = (await foundRes.json()) as Record<string, unknown>;
+			const compId = Number(foundData.id);
+
+			// Fund company treasury with $5000
+			await updateCompanyCash(compId, 5000);
+
+			// Buy geothermal_plant (cost $500)
+			const buyReq = new Request("http://localhost/facility/buy", {
+				method: "POST",
+				headers: { "Content-Type": "application/json", Auth: token },
+				body: JSON.stringify({
+					company_id: compId,
+					recipe: "geothermal_plant",
+					name: "Primary Thermal Unit",
+				}),
+			});
+			const buyRes = await route(buyReq);
+			expect(buyRes.status).toBe(200);
+			const buyData = (await buyRes.json()) as {
+				status: string;
+				facility_id: string;
+				cost: number;
+				balance: number;
+			};
+			expect(buyData.status).toBe("Success");
+			expect(buyData.cost).toBe(500);
+			expect(buyData.balance).toBe(4500);
+			expect(buyData.facility_id).toBeDefined();
+
+			// CEO checks company profile
+			const compReq = new Request(`http://localhost/company?id=${compId}`, {
+				method: "GET",
+				headers: { Auth: token },
+			});
+			const compRes = await route(compReq);
+			const compDetails = (await compRes.json()) as {
+				status: string;
+				company: {
+					cash: number;
+					data: {
+						facilities: Array<{
+							id: string;
+							name: string;
+							recipe: { name: string; outputQuant: number };
+						}>;
+					};
+				};
+			};
+			expect(compDetails.company.cash).toBe(4500);
+			expect(compDetails.company.data.facilities.length).toBe(1);
+			expect(compDetails.company.data.facilities[0]?.name).toBe(
+				"Primary Thermal Unit",
+			);
+			expect(compDetails.company.data.facilities[0]?.recipe.name).toBe(
+				"Geothermal Power Plant",
+			);
 		});
 	});
 });
