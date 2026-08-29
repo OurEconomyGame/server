@@ -22,7 +22,7 @@ export function cleanupDbOnExit(): void {
 	if (process.env.DEBUG === "true" && existsSync(DB_DIR)) {
 		try {
 			db.close();
-		} catch { }
+		} catch {}
 		try {
 			rmSync(DB_DIR, { recursive: true, force: true });
 			console.log("[DB] DEBUG=true: Database file deleted on process exit.");
@@ -132,18 +132,20 @@ export async function initDb(): Promise<void> {
 		`);
 		await db.run(`
 			:create order {
-				:id Int
+				id: Int
 				=>
 				company_id: Int,
+				resource: Int,
 				quantity: Int,
 				unitPrice: Float
 			}
 		`);
 		await db.run(`
 			:create offer {
-				:id Int
+				id: Int
 				=>
 				company_id: Int,
+				resource: Int,
 				quantity: Int,
 				unitPrice: Float
 			}
