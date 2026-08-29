@@ -9,7 +9,7 @@ import {
 	getAllOffersByResource,
 	getAllOrdersByCompany,
 	getAllOrdersByResource,
-} from "../src/market/orders.ts";
+} from "../src/market/index.ts";
 
 beforeAll(async () => {
 	await initDb();
