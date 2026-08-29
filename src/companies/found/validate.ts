@@ -1,3 +1,4 @@
+import { createEmptyInventory } from "../../inventory/inventory.ts";
 import { companyTypes } from "../helpers/types.ts";
 
 export type ValidationResult =
@@ -67,7 +68,9 @@ export function validateFoundingParams(params: unknown): ValidationResult {
 	}
 
 	const type: companyTypes = rawType;
-	const data: Record<string, unknown> = {};
+	const data: Record<string, unknown> = {
+		inventory: createEmptyInventory(),
+	};
 
 	return {
 		ok: true,

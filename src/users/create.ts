@@ -1,6 +1,7 @@
 import { getUserByName } from "../db/gets.ts";
 import { query } from "../db/init.ts";
 import { insertUser } from "../db/inserts.ts";
+import { createEmptyInventory } from "../inventory/inventory.ts";
 import { createSession } from "../sessions/create.ts";
 
 /**
@@ -35,13 +36,16 @@ export async function createUser(
 	const pass_hash = await Bun.password.hash(password);
 	const date = Math.floor(Date.now() / 1000);
 	const id = await getNextUserId();
+	const data = {
+		inventory: createEmptyInventory(),
+	};
 	const success = await insertUser(
 		id,
 		username,
 		pass_hash,
 		"none",
 		date,
-		{},
+		data,
 		date,
 	);
 	let token = "";
