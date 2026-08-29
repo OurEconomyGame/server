@@ -180,3 +180,83 @@ export async function insertShare(
 		return false;
 	}
 }
+
+/**
+ * Inserts a new buy order record into the database.
+ *
+ * @param id - Unique order ID.
+ * @param company_id - Company ID placing the order.
+ * @param resource - Resource enum identifier.
+ * @param quantity - Units of resource to buy.
+ * @param unitPrice - Price offered per unit.
+ * @returns A promise resolving to true on success, false on failure.
+ */
+export async function insertOrder(
+	id: number,
+	company_id: number,
+	resource: number,
+	quantity: number,
+	unitPrice: number,
+): Promise<boolean> {
+	try {
+		await query(
+			`
+			?[id, company_id, resource, quantity, unitPrice] <- [
+				[$id, $company_id, $resource, $quantity, $unitPrice]
+			]
+			:insert order { id => company_id, resource, quantity, unitPrice }
+			`,
+			{
+				id,
+				company_id,
+				resource,
+				quantity,
+				unitPrice,
+			},
+		);
+		return true;
+	} catch (error: unknown) {
+		console.error("Failed to insert order:", error);
+		return false;
+	}
+}
+
+/**
+ * Inserts a new sell offer record into the database.
+ *
+ * @param id - Unique offer ID.
+ * @param company_id - Company ID placing the offer.
+ * @param resource - Resource enum identifier.
+ * @param quantity - Units of resource to sell.
+ * @param unitPrice - Asking price per unit.
+ * @returns A promise resolving to true on success, false on failure.
+ */
+export async function insertOffer(
+	id: number,
+	company_id: number,
+	resource: number,
+	quantity: number,
+	unitPrice: number,
+): Promise<boolean> {
+	try {
+		await query(
+			`
+			?[id, company_id, resource, quantity, unitPrice] <- [
+				[$id, $company_id, $resource, $quantity, $unitPrice]
+			]
+			:insert offer { id => company_id, resource, quantity, unitPrice }
+			`,
+			{
+				id,
+				company_id,
+				resource,
+				quantity,
+				unitPrice,
+			},
+		);
+		return true;
+	} catch (error: unknown) {
+		console.error("Failed to insert offer:", error);
+		return false;
+	}
+}

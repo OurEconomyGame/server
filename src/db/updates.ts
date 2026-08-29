@@ -1,8 +1,12 @@
 import {
 	type CompanyRecord,
 	getCompanyById,
+	getOfferById,
+	getOrderById,
 	getShareById,
 	getUserById,
+	type OfferRecord,
+	type OrderRecord,
 	type SessionRecord,
 	type ShareRecord,
 	type UserRecord,
@@ -227,6 +231,96 @@ export async function updateShareById(
 		return updated;
 	} catch (error: unknown) {
 		console.error(`Failed to update share by ID ${id}:`, error);
+		return null;
+	}
+}
+
+/**
+ * Updates an order record by order ID.
+ *
+ * @param id - The numeric order ID to update.
+ * @param updates - Partial object containing updated fields.
+ * @returns A promise that resolves to the updated OrderRecord, or null if order not found.
+ */
+export async function updateOrderById(
+	id: number,
+	updates: Partial<Omit<OrderRecord, "id">>,
+): Promise<OrderRecord | null> {
+	const existing = await getOrderById(id);
+	if (!existing) {
+		return null;
+	}
+
+	const updated: OrderRecord = {
+		...existing,
+		...updates,
+		id,
+	};
+
+	try {
+		await query(
+			`
+			?[id, company_id, resource, quantity, unitPrice] <- [
+				[$id, $company_id, $resource, $quantity, $unitPrice]
+			]
+			:put order { id => company_id, resource, quantity, unitPrice }
+			`,
+			{
+				id: updated.id,
+				company_id: updated.company_id,
+				resource: updated.resource,
+				quantity: updated.quantity,
+				unitPrice: updated.unitPrice,
+			},
+		);
+		return updated;
+	} catch (error: unknown) {
+		console.error(`Failed to update order by ID ${id}:`, error);
+		return null;
+	}
+}
+
+/**
+ * Updates an offer record by offer ID.
+ *
+ * @param id - The numeric offer ID to update.
+ * @param updates - Partial object containing updated fields.
+ * @returns A promise that resolves to the updated OfferRecord, or null if offer not found.
+ */
+export async function updateOfferById(
+	id: number,
+	updates: Partial<Omit<OfferRecord, "id">>,
+): Promise<OfferRecord | null> {
+	const existing = await getOfferById(id);
+	if (!existing) {
+		return null;
+	}
+
+	const updated: OfferRecord = {
+		...existing,
+		...updates,
+		id,
+	};
+
+	try {
+		await query(
+			`
+			?[id, company_id, resource, quantity, unitPrice] <- [
+				[$id, $company_id, $resource, $quantity, $unitPrice]
+			]
+			:put offer { id => company_id, resource, quantity, unitPrice }
+			`,
+			{
+				id: updated.id,
+				company_id: updated.company_id,
+				resource: updated.resource,
+				quantity: updated.quantity,
+				unitPrice: updated.unitPrice,
+			},
+		);
+		return updated;
+	} catch (error: unknown) {
+		console.error(`Failed to update offer by ID ${id}:`, error);
 		return null;
 	}
 }

@@ -39,6 +39,22 @@ export interface ShareRecord {
 	owned_id: number;
 }
 
+export interface OrderRecord {
+	id: number;
+	company_id: number;
+	resource: number;
+	quantity: number;
+	unitPrice: number;
+}
+
+export interface OfferRecord {
+	id: number;
+	company_id: number;
+	resource: number;
+	quantity: number;
+	unitPrice: number;
+}
+
 /**
  * Retrieves a session record by token.
  *
@@ -270,5 +286,133 @@ export async function getAllShares(): Promise<ShareRecord[]> {
 		`
 		?[id, owner_id, owner_user, quantity, owned_id] := *shares{id, owner_id, owner_user, quantity, owned_id}
 		`,
+	);
+}
+
+/**
+ * Retrieves an order record by order ID.
+ *
+ * @param id - The numeric order ID.
+ * @returns A promise that resolves to the OrderRecord or null if not found.
+ */
+export async function getOrderById(id: number): Promise<OrderRecord | null> {
+	const result = await query<OrderRecord>(
+		`
+		?[id, company_id, resource, quantity, unitPrice] := *order{id, company_id, resource, quantity, unitPrice}, id == $id
+		`,
+		{ id },
+	);
+	return result.length > 0 && result[0] ? result[0] : null;
+}
+
+/**
+ * Retrieves an offer record by offer ID.
+ *
+ * @param id - The numeric offer ID.
+ * @returns A promise that resolves to the OfferRecord or null if not found.
+ */
+export async function getOfferById(id: number): Promise<OfferRecord | null> {
+	const result = await query<OfferRecord>(
+		`
+		?[id, company_id, resource, quantity, unitPrice] := *offer{id, company_id, resource, quantity, unitPrice}, id == $id
+		`,
+		{ id },
+	);
+	return result.length > 0 && result[0] ? result[0] : null;
+}
+
+/**
+ * Retrieves all order records in the database.
+ *
+ * @returns A promise that resolves to an array of all OrderRecords.
+ */
+export async function getAllOrders(): Promise<OrderRecord[]> {
+	return query<OrderRecord>(
+		`
+		?[id, company_id, resource, quantity, unitPrice] := *order{id, company_id, resource, quantity, unitPrice}
+		`,
+	);
+}
+
+/**
+ * Retrieves all offer records in the database.
+ *
+ * @returns A promise that resolves to an array of all OfferRecords.
+ */
+export async function getAllOffers(): Promise<OfferRecord[]> {
+	return query<OfferRecord>(
+		`
+		?[id, company_id, resource, quantity, unitPrice] := *offer{id, company_id, resource, quantity, unitPrice}
+		`,
+	);
+}
+
+/**
+ * Retrieves all buy orders for a given resource, sorted from highest price to lowest price.
+ *
+ * @param resource - The resource enum ID.
+ * @returns A promise resolving to an array of OrderRecords sorted descending by unitPrice.
+ */
+export async function getAllOrdersByResource(
+	resource: number,
+): Promise<OrderRecord[]> {
+	const orders = await query<OrderRecord>(
+		`
+		?[id, company_id, resource, quantity, unitPrice] := *order{id, company_id, resource, quantity, unitPrice}, resource == $resource
+		`,
+		{ resource },
+	);
+	return orders.sort((a, b) => b.unitPrice - a.unitPrice);
+}
+
+/**
+ * Retrieves all sell offers for a given resource, sorted from lowest price to highest price.
+ *
+ * @param resource - The resource enum ID.
+ * @returns A promise resolving to an array of OfferRecords sorted ascending by unitPrice.
+ */
+export async function getAllOffersByResource(
+	resource: number,
+): Promise<OfferRecord[]> {
+	const offers = await query<OfferRecord>(
+		`
+		?[id, company_id, resource, quantity, unitPrice] := *offer{id, company_id, resource, quantity, unitPrice}, resource == $resource
+		`,
+		{ resource },
+	);
+	return offers.sort((a, b) => a.unitPrice - b.unitPrice);
+}
+
+/**
+ * Retrieves all buy orders placed by a specific company.
+ *
+ * @param company_id - The numeric company ID.
+ * @returns A promise resolving to an array of matching OrderRecords.
+ */
+export async function getAllOrdersByCompany(
+	company_id: number,
+): Promise<OrderRecord[]> {
+	return query<OrderRecord>(
+		`
+		?[id, company_id, resource, quantity, unitPrice] := *order{id, company_id, resource, quantity, unitPrice}, company_id == $company_id
+		`,
+		{ company_id },
+	);
+}
+
+/**
+ * Retrieves all sell offers placed by a specific company.
+ *
+ * @param company_id - The numeric company ID.
+ * @returns A promise resolving to an array of matching OfferRecords.
+ */
+export async function getAllOffersByCompany(
+	company_id: number,
+): Promise<OfferRecord[]> {
+	return query<OfferRecord>(
+		`
+		?[id, company_id, resource, quantity, unitPrice] := *offer{id, company_id, resource, quantity, unitPrice}, company_id == $company_id
+		`,
+		{ company_id },
 	);
 }

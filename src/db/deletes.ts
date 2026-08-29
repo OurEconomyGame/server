@@ -1,4 +1,10 @@
-import { getCompanyById, getShareById, getUserById } from "./gets.ts";
+import {
+	getCompanyById,
+	getOfferById,
+	getOrderById,
+	getShareById,
+	getUserById,
+} from "./gets.ts";
 import { query } from "./init.ts";
 
 /**
@@ -111,6 +117,60 @@ export async function deleteShareById(id: number): Promise<boolean> {
 		return true;
 	} catch (error: unknown) {
 		console.error(`Failed to delete share by ID ${id}:`, error);
+		return false;
+	}
+}
+
+/**
+ * Deletes an order record by order ID.
+ *
+ * @param id - The numeric order ID to delete.
+ * @returns A promise that resolves to true if deleted, or false if not found or failed.
+ */
+export async function deleteOrderById(id: number): Promise<boolean> {
+	const existing = await getOrderById(id);
+	if (!existing) {
+		return false;
+	}
+
+	try {
+		await query(
+			`
+			?[id] <- [[$id]]
+			:rm order { id }
+			`,
+			{ id },
+		);
+		return true;
+	} catch (error: unknown) {
+		console.error(`Failed to delete order by ID ${id}:`, error);
+		return false;
+	}
+}
+
+/**
+ * Deletes an offer record by offer ID.
+ *
+ * @param id - The numeric offer ID to delete.
+ * @returns A promise that resolves to true if deleted, or false if not found or failed.
+ */
+export async function deleteOfferById(id: number): Promise<boolean> {
+	const existing = await getOfferById(id);
+	if (!existing) {
+		return false;
+	}
+
+	try {
+		await query(
+			`
+			?[id] <- [[$id]]
+			:rm offer { id }
+			`,
+			{ id },
+		);
+		return true;
+	} catch (error: unknown) {
+		console.error(`Failed to delete offer by ID ${id}:`, error);
 		return false;
 	}
 }
