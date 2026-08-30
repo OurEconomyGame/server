@@ -11,12 +11,9 @@ if (!existsSync(DB_DIR)) {
 	mkdirSync(DB_DIR, { recursive: true });
 }
 
-// 2. Initialize CozoDb with RocksDB (singleton to prevent lock errors across reloads)
-declare global {
-	var __cozo_db: CozoDb | undefined;
-}
-
-export const db: CozoDb = (globalThis.__cozo_db ??= new CozoDb("rocksdb", DB_DIR));
+// 2. Initialize CozoDb with RocksDB
+// Format: new CozoDb("rocksdb", path_to_directory)
+export const db = new CozoDb("rocksdb", DB_DIR);
 
 /**
  * Clean up database directory on process close if DEBUG=true.
@@ -80,7 +77,201 @@ export async function query<T = Record<string, unknown>>(
 }
 
 /**
- * Initialize relations with a placeholder schema.
+ * Migrates existing relations if columns are missing from older database schemas.
+ */
+async function migrateSchema(): Promise<void> {
+	// 1. Company migration (ensure 'cash' column exists)
+	try {
+		const res = (await db.run("::columns company")) as {
+			rows: Array<[string, boolean, number, string, boolean]>;
+		};
+		const colNames = res.rows.map((r) => r[0]);
+		if (!colNames.includes("cash")) {
+			console.log("[DB] Migrating 'company' relation to add 'cash' column...");
+			const oldRows = (await db.run(`
+				?[id, name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding] := *company{id, name, founder_id, type, last_accessed, created_at, ceo, data, shares_outstanding}
+			`)) as { rows: Array<unknown[]> };
+
+			await db.run("::remove company");
+			await db.run(`
+				:create company {
+					id: Int
+					=>
+					name: String,
+					founder_id: Int,
+					type: Int,
+					last_accessed: Int,
+					cash: Float,
+					created_at: Int,
+					ceo: Int,
+					data: Json,
+					shares_outstanding: Int
+				}
+			`);
+
+			for (const row of oldRows.rows) {
+				const [
+					id,
+					name,
+					founder_id,
+					type,
+					last_accessed,
+					created_at,
+					ceo,
+					data,
+					shares_outstanding,
+				] = row;
+				await db.run(
+					`
+					?[id, name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding] <- [
+						[$id, $name, $founder_id, $type, $last_accessed, 0.0, $created_at, $ceo, $data, $shares_outstanding]
+					]
+					:put company { id => name, founder_id, type, last_accessed, cash, created_at, ceo, data, shares_outstanding }
+					`,
+					{
+						id,
+						name,
+						founder_id,
+						type,
+						last_accessed,
+						created_at,
+						ceo,
+						data,
+						shares_outstanding,
+					},
+				);
+			}
+			console.log("[DB] 'company' migration complete.");
+		}
+	} catch {}
+
+	// 2. User migration (ensure 'cash' column exists)
+	try {
+		const res = (await db.run("::columns user")) as {
+			rows: Array<[string, boolean, number, string, boolean]>;
+		};
+		const colNames = res.rows.map((r) => r[0]);
+		if (!colNames.includes("cash")) {
+			console.log("[DB] Migrating 'user' relation to add 'cash' column...");
+			const oldRows = (await db.run(`
+				?[id, name, pass_hash, email, last_accessed, data, created_at] := *user{id, name, pass_hash, email, last_accessed, data, created_at}
+			`)) as { rows: Array<unknown[]> };
+
+			await db.run("::remove user");
+			await db.run(`
+				:create user {
+					id: Int
+					=>
+					name: String,
+					pass_hash: String,
+					email: String,
+					last_accessed: Int,
+					cash: Float,
+					data: Json,
+					created_at: Int
+				}
+			`);
+
+			for (const row of oldRows.rows) {
+				const [id, name, pass_hash, email, last_accessed, data, created_at] =
+					row;
+				await db.run(
+					`
+					?[id, name, pass_hash, email, last_accessed, cash, data, created_at] <- [
+						[$id, $name, $pass_hash, $email, $last_accessed, 0.0, $data, $created_at]
+					]
+					:put user { id => name, pass_hash, email, last_accessed, cash, data, created_at }
+					`,
+					{ id, name, pass_hash, email, last_accessed, data, created_at },
+				);
+			}
+			console.log("[DB] 'user' migration complete.");
+		}
+	} catch {}
+
+	// 3. Order migration (ensure 'resource' column exists)
+	try {
+		const res = (await db.run("::columns order")) as {
+			rows: Array<[string, boolean, number, string, boolean]>;
+		};
+		const colNames = res.rows.map((r) => r[0]);
+		if (!colNames.includes("resource")) {
+			console.log("[DB] Migrating 'order' relation to add 'resource' column...");
+			const oldRows = (await db.run(`
+				?[id, company_id, quantity, unitPrice] := *order{id, company_id, quantity, unitPrice}
+			`)) as { rows: Array<unknown[]> };
+
+			await db.run("::remove order");
+			await db.run(`
+				:create order {
+					id: Int
+					=>
+					company_id: Int,
+					resource: Int,
+					quantity: Float,
+					unitPrice: Float
+				}
+			`);
+
+			for (const row of oldRows.rows) {
+				const [id, company_id, quantity, unitPrice] = row;
+				await db.run(
+					`
+					?[id, company_id, resource, quantity, unitPrice] <- [
+						[$id, $company_id, 0, $quantity, $unitPrice]
+					]
+					:put order { id => company_id, resource, quantity, unitPrice }
+					`,
+					{ id, company_id, quantity, unitPrice },
+				);
+			}
+			console.log("[DB] 'order' migration complete.");
+		}
+	} catch {}
+
+	// 4. Offer migration (ensure 'resource' column exists)
+	try {
+		const res = (await db.run("::columns offer")) as {
+			rows: Array<[string, boolean, number, string, boolean]>;
+		};
+		const colNames = res.rows.map((r) => r[0]);
+		if (!colNames.includes("resource")) {
+			console.log("[DB] Migrating 'offer' relation to add 'resource' column...");
+			const oldRows = (await db.run(`
+				?[id, company_id, quantity, unitPrice] := *offer{id, company_id, quantity, unitPrice}
+			`)) as { rows: Array<unknown[]> };
+
+			await db.run("::remove offer");
+			await db.run(`
+				:create offer {
+					id: Int
+					=>
+					company_id: Int,
+					resource: Int,
+					quantity: Float,
+					unitPrice: Float
+				}
+			`);
+
+			for (const row of oldRows.rows) {
+				const [id, company_id, quantity, unitPrice] = row;
+				await db.run(
+					`
+					?[id, company_id, resource, quantity, unitPrice] <- [
+						[$id, $company_id, 0, $quantity, $unitPrice]
+					]
+					:put offer { id => company_id, resource, quantity, unitPrice }
+					`,
+					{ id, company_id, quantity, unitPrice },
+				);
+			}
+			console.log("[DB] 'offer' migration complete.");
+		}
+	} catch {}
+}
+
+/**
+ * Initialize relations with schema and run automated migrations if needed.
  */
 export async function initDb(): Promise<void> {
 	console.log(`[DB] Initializing CozoDB with RocksDB engine at: ${DB_DIR}`);
@@ -163,4 +354,6 @@ export async function initDb(): Promise<void> {
 			throw err;
 		}
 	}
+
+	await migrateSchema();
 }

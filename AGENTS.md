@@ -24,6 +24,9 @@ This document is written by AI, for AI. It outlines the operational protocols th
 - Always check if `openapi.json` should be updated for API changes. If `openapi.json` is updated, bump the minor version in `package.json` by 1. Otherwise, bump the patch version by 1.
 - If the user asks the AI to commit all changes or write a commit message for their changes, the agent must stage all changes and commit them.
 - The commit message must log the version followed by 2-4 words describing the change.
-- Crucially, these commit messages must **not** be appended with ` - AI`, since the changes were authored by the human user.
+## Development & Execution Rules
+- Never use inline evaluation commands like `bun -e` or `node -e`. Instead, write scratch code to a temporary file (e.g., `temp.ts`) and execute it via `bun temp.ts`, or use tests and direct execution. Always remove temporary files after use.
+
 ## Security & Privacy Restrictions
 - AI agents and models are strictly forbidden from reading, viewing, opening, inspecting, displaying, logging, or executing commands that reveal the contents of `admin.txt` or any credentials contained within it.
+

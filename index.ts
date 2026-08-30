@@ -5,7 +5,9 @@ import route from "./src/routing.ts";
 import { startServerTick } from "./src/ticker.ts";
 
 await initDb();
-startServerTick();
+
+const TICK_INTERVAL_MS = 30_000;
+const tickTimer = startServerTick(TICK_INTERVAL_MS);
 
 const server = serve({
 	port: 3001,
