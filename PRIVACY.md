@@ -45,12 +45,20 @@ For privacy questions, data inquiries, or notices regarding the API, contact the
 
 > **Note on Email Communications**: `xillion@napp9.com` is an inbound-only receiving address that does not send outgoing emails. All inquiries should provide alternate return contact information and expect any replies to originate from a different administrative address.
 
-## 6. Supporting & Funding the Project
+## 6. Project Abandonment & Democratic Data Transfer Policy
+
+In the event that the project maintainer permanently ceases active maintenance or steps down from operating the primary OurEconomy network:
+1. **Spontaneous Apache 2.0 Open Source Conversion**: The codebase will immediately and spontaneously be licensed under Apache License, Version 2.0.
+2. **Democratic Successor Transfer**: The operational player database (including user accounts, company registries, and ledger state) will **never be sold**. The database may only be transferred to a designated successor administrator if at least **sixty percent (60%) of active players** vote in favor of the transfer. If the 60% approval threshold is not met, user authentication credentials and personal database records will be permanently purged to protect player privacy.
+
+---
+
+## 7. Supporting & Funding the Project
 
 OurEconomy is an independent project. The maintainer pays for domain names (`napp9.com`) out of pocket and operates the simulation on self-purchased dedicated server hardware. Community contributions and funding will be gratefully accepted via GitHub Sponsors / GitHub Funding and Patreon (as soon as setups are completed).
 
 ---
 
-## 7. Policy Revisions
+## 8. Policy Revisions
 
 We may update this Privacy Policy periodically. Any revisions will be published directly to this file in the server repository and reflected in API documentation.

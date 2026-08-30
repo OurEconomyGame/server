@@ -82,12 +82,18 @@ To solve this, OurEconomy separates the frontend and backend models:
 3. **Small Group / Dev Grant**: The BSL Additional Use Grant permits deployments for up to **25 registered users** for testing, education, and small private groups.
 4. **Guaranteed Open Source Future**: Under BSL 1.1, every version automatically converts to **Apache License 2.0** on its 2-year anniversary.
 
+### Project Abandonment & Democratic Successor Guarantee
+If the maintainer ever permanently ceases maintenance or abandons the project:
+1. **Spontaneous Apache 2.0 Release**: The codebase immediately and spontaneously converts to the **Apache License 2.0** without waiting for the 2-year Change Date.
+2. **Democratic Database Transfer**: With the approval of **at least 60% of active players**, the maintainer will select a designated successor administrator and transfer the operational database/ledger to keep the game alive. (See [`PRIVACY.md`](./PRIVACY.md) for data safeguards).
+
 ---
 
 ## Licensing & DMCA Enforcement
 
 - **Strict BSL 1.1 Terms**: The OurEconomy server engine is protected under the [Business Source License 1.1](./LICENSE.md).
 - **DMCA Enforcement**: Any unauthorized production deployments exceeding the Additional Use Grant (25 registered users), unlicensed commercial forks, or redistribution without compliance will be met with immediate DMCA takedown notices and copyright enforcement.
+
 
 
 

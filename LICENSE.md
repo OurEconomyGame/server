@@ -14,7 +14,7 @@ License Text
 
 2. Effective Date. This License is effective upon your download or receipt of the Licensed Work.
 
-3. Change of License. On the Change Date, or in the event of a change of control of Licensor or the sale of all or substantially all of its assets prior to the Change Date, the Licensed Work shall automatically be licensed under the Change License. In the event of a change of license under this Section 3, the terms of the Change License shall govern your use of the Licensed Work.
+3. Change of License & Abandonment Guarantee. On the Change Date, or in the event of a change of control of Licensor, or if the Licensor permanently ceases active maintenance or abandons the Licensed Work prior to the Change Date, the Licensed Work shall automatically and spontaneously be licensed under the Change License (Apache License, Version 2.0). In the event of a change of license under this Section 3, the terms of the Change License shall govern your use of the Licensed Work.
 
 4. Termination. This License and the rights granted hereunder will terminate automatically if you fail to comply with any of its terms.
 
