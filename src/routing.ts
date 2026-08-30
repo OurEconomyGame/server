@@ -4,6 +4,10 @@ import { buyFacility } from "./companies/production/buy.ts";
 import { getCompanyInfo } from "./companies/read/get.ts";
 import { getAllCompaniesInfo } from "./companies/read/list.ts";
 import { getCompanyShareholders } from "./companies/read/shareholders.ts";
+import {
+	handleCompanySetWage,
+	handleCompanyWork,
+} from "./companies/work/index.ts";
 import { handleDocs } from "./docs.ts";
 import parseAuthHeader from "./header_parse.ts";
 import {
@@ -114,6 +118,21 @@ async function handleRequest(request: Request): Promise<Response> {
 					status: "You cannot purchase facilities with carrier pigeons.",
 				});
 			return Response.json(await buyFacility(postParams, auth_token));
+
+		case "/company/work":
+		case "/work":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to report for work",
+				});
+			return Response.json(await handleCompanyWork(postParams, auth_token));
+
+		case "/company/wage":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to set company wage",
+				});
+			return Response.json(await handleCompanySetWage(postParams, auth_token));
 
 		case "/market/depth":
 			return Response.json(await handleMarketDepth(params));

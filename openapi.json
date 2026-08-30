@@ -3,7 +3,7 @@
 	"info": {
 		"title": "OurEconomy API",
 		"description": "API documentation for the OurEconomy backend server.",
-		"version": "0.17.0"
+		"version": "0.18.0"
 	},
 	"paths": {
 		"/version": {
@@ -556,6 +556,98 @@
 										"balance": {
 											"type": "number"
 										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/company/work": {
+			"post": {
+				"summary": "Perform a daily work shift at a company (worker receives wage and triggers a random facility production cycle)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the worker",
+						"schema": { "type": "string" }
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["company_id"],
+								"properties": {
+									"company_id": { "type": "integer" }
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Work shift outcome, wage paid, and production cycle result",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"wage_paid": { "type": "number" },
+										"company_cash": { "type": "number" },
+										"user_cash": { "type": "number" },
+										"production": { "type": "object" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/company/wage": {
+			"post": {
+				"summary": "Set the worker shift wage for a company (CEO only)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of company CEO",
+						"schema": { "type": "string" }
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["company_id", "wage"],
+								"properties": {
+									"company_id": { "type": "integer" },
+									"wage": { "type": "number" }
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Wage update result",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"wage": { "type": "number" }
 									}
 								}
 							}

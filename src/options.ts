@@ -55,6 +55,8 @@ export default async function handleOptions(
 		"/login",
 		"/found",
 		"/facility/buy",
+		"/company/work",
+		"/company/wage",
 		"/market/buy",
 		"/market/sell",
 		"/market/cancel",

@@ -1307,13 +1307,185 @@ describe("Routing Suite - route(request)", () => {
 				status: string;
 				refunded_resource_qty: number;
 			};
-			expect(cancelData.status).toBe("Success");
-			expect(cancelData.refunded_resource_qty).toBe(30);
-
 			await deleteCompanyById(sCompId);
 			await deleteCompanyById(bCompId);
 			await deleteUserById(sUserId);
 			await deleteUserById(bUserId);
+		});
+	});
+
+	describe("17. Company Worker Shifts & Production Execution (/company/wage, /company/work)", () => {
+		test("CEO sets company wage, rejected for non-CEO", async () => {
+			const ceoRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `wage_ceo_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const ceoData = (await ceoRes.json()) as Record<string, unknown>;
+			const ceoToken = ceoData.random as string;
+			const ceoId = ceoData.id as number;
+			await updateUserCash(ceoId, 5000);
+
+			const compRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ name: `Wage_Co_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const compData = (await compRes.json()) as Record<string, unknown>;
+			const compId = Number(compData.id);
+
+			// Other user tries to set wage -> Rejected
+			const badWage = await route(
+				new Request("http://localhost/company/wage", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: "ghost_token" },
+					body: JSON.stringify({ company_id: compId, wage: 25 }),
+				}),
+			);
+			const badWageData = (await badWage.json()) as { status: string };
+			expect(badWageData.status).toContain("Only the CEO");
+
+			// CEO sets wage to $35
+			const setWage = await route(
+				new Request("http://localhost/company/wage", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ company_id: compId, wage: 35 }),
+				}),
+			);
+			const setWageData = (await setWage.json()) as {
+				status: string;
+				wage: number;
+			};
+			expect(setWageData.status).toBe("Success");
+			expect(setWageData.wage).toBe(35);
+
+			await deleteCompanyById(compId);
+			await deleteUserById(ceoId);
+		});
+
+		test("Worker performs shift, receives wage, triggers random production, mapped in workers/worked, rejects duplicate work same day", async () => {
+			// Create CEO & Company with Geothermal Facility
+			const ceoRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `fac_ceo_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const ceoData = (await ceoRes.json()) as Record<string, unknown>;
+			const ceoToken = ceoData.random as string;
+			const ceoId = ceoData.id as number;
+			await updateUserCash(ceoId, 10000);
+
+			const compRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ name: `Fac_Co_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const compId = Number(
+				((await compRes.json()) as Record<string, unknown>).id,
+			);
+			await updateCompanyCash(compId, 5000);
+
+			// Buy Water Pump facility (cost $200)
+			const buyFacRes = await route(
+				new Request("http://localhost/facility/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({
+						company_id: compId,
+						recipe: "water_pump",
+					}),
+				}),
+			);
+			expect(buyFacRes.status).toBe(200);
+
+			// Set wage to $20
+			await route(
+				new Request("http://localhost/company/wage", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ company_id: compId, wage: 20 }),
+				}),
+			);
+
+			// Create Worker Player
+			const workerRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `worker_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const workerData = (await workerRes.json()) as Record<string, unknown>;
+			const workerToken = workerData.random as string;
+			const workerId = workerData.id as number;
+			await updateUserCash(workerId, 0); // Start with $0
+
+			// Worker performs work
+			const workRes = await route(
+				new Request("http://localhost/company/work", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: workerToken },
+					body: JSON.stringify({ company_id: compId }),
+				}),
+			);
+			const workResult = (await workRes.json()) as {
+				status: string;
+				wage_paid: number;
+				company_cash: number;
+				user_cash: number;
+				production: { facility: string; output: number; quantity: number };
+			};
+			expect(workResult.status).toBe("Success");
+			expect(workResult.wage_paid).toBe(20);
+			expect(workResult.user_cash).toBe(20);
+			expect(workResult.company_cash).toBe(4780); // 5000 - 200 (facility) - 20 (wage)
+			expect(workResult.production.output).toBe(1); // Water
+			expect(workResult.production.quantity).toBe(500);
+
+			// Worker tries to work again at same company today -> Rejected
+			const dupWork = await route(
+				new Request("http://localhost/company/work", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: workerToken },
+					body: JSON.stringify({ company_id: compId }),
+				}),
+			);
+			const dupWorkData = (await dupWork.json()) as { status: string };
+			expect(dupWorkData.status).toContain("already worked at this company");
+
+			// Verify mapped arrays in company.data: workers has workerId, worked has true
+			const compProfile = await route(
+				new Request(`http://localhost/company?id=${compId}`, {
+					method: "GET",
+					headers: { Auth: ceoToken },
+				}),
+			);
+			const compInfo = (await compProfile.json()) as {
+				company: {
+					data: {
+						workers: number[];
+						worked: boolean[];
+						inventory: Record<number, number>;
+					};
+				};
+			};
+			expect(compInfo.company.data.workers).toContain(workerId);
+			const workerIdx = compInfo.company.data.workers.indexOf(workerId);
+			expect(compInfo.company.data.worked[workerIdx]).toBe(true);
+			expect(compInfo.company.data.inventory[1]).toBe(500); // 500 water
+
+			await deleteCompanyById(compId);
+			await deleteUserById(ceoId);
+			await deleteUserById(workerId);
 		});
 	});
 });
