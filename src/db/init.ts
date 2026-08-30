@@ -11,9 +11,12 @@ if (!existsSync(DB_DIR)) {
 	mkdirSync(DB_DIR, { recursive: true });
 }
 
-// 2. Initialize CozoDb with RocksDB
-// Format: new CozoDb("rocksdb", path_to_directory)
-export const db = new CozoDb("rocksdb", DB_DIR);
+// 2. Initialize CozoDb with RocksDB (singleton to prevent lock errors across reloads)
+declare global {
+	var __cozo_db: CozoDb | undefined;
+}
+
+export const db: CozoDb = (globalThis.__cozo_db ??= new CozoDb("rocksdb", DB_DIR));
 
 /**
  * Clean up database directory on process close if DEBUG=true.

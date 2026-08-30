@@ -12,6 +12,10 @@ export async function runServerTick() {
 	}
 }
 
+declare global {
+	var __server_tick_timer: ReturnType<typeof setInterval> | undefined;
+}
+
 /**
  * Starts the periodic server-side ticker loop.
  *
@@ -21,8 +25,16 @@ export async function runServerTick() {
 export function startServerTick(
 	intervalMs: number = Number(process.env.TICK_INTERVAL_MS) || 30_000,
 ): ReturnType<typeof setInterval> {
+	if (globalThis.__server_tick_timer) {
+		clearInterval(globalThis.__server_tick_timer);
+	}
 	console.log(`[Ticker] Server ticker started (interval: ${intervalMs}ms)`);
-	return setInterval(async () => {
-		await runServerTick();
+	globalThis.__server_tick_timer = setInterval(async () => {
+		try {
+			await runServerTick();
+		} catch (err) {
+			console.error("[Ticker] Error in tick loop:", err);
+		}
 	}, intervalMs);
+	return globalThis.__server_tick_timer;
 }

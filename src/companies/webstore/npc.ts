@@ -7,13 +7,18 @@ import type { NpcPurchaseResult, WebStoreData } from "./types.ts";
 export async function executeNpcPurchase(): Promise<NpcPurchaseResult> {
 	const all = await getAllCompanies();
 	const stores = all
-		.filter((c) => c.type === companyTypes.WebStore)
+		.filter((c) => c && c.type === companyTypes.WebStore)
 		.map((c) => {
-			const d = (c.data ?? {}) as WebStoreData;
-			const inv = d.inventory ?? {};
-			const food = inv[Resources.Food] ?? 0;
-			const elec = inv[Resources.Electricity] ?? 0;
-			const price = d.food_price ?? d.price ?? 10;
+			let d: WebStoreData = {};
+			try {
+				d = (typeof c.data === "string" ? JSON.parse(c.data) : (c.data ?? {})) as WebStoreData;
+			} catch {
+				d = {};
+			}
+			const inv = (d && typeof d === "object" ? d.inventory ?? {} : {}) as Record<number, number>;
+			const food = Number(inv[Resources.Food] ?? 0);
+			const elec = Number(inv[Resources.Electricity] ?? 0);
+			const price = Number(d.food_price ?? d.price ?? 10);
 			return { c, d, inv, food, elec, price };
 		})
 		.filter((s) => s.food >= 1 && s.elec >= 11 && s.price > 0);
@@ -24,12 +29,16 @@ export async function executeNpcPurchase(): Promise<NpcPurchaseResult> {
 	const minPrice = Math.min(...stores.map((s) => s.price));
 	const weighted = stores.map((s) => ({
 		...s,
-		w: 0.5 ** (Math.max(0, (s.price - minPrice) / minPrice) / 0.1),
+		w: minPrice > 0 ? 0.5 ** (Math.max(0, (s.price - minPrice) / minPrice) / 0.1) : 1,
 	}));
 	const totWeight = weighted.reduce((sum, s) => sum + s.w, 0);
 
+	let chosen = weighted[0];
+	if (!chosen) {
+		return { purchased: false, message: "No stock-ready WebStores found" };
+	}
+
 	let r = Math.random() * totWeight;
-	let chosen = weighted[0]!;
 	for (const item of weighted) {
 		if (r < item.w) {
 			chosen = item;
