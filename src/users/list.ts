@@ -15,6 +15,7 @@ export async function getAllUsersPublicInfo(
 	const publicInfo: PublicUser[] = [];
 
 	for (const user of users) {
+		if (user.id === 0) continue;
 		publicInfo.push({
 			id: user.id,
 			username: user.name,

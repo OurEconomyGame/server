@@ -54,13 +54,15 @@ describe("Routing Suite - route(request)", () => {
 	});
 
 	describe("3. GET /list/users", () => {
-		test("returns public user list response", async () => {
+		test("returns public user list response and omits citizen 0", async () => {
 			const req = new Request("http://localhost/list/users", { method: "GET" });
 			const res = await route(req);
 			expect(res.status).toBe(200);
 
-			const data = (await res.json()) as unknown[];
+			const data = (await res.json()) as Array<{ id: number; username: string }>;
 			expect(Array.isArray(data)).toBe(true);
+			const hasUser0 = data.some((u) => u.id === 0);
+			expect(hasUser0).toBe(false);
 		});
 
 		test("sorts users by ID by default", async () => {
