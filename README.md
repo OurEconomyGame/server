@@ -43,3 +43,11 @@ If you find this project valuable or wish to support ongoing server hosting and 
 
 For inquiries or custom commercial botting licenses, contact via **napp9.com** or **xillion@napp9.com** *(Note: inbound-only receiving address; please include return contact info)*.
 
+---
+
+## Craftsmanship & Licensing Enforcement
+
+- **Strict BSL & DMCA Enforcement**: The OurEconomy server engine is licensed under the [Business Source License 1.1](./LICENSE.md). Any unauthorized production deployments exceeding the Additional Use Grant (25 registered users), unlicensed redistribution, or license violations will be met with immediate DMCA takedown notices and copyright enforcement.
+- **Architectural Quality**: While 80–90% of this codebase was authored with AI pair-programming assistance, this codebase is engineered with strict human oversight, deterministic relational database modeling, exhaustive unit/integration testing, clean modularity, and strict TypeScript typing. It is as far from "AI slop" as possible.
+
+

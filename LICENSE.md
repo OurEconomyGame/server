@@ -21,3 +21,5 @@ License Text
 5. Trademark. This License does not grant you any right to use the Licensor’s trademarks, service marks, or logos.
 
 6. Disclaimer of Warranty. THE LICENSED WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE LICENSED WORK OR THE USE OR OTHER DEALINGS IN THE LICENSED WORK.
+
+7. Enforcement & DMCA Takedown Notice. The Licensor vigorously protects its intellectual property and copyright. Any unauthorized production deployments exceeding the Additional Use Grant, unlicensed commercial forks, or violations of this Business Source License 1.1 will be met with immediate DMCA takedown notices and legal enforcement.
