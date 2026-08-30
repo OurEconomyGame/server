@@ -934,33 +934,6 @@
 				}
 			}
 		},
-		"/store/tick": {
-			"post": {
-				"summary": "Simulate an NPC civilian consumer purchase round (prefers cheapest WebStore, order size 1-50)",
-				"responses": {
-					"200": {
-						"description": "NPC purchase outcome, store selected, volume sold, and revenue generated",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"purchased": { "type": "boolean" },
-										"store_id": { "type": "number" },
-										"store_name": { "type": "string" },
-										"quantity": { "type": "number" },
-										"price": { "type": "number" },
-										"revenue": { "type": "number" },
-										"electricity_used": { "type": "number" },
-										"message": { "type": "string" }
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		},
 		"/market/depth": {
 			"get": {
 				"summary": "Get orderbook depth (all buy orders and sell offers) for a resource",

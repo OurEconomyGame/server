@@ -1,5 +1,4 @@
 import { buyFromWebstore } from "./buy.ts";
-import { executeNpcPurchase } from "./npc.ts";
 import { setWebstorePrice } from "./price.ts";
 
 export interface StorePayload {
@@ -32,8 +31,4 @@ export async function handleStoreBuy(
 	const compId = Number(p.company_id ?? p.company);
 	const qty = Number(p.quantity);
 	return await buyFromWebstore(compId, qty, authToken);
-}
-
-export async function handleStoreTick(): Promise<Record<string, unknown>> {
-	return await executeNpcPurchase();
 }

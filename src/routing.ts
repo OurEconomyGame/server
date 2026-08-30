@@ -11,7 +11,6 @@ import { getCompanyShareholders } from "./companies/read/shareholders.ts";
 import {
 	handleStoreBuy,
 	handleStorePrice,
-	handleStoreTick,
 } from "./companies/webstore/index.ts";
 import {
 	handleCompanyFire,
@@ -186,9 +185,6 @@ async function handleRequest(request: Request): Promise<Response> {
 					status: "POST method required to purchase from store",
 				});
 			return Response.json(await handleStoreBuy(postParams, auth_token));
-
-		case "/store/tick":
-			return Response.json(await handleStoreTick());
 
 		case "/market/depth":
 			return Response.json(await handleMarketDepth(params));

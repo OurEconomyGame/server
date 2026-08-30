@@ -7,6 +7,7 @@ import { initDb } from "../src/db/init.ts";
 import { updateCompanyCash, updateUserCash } from "../src/db/updates.ts";
 import { addCompanyResource } from "../src/market/index.ts";
 import route from "../src/routing.ts";
+import { runServerTick } from "../src/ticker.ts";
 
 beforeAll(async () => {
 	await initDb();
@@ -1707,7 +1708,7 @@ describe("Routing Suite - route(request)", () => {
 		});
 	});
 
-	describe("19. WebStore Operations & NPC Consumer Sink (/store/price, /store/buy, /store/tick)", () => {
+	describe("19. WebStore Operations & Server NPC Consumer Sink (/store/price, /store/buy)", () => {
 		test("WebStore retail pricing and player food purchase with electricity operating overhead", async () => {
 			// Create CEO and found WebStore (Type 1, cost $750)
 			const ceoRes = await route(
@@ -1813,7 +1814,15 @@ describe("Routing Suite - route(request)", () => {
 			await deleteUserById(custId);
 		});
 
-		test("NPC consumer sink simulates purchase from cheapest WebStore (/store/tick)", async () => {
+		test("rejects client-triggered /store/tick (non-client triggerable, 404)", async () => {
+			const tickReq = new Request("http://localhost/store/tick", {
+				method: "POST",
+			});
+			const tickRes = await route(tickReq);
+			expect(tickRes.status).toBe(404);
+		});
+
+		test("Server ticker simulates NPC consumer purchase from cheapest WebStore", async () => {
 			const ceoRes = await route(
 				new Request("https://app.napp9.com/signup", {
 					method: "POST",
@@ -1853,26 +1862,14 @@ describe("Routing Suite - route(request)", () => {
 			await addCompanyResource(storeId, Resources.Food, 100);
 			await addCompanyResource(storeId, Resources.Electricity, 200);
 
-			// Run NPC purchase tick
-			const tickRes = await route(
-				new Request("http://localhost/store/tick", {
-					method: "POST",
-				}),
-			);
-			const tickData = (await tickRes.json()) as {
-				purchased: boolean;
-				store_id: number;
-				quantity: number;
-				price: number;
-				revenue: number;
-				electricity_used: number;
-			};
-			expect(tickData.purchased).toBe(true);
-			expect(tickData.store_id).toBe(storeId);
-			expect(tickData.quantity).toBeGreaterThanOrEqual(1);
-			expect(tickData.quantity).toBeLessThanOrEqual(50);
-			expect(tickData.electricity_used).toBe(10 + tickData.quantity);
-			expect(tickData.revenue).toBe(tickData.quantity * 10);
+			// Run server-side tick directly
+			const tickData = await runServerTick();
+			expect(tickData?.purchased).toBe(true);
+			expect(tickData?.store_id).toBe(storeId);
+			expect(tickData?.quantity).toBeGreaterThanOrEqual(1);
+			expect(tickData?.quantity).toBeLessThanOrEqual(50);
+			expect(tickData?.electricity_used).toBe(10 + (tickData?.quantity ?? 0));
+			expect(tickData?.revenue).toBe((tickData?.quantity ?? 0) * 10);
 
 			await deleteCompanyById(storeId);
 			await deleteUserById(ceoId);
