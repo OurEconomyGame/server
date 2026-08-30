@@ -236,9 +236,38 @@ async function handleRequest(request: Request): Promise<Response> {
  */
 export default async function route(request: Request): Promise<Response> {
 	if (request.method === "OPTIONS") {
-		return await handleOptions(request);
+		const optionsRes = await handleOptions(request);
+		console.log(
+			"Response Sent for OPTIONS URL: ",
+			request.url,
+			"Status: ",
+			optionsRes.status,
+		);
+		return optionsRes;
 	}
 
 	const response = await handleRequest(request);
-	return withCors(response);
+	const finalResponse = withCors(response);
+	try {
+		const cloned = finalResponse.clone();
+		const responseBody = await cloned.text();
+		console.log(
+			"Response Sent for URL: ",
+			request.url,
+			"Status: ",
+			finalResponse.status,
+			"Body: ",
+			responseBody.length > 500
+				? responseBody.slice(0, 500) + "... [truncated]"
+				: responseBody,
+		);
+	} catch {
+		console.log(
+			"Response Sent for URL: ",
+			request.url,
+			"Status: ",
+			finalResponse.status,
+		);
+	}
+	return finalResponse;
 }
