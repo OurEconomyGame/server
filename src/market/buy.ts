@@ -1,8 +1,8 @@
-import { getCompanyById } from "../db/gets.ts";
+import { getCompanyById, getUserById } from "../db/gets.ts";
 import { insertOrder } from "../db/inserts.ts";
 import { getNextOrderId } from "./ids.ts";
-import { matchBuyOffers } from "./match.ts";
-import { addCompanyCash } from "./settle.ts";
+import { matchBuyOffers, matchBuyOffersForUser } from "./match.ts";
+import { addCompanyCash, addUserCash } from "./settle.ts";
 import type { BuyResult } from "./types.ts";
 
 /**
@@ -47,6 +47,72 @@ export async function executeBuy(
 		await insertOrder(
 			restingOrderId,
 			company_id,
+			resource,
+			remaining,
+			unitPrice,
+		);
+	}
+
+	return {
+		success: true,
+		filledQuantity: quantity - remaining,
+		remainingQuantity: remaining,
+		restingOrderId,
+	};
+}
+
+/**
+ * Executes a buy order for a user (consumer sink), matching against existing sell offers.
+ */
+export async function executeUserBuy(
+	user_id: number,
+	resource: number,
+	quantity: number,
+	unitPrice: number,
+): Promise<BuyResult> {
+	const user = await getUserById(user_id);
+	if (!user) {
+		return {
+			success: false,
+			error: "User not found",
+			filledQuantity: 0,
+			remainingQuantity: quantity,
+		};
+	}
+
+	const totalMaxCost = quantity * unitPrice;
+	if (user.id === 0 && user.cash < totalMaxCost) {
+		user.cash = totalMaxCost;
+	}
+
+	if (user.cash < totalMaxCost) {
+		return {
+			success: false,
+			error: `Insufficient personal funds. Available: $${user.cash}, required: $${totalMaxCost}`,
+			filledQuantity: 0,
+			remainingQuantity: quantity,
+		};
+	}
+
+	await addUserCash(user_id, -totalMaxCost);
+	const { remaining, priceSurplus } = await matchBuyOffersForUser(
+		user_id,
+		resource,
+		quantity,
+		unitPrice,
+	);
+
+	if (priceSurplus > 0) {
+		await addUserCash(user_id, priceSurplus);
+	}
+
+	let restingOrderId: number | undefined;
+	if (remaining > 0) {
+		restingOrderId = await getNextOrderId();
+		const orderEntityId = -user_id;
+		await insertOrder(
+			restingOrderId,
+			orderEntityId,
 			resource,
 			remaining,
 			unitPrice,

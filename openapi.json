@@ -976,13 +976,13 @@
 		},
 		"/market/buy": {
 			"post": {
-				"summary": "Place and execute a market buy order for a company (CEO only)",
+				"summary": "Place and execute a market buy order for a company (CEO) or as a user consumer sink",
 				"parameters": [
 					{
 						"name": "Auth",
 						"in": "header",
 						"required": true,
-						"description": "Session token of company CEO",
+						"description": "Session token of company CEO or authenticated user",
 						"schema": { "type": "string" }
 					}
 				],
@@ -992,9 +992,12 @@
 						"application/json": {
 							"schema": {
 								"type": "object",
-								"required": ["company_id", "resource", "quantity", "unitPrice"],
+								"required": ["resource", "quantity", "unitPrice"],
 								"properties": {
-									"company_id": { "type": "integer" },
+									"company_id": {
+										"type": "integer",
+										"description": "Company ID if placing on behalf of a company (omitted for user consumer sink)"
+									},
 									"resource": { "type": "integer" },
 									"quantity": { "type": "number" },
 									"unitPrice": { "type": "number" }
@@ -1012,6 +1015,8 @@
 									"type": "object",
 									"properties": {
 										"status": { "type": "string" },
+										"user_id": { "type": "number" },
+										"sink": { "type": "boolean" },
 										"filled_quantity": { "type": "number" },
 										"remaining_quantity": { "type": "number" },
 										"resting_order_id": { "type": "number" }
@@ -1074,13 +1079,13 @@
 		},
 		"/market/cancel": {
 			"post": {
-				"summary": "Cancel an open market order or offer and release escrowed cash or resources (CEO only)",
+				"summary": "Cancel an open market order or offer and release escrowed cash or resources (CEO or user)",
 				"parameters": [
 					{
 						"name": "Auth",
 						"in": "header",
 						"required": true,
-						"description": "Session token of company CEO",
+						"description": "Session token of company CEO or order owner",
 						"schema": { "type": "string" }
 					}
 				],
@@ -1090,7 +1095,6 @@
 						"application/json": {
 							"schema": {
 								"type": "object",
-								"required": ["company_id"],
 								"properties": {
 									"company_id": { "type": "integer" },
 									"order_id": { "type": "integer" },

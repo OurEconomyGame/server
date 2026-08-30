@@ -2,10 +2,14 @@ import { deleteOfferById, deleteOrderById } from "../db/deletes.ts";
 import { updateOfferById, updateOrderById } from "../db/updates.ts";
 import { getAllOffersByResource } from "./offers.ts";
 import { getAllOrdersByResource } from "./orders.ts";
-import { addCompanyCash, addCompanyResource } from "./settle.ts";
+import {
+	addCompanyCash,
+	addUserResource,
+	deliverResource,
+} from "./settle.ts";
 
 /**
- * Matches an incoming buy order against existing sell offers.
+ * Matches an incoming buy order (for a company) against existing sell offers.
  */
 export async function matchBuyOffers(
 	company_id: number,
@@ -24,7 +28,38 @@ export async function matchBuyOffers(
 		const matchQty = Math.min(remaining, offer.quantity);
 		priceSurplus += matchQty * (unitPrice - offer.unitPrice);
 		await addCompanyCash(offer.company_id, matchQty * offer.unitPrice);
-		await addCompanyResource(company_id, resource, matchQty);
+		await deliverResource(company_id, resource, matchQty);
+
+		if (matchQty === offer.quantity) {
+			await deleteOfferById(offer.id);
+		} else {
+			await updateOfferById(offer.id, { quantity: offer.quantity - matchQty });
+		}
+		remaining -= matchQty;
+	}
+	return { remaining, priceSurplus };
+}
+
+/**
+ * Matches an incoming user buy order (consumer sink) against existing sell offers.
+ */
+export async function matchBuyOffersForUser(
+	user_id: number,
+	resource: number,
+	quantity: number,
+	unitPrice: number,
+): Promise<{ remaining: number; priceSurplus: number }> {
+	let remaining = quantity;
+	let priceSurplus = 0;
+	const offers = await getAllOffersByResource(resource);
+
+	for (const offer of offers) {
+		if (offer.unitPrice > unitPrice || remaining <= 0) break;
+
+		const matchQty = Math.min(remaining, offer.quantity);
+		priceSurplus += matchQty * (unitPrice - offer.unitPrice);
+		await addCompanyCash(offer.company_id, matchQty * offer.unitPrice);
+		await addUserResource(user_id, resource, matchQty);
 
 		if (matchQty === offer.quantity) {
 			await deleteOfferById(offer.id);
@@ -55,7 +90,7 @@ export async function matchSellOrders(
 
 		const matchQty = Math.min(remaining, order.quantity);
 		totalEarnings += matchQty * order.unitPrice;
-		await addCompanyResource(order.company_id, resource, matchQty);
+		await deliverResource(order.company_id, resource, matchQty);
 
 		if (matchQty === order.quantity) {
 			await deleteOrderById(order.id);

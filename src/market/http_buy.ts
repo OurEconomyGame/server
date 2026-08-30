@@ -1,5 +1,6 @@
+import { getUserBySessionToken } from "../sessions/check.ts";
 import { isCompanyCeo } from "./auth.ts";
-import { executeBuy } from "./buy.ts";
+import { executeBuy, executeUserBuy } from "./buy.ts";
 
 export interface MarketBuyPayload {
 	company_id?: number;
@@ -12,23 +13,30 @@ export interface MarketBuyPayload {
 
 /**
  * Handles HTTP request to place and execute a market buy order.
+ * Can be placed on behalf of a company (if company_id > 0) or by a user as a consumer sink.
  */
 export async function handleMarketBuy(
 	payload: unknown,
 	auth_token: string | null,
 ): Promise<Record<string, unknown>> {
+	if (!auth_token) {
+		return { status: "Authentication token required" };
+	}
+
+	const user = await getUserBySessionToken(auth_token);
+	if (!user) {
+		return { status: "Invalid session token" };
+	}
+
 	if (!payload || typeof payload !== "object") {
 		return { status: "Invalid request payload" };
 	}
 
 	const p = payload as MarketBuyPayload;
-	const companyId = Number(p.company_id);
 	const resource = Number(p.resource);
 	const quantity = Number(p.quantity);
 	const price = Number(p.unitPrice ?? p.price ?? p.max_price);
 
-	if (!Number.isFinite(companyId) || companyId <= 0)
-		return { status: "Missing or invalid company_id" };
 	if (!Number.isFinite(resource) || resource < 0)
 		return { status: "Missing or invalid resource" };
 	if (!Number.isFinite(quantity) || quantity <= 0)
@@ -36,20 +44,43 @@ export async function handleMarketBuy(
 	if (!Number.isFinite(price) || price <= 0)
 		return { status: "Price must be greater than 0" };
 
-	const isCeo = await isCompanyCeo(auth_token, companyId);
-	if (!isCeo) {
+	// 1. Company Buy Order
+	if (
+		p.company_id !== undefined &&
+		p.company_id !== null &&
+		Number(p.company_id) > 0
+	) {
+		const companyId = Number(p.company_id);
+		const isCeo = await isCompanyCeo(auth_token, companyId);
+		if (!isCeo) {
+			return {
+				status: "Only the CEO can place market orders for this company",
+			};
+		}
+
+		const result = await executeBuy(companyId, resource, quantity, price);
+		if (!result.success) {
+			return { status: result.error ?? "Failed to execute buy order" };
+		}
+
 		return {
-			status: "Only the CEO can place market orders for this company",
+			status: "Success",
+			filled_quantity: result.filledQuantity,
+			remaining_quantity: result.remainingQuantity,
+			resting_order_id: result.restingOrderId,
 		};
 	}
 
-	const result = await executeBuy(companyId, resource, quantity, price);
+	// 2. User Consumer Sink Order
+	const result = await executeUserBuy(user.id, resource, quantity, price);
 	if (!result.success) {
-		return { status: result.error ?? "Failed to execute buy order" };
+		return { status: result.error ?? "Failed to execute user buy order" };
 	}
 
 	return {
 		status: "Success",
+		user_id: user.id,
+		sink: true,
 		filled_quantity: result.filledQuantity,
 		remaining_quantity: result.remainingQuantity,
 		resting_order_id: result.restingOrderId,

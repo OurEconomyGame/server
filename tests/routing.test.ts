@@ -2,7 +2,11 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import details from "../package.json";
 import { Resources } from "../src/companies/production/resources.ts";
 import { deleteCompanyById, deleteUserById } from "../src/db/deletes.ts";
-import { getSharesByOwner } from "../src/db/gets.ts";
+import {
+	getCompanyById,
+	getSharesByOwner,
+	getUserById,
+} from "../src/db/gets.ts";
 import { initDb } from "../src/db/init.ts";
 import { updateCompanyCash, updateUserCash } from "../src/db/updates.ts";
 import { addCompanyResource } from "../src/market/index.ts";
@@ -2025,6 +2029,151 @@ describe("Routing Suite - route(request)", () => {
 			// Clean up
 			await deleteUserById(u1Id);
 			if (u0Id !== 0) await deleteUserById(u0Id);
+		});
+	});
+
+	describe("21. User Market Orders & Consumer Sinks (/market/buy, /market/cancel)", () => {
+		test("allows user to place buy orders without company_id, matching against market offers", async () => {
+			// 1. Create a seller company with CEO
+			const ceoRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `market_ceo_${Date.now()}`,
+						secret: "pass",
+					}),
+				}),
+			);
+			const ceoData = (await ceoRes.json()) as Record<string, unknown>;
+			const ceoToken = ceoData.random as string;
+			const ceoId = ceoData.id as number;
+			await updateUserCash(ceoId, 10000);
+
+			const compRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({
+						name: `SinkSupply_${Date.now()}`,
+						type: 0,
+					}),
+				}),
+			);
+			const compId = Number(
+				((await compRes.json()) as Record<string, unknown>).id,
+			);
+
+			// Stock company with 50 RawOre and place sell offer at $12 each
+			await addCompanyResource(compId, Resources.RawOre, 50);
+			const sellRes = await route(
+				new Request("http://localhost/market/sell", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({
+						company_id: compId,
+						resource: Resources.RawOre,
+						quantity: 50,
+						unitPrice: 12,
+					}),
+				}),
+			);
+			expect((await sellRes.json() as Record<string, unknown>).status).toBe("Success");
+
+			// 2. Create consumer user
+			const buyerRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `sink_consumer_${Date.now()}`,
+						secret: "pass",
+					}),
+				}),
+			);
+			const buyerData = (await buyerRes.json()) as Record<string, unknown>;
+			const buyerToken = buyerData.random as string;
+			const buyerId = buyerData.id as number;
+			await updateUserCash(buyerId, 1000);
+
+			// 3. User places market buy order for 30 RawOre at $15 (higher than $12 offer)
+			const buyRes = await route(
+				new Request("http://localhost/market/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: buyerToken },
+					body: JSON.stringify({
+						resource: Resources.RawOre,
+						quantity: 30,
+						unitPrice: 15,
+					}),
+				}),
+			);
+			const buyData = (await buyRes.json()) as {
+				status: string;
+				sink: boolean;
+				filled_quantity: number;
+				remaining_quantity: number;
+			};
+			expect(buyData.status).toBe("Success");
+			expect(buyData.sink).toBe(true);
+			expect(buyData.filled_quantity).toBe(30);
+			expect(buyData.remaining_quantity).toBe(0);
+
+			// Check seller company received cash: 30 * $12 = $360
+			const sellerComp = await getCompanyById(compId);
+			expect(sellerComp?.cash).toBe(360);
+
+			// Check user received 30 RawOre in inventory and was charged 30 * $12 = $360 (refunded $3/unit surplus from $15 limit)
+			const buyerUser = await getUserById(buyerId);
+			const buyerInv = (buyerUser?.data as { inventory?: Record<number, number> })?.inventory;
+			expect(buyerInv?.[Resources.RawOre]).toBe(30);
+			expect(buyerUser?.cash).toBe(1000 - 360);
+
+			// 4. User places resting order and cancels it
+			const restingBuyRes = await route(
+				new Request("http://localhost/market/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: buyerToken },
+					body: JSON.stringify({
+						resource: Resources.RawOre,
+						quantity: 10,
+						unitPrice: 5, // Below market offers
+					}),
+				}),
+			);
+			const restingBuyData = (await restingBuyRes.json()) as {
+				status: string;
+				resting_order_id: number;
+				remaining_quantity: number;
+			};
+			expect(restingBuyData.status).toBe("Success");
+			expect(restingBuyData.remaining_quantity).toBe(10);
+			const restingOrderId = restingBuyData.resting_order_id;
+			expect(typeof restingOrderId).toBe("number");
+
+			// Cancel resting order
+			const cancelRes = await route(
+				new Request("http://localhost/market/cancel", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: buyerToken },
+					body: JSON.stringify({
+						order_id: restingOrderId,
+					}),
+				}),
+			);
+			const cancelData = (await cancelRes.json()) as {
+				status: string;
+				cancelled: string;
+				refunded_cash: number;
+			};
+			expect(cancelData.status).toBe("Success");
+			expect(cancelData.cancelled).toBe("order");
+			expect(cancelData.refunded_cash).toBe(50);
+
+			// Clean up
+			await deleteCompanyById(compId);
+			await deleteUserById(ceoId);
+			await deleteUserById(buyerId);
 		});
 	});
 });
