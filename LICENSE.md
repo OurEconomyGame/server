@@ -2,7 +2,7 @@ Business Source License 1.1
 
 Parameters
 
-Licensor: The holder of the domain napp9.com (Contactable at xillion@napp9.com).
+Licensor: The holder of the domain napp9.com as of August 29th, 2026 (Contactable at xillion@napp9.com).
 Licensed Work: OurEconomy server Engine.
 Additional Use Grant: Production use of the Licensed Work is allowed solely for deployments supporting twenty-five (25) or fewer registered user accounts.
 Change Date: The two-year anniversary of the first public release of each specific version of the Licensed Work.
