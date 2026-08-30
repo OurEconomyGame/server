@@ -2,8 +2,13 @@
 	"openapi": "3.0.3",
 	"info": {
 		"title": "OurEconomy API",
-		"description": "API documentation for the OurEconomy backend server.",
-		"version": "0.20.0"
+		"description": "API documentation for the OurEconomy backend server. Competing frontends are permitted subject to API Terms of Service (botting is strictly prohibited).",
+		"termsOfService": "https://raw.githubusercontent.com/OurEconomyGame/server/main/API_TERMS.md",
+		"license": {
+			"name": "BSL 1.1 / API Terms of Service",
+			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
+		},
+		"version": "0.24.0"
 	},
 	"paths": {
 		"/version": {
