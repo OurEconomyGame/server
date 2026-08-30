@@ -66,10 +66,29 @@ Every subsystem in OurEconomy was deliberately architected, directed, refactored
 
 ---
 
+## Why BSL 1.1 Instead of Permissive OSS? (Preventing Community Fragmentation)
+
+A common question is why OurEconomy uses the **Business Source License 1.1 (BSL 1.1)** rather than an unconstrained permissive open-source license (like MIT or Apache 2.0 from day one).
+
+### The MMO Economic Network Effect
+A persistent virtual economy relies entirely on **market liquidity, player density, and deep orderbooks**:
+- If the server engine were permissively open-sourced at launch, it would trigger severe **community fragmentation**: dozens of isolated, low-population private servers with illiquid orderbooks and empty markets ("ghost towns").
+- Virtual economies cannot function in a vacuum—companies need employees, manufacturers need buyers, and retail stores need customers. Splintering the player base across splintered servers undermines the core simulation.
+
+### Unified Core Network + Competing Frontends
+To solve this, OurEconomy separates the frontend and backend models:
+1. **Central Server Liquidity**: The core server engine is BSL-protected to keep the main economy unified, vibrant, and actively traded.
+2. **Open Competing Frontends**: Developers are completely free to build, host, monetize, and distribute custom or competing web/mobile/desktop clients that connect to the shared network (see [`API_TERMS.md`](./API_TERMS.md)).
+3. **Small Group / Dev Grant**: The BSL Additional Use Grant permits deployments for up to **25 registered users** for testing, education, and small private groups.
+4. **Guaranteed Open Source Future**: Under BSL 1.1, every version automatically converts to **Apache License 2.0** on its 2-year anniversary.
+
+---
+
 ## Licensing & DMCA Enforcement
 
 - **Strict BSL 1.1 Terms**: The OurEconomy server engine is protected under the [Business Source License 1.1](./LICENSE.md).
 - **DMCA Enforcement**: Any unauthorized production deployments exceeding the Additional Use Grant (25 registered users), unlicensed commercial forks, or redistribution without compliance will be met with immediate DMCA takedown notices and copyright enforcement.
+
 
 
 
