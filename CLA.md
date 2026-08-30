@@ -3,7 +3,7 @@
 By submitting code, documentation, or any other contributions to the OurEconomy project and repository, you agree to the following terms:
 
 ## 1. Lifelong Grant of Rights
-You hereby grant to the **holder of the domain napp9.com as of August 29th, 2026** (contactable at xillion@napp9.com), and its successors and assignees, a perpetual, irrevocable, lifelong, worldwide, royalty-free, fully sublicensable, and transferable license to:
+You hereby grant to the **holder of the domain napp9.com as of August 29th, 2026** (contactable at xillion@napp9.com; please note that xillion@napp9.com is an inbound-only address and does not send outgoing emails—inquiries must include alternate return contact information and expect responses from a different email address), and its successors and assignees, a perpetual, irrevocable, lifelong, worldwide, royalty-free, fully sublicensable, and transferable license to:
 - Use, reproduce, modify, adapt, prepare derivative works of, and publicly perform or display the contributed code;
 - Distribute, redistribute, and publish the contributed code across all media and platforms;
 - Use, exploit, and deploy the contributed code for commercial, non-commercial, proprietary, and production uses; and

@@ -17,7 +17,7 @@ Welcome to the **OurEconomy** Public Game API. These API Terms of Service ("Term
 ## 2. Prohibition on Unauthorized Botting & Purchased Botting Licenses
 
 1. **Default Prohibition on Automated Gameplay**: All forms of unapproved automated play, algorithmic trading bots, automated worker scripts, auto-clickers, macros, headless script agents, or automated scrapers are **strictly prohibited** by default.
-2. **Commercial Botting License Requirement**: Automated gameplay, script agents, and botting are permitted **solely and exclusively** under an official **Commercial Botting License that MUST BE PURCHASED** and explicitly granted in writing by the server runner/operator (contactable via napp9.com / xillion@napp9.com).
+2. **Commercial Botting License Requirement**: Automated gameplay, script agents, and botting are permitted **solely and exclusively** under an official **Commercial Botting License that MUST BE PURCHASED** and explicitly granted in writing by the server runner/operator (contactable via napp9.com / xillion@napp9.com; note: xillion@napp9.com is an inbound-only receiving address that does not send outgoing emails—please include alternate return contact information in all communications and expect replies from a different email address).
 3. **Enforcement & Penalties**: Any accounts, companies, sessions, or IP addresses found engaging in automated play without a valid, purchased botting license are subject to immediate termination, complete economic asset forfeiture, and permanent network-level banning without refund or notice.
 
 ---
