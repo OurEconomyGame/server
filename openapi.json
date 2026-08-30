@@ -1120,6 +1120,67 @@
 					}
 				}
 			}
+		},
+		"/cash/inject": {
+			"post": {
+				"summary": "Inject or mint cash into UID 0, another user, or a company treasury (UID 0 only)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of User ID 0 (root/admin)",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["amount"],
+								"properties": {
+									"amount": {
+										"type": "number",
+										"description": "Cash amount to inject/mint"
+									},
+									"user_id": {
+										"type": "integer",
+										"description": "Optional target user ID (defaults to UID 0)"
+									},
+									"company_id": {
+										"type": "integer",
+										"description": "Optional target company ID"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Cash injection result with updated balance",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"injected": { "type": "number" },
+										"user_id": { "type": "number" },
+										"user_cash": { "type": "number" },
+										"company_id": { "type": "number" },
+										"company_cash": { "type": "number" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }

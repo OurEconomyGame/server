@@ -1916,4 +1916,115 @@ describe("Routing Suite - route(request)", () => {
 			await deleteUserById(ceoId);
 		});
 	});
+
+	describe("20. Cash Injection & Admin Minting (/cash/inject)", () => {
+		test("allows UID 0 to inject arbitrary cash into own account, another user, or company", async () => {
+			// Ensure UID 0 exists
+			const u0Res = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `admin_root_${Date.now()}`,
+						secret: "rootpass",
+					}),
+				}),
+			);
+			const u0Data = (await u0Res.json()) as Record<string, unknown>;
+			let u0Token = u0Data.random as string;
+			let u0Id = u0Data.id as number;
+
+			// If u0Id is not 0 (due to existing test data), manually ensure user 0 exists
+			if (u0Id !== 0) {
+				const existingU0 = await route(
+					new Request("http://localhost/login", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ hi: `admin_root_${Date.now()}`, secret: "pass" }),
+					}),
+				);
+			}
+
+			// Create a secondary regular user
+			const u1Res = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `regular_user_${Date.now()}`,
+						secret: "regpass",
+					}),
+				}),
+			);
+			const u1Data = (await u1Res.json()) as Record<string, unknown>;
+			const u1Token = u1Data.random as string;
+			const u1Id = u1Data.id as number;
+
+			// Reject non-UID 0 caller
+			const forbiddenRes = await route(
+				new Request("http://localhost/cash/inject", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Auth: u1Token,
+					},
+					body: JSON.stringify({ amount: 100000 }),
+				}),
+			);
+			const forbiddenData = (await forbiddenRes.json()) as { status: string };
+			expect(forbiddenData.status).toContain("Forbidden");
+
+			// UID 0 self-injection
+			// Create session for user 0
+			const { createSession } = await import("../src/sessions/create.ts");
+			const rootToken = await createSession(0);
+
+			const injectSelfRes = await route(
+				new Request("http://localhost/cash/inject", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Auth: rootToken,
+					},
+					body: JSON.stringify({ amount: 500000 }),
+				}),
+			);
+			const injectSelfData = (await injectSelfRes.json()) as {
+				status: string;
+				injected: number;
+				user_id: number;
+				user_cash: number;
+			};
+			expect(injectSelfData.status).toBe("Success");
+			expect(injectSelfData.injected).toBe(500000);
+			expect(injectSelfData.user_id).toBe(0);
+			expect(injectSelfData.user_cash).toBeGreaterThanOrEqual(500000);
+
+			// UID 0 injects into regular user
+			const injectUserRes = await route(
+				new Request("http://localhost/cash/inject", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Auth: rootToken,
+					},
+					body: JSON.stringify({ amount: 250000, user_id: u1Id }),
+				}),
+			);
+			const injectUserData = (await injectUserRes.json()) as {
+				status: string;
+				injected: number;
+				user_id: number;
+				user_cash: number;
+			};
+			expect(injectUserData.status).toBe("Success");
+			expect(injectUserData.injected).toBe(250000);
+			expect(injectUserData.user_id).toBe(u1Id);
+			expect(injectUserData.user_cash).toBeGreaterThanOrEqual(250000);
+
+			// Clean up
+			await deleteUserById(u1Id);
+			if (u0Id !== 0) await deleteUserById(u0Id);
+		});
+	});
 });

@@ -45,7 +45,7 @@ export async function foundCompany(
 
 	// 3. Failure: Insufficient funds
 	const cost = COMPANY_FOUNDING_COSTS[type] ?? 500;
-	if (user.cash < cost) {
+	if (user.id !== 0 && user.cash < cost) {
 		return respond("You cant afford to start a company. Get your money up.", 0);
 	}
 
@@ -65,8 +65,12 @@ export async function foundCompany(
 	const created_at = now;
 	const last_accessed = now;
 
-	// Deduct founding cost from user cash balance
-	await updateUserCash(user.id, user.cash - cost);
+	// Deduct founding cost from user cash balance (UID 0 creates funds if needed)
+	if (user.id !== 0) {
+		await updateUserCash(user.id, user.cash - cost);
+	} else if (user.cash >= cost) {
+		await updateUserCash(user.id, user.cash - cost);
+	}
 
 	const companyId = await getNextCompanyId();
 	const shareId = await getNextShareId();

@@ -1,4 +1,5 @@
 import details from "../package.json";
+import { handleCashInject } from "./admin/cash.ts";
 import {
 	handleCompanyDeposit,
 	handleCompanyDividend,
@@ -209,6 +210,15 @@ async function handleRequest(request: Request): Promise<Response> {
 					status: "POST method required to cancel market orders",
 				});
 			return Response.json(await handleMarketCancel(postParams, auth_token));
+
+		case "/cash/inject":
+		case "/cash/mint":
+		case "/admin/cash":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to inject cash",
+				});
+			return Response.json(await handleCashInject(postParams, auth_token));
 
 		default:
 			return new Response("You are utterless and hopelessly lost. Get a GPS.", {
