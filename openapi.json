@@ -3,7 +3,7 @@
 	"info": {
 		"title": "OurEconomy API",
 		"description": "API documentation for the OurEconomy backend server.",
-		"version": "0.19.0"
+		"version": "0.20.0"
 	},
 	"paths": {
 		"/version": {
@@ -831,6 +831,128 @@
 										"dividend_distributed": { "type": "number" },
 										"remaining_cash": { "type": "number" },
 										"shareholders_paid": { "type": "number" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/store/price": {
+			"post": {
+				"summary": "Set the Food retail selling price for a WebStore (CEO only)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the WebStore CEO",
+						"schema": { "type": "string" }
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["company_id", "price"],
+								"properties": {
+									"company_id": { "type": "integer" },
+									"price": { "type": "number" }
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Price update confirmation",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"price": { "type": "number" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/store/buy": {
+			"post": {
+				"summary": "Purchase Food from a WebStore (consumes 10 electricity + 1 electricity per food item)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the purchasing player",
+						"schema": { "type": "string" }
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["company_id", "quantity"],
+								"properties": {
+									"company_id": { "type": "integer" },
+									"quantity": { "type": "number" }
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Purchase confirmation, total cost, electricity consumed, and updated balances",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"quantity": { "type": "number" },
+										"price": { "type": "number" },
+										"total_cost": { "type": "number" },
+										"electricity_used": { "type": "number" },
+										"buyer_cash": { "type": "number" },
+										"store_cash": { "type": "number" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/store/tick": {
+			"post": {
+				"summary": "Simulate an NPC civilian consumer purchase round (prefers cheapest WebStore, order size 1-50)",
+				"responses": {
+					"200": {
+						"description": "NPC purchase outcome, store selected, volume sold, and revenue generated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"purchased": { "type": "boolean" },
+										"store_id": { "type": "number" },
+										"store_name": { "type": "string" },
+										"quantity": { "type": "number" },
+										"price": { "type": "number" },
+										"revenue": { "type": "number" },
+										"electricity_used": { "type": "number" },
+										"message": { "type": "string" }
 									}
 								}
 							}

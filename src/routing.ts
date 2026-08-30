@@ -9,6 +9,11 @@ import { getCompanyInfo } from "./companies/read/get.ts";
 import { getAllCompaniesInfo } from "./companies/read/list.ts";
 import { getCompanyShareholders } from "./companies/read/shareholders.ts";
 import {
+	handleStoreBuy,
+	handleStorePrice,
+	handleStoreTick,
+} from "./companies/webstore/index.ts";
+import {
 	handleCompanyFire,
 	handleCompanyQuit,
 	handleCompanySetWage,
@@ -167,6 +172,23 @@ async function handleRequest(request: Request): Promise<Response> {
 					status: "POST method required to distribute dividends",
 				});
 			return Response.json(await handleCompanyDividend(postParams, auth_token));
+
+		case "/store/price":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to set store price",
+				});
+			return Response.json(await handleStorePrice(postParams, auth_token));
+
+		case "/store/buy":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to purchase from store",
+				});
+			return Response.json(await handleStoreBuy(postParams, auth_token));
+
+		case "/store/tick":
+			return Response.json(await handleStoreTick());
 
 		case "/market/depth":
 			return Response.json(await handleMarketDepth(params));

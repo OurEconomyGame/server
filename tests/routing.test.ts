@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import details from "../package.json";
+import { Resources } from "../src/companies/production/resources.ts";
 import { deleteCompanyById, deleteUserById } from "../src/db/deletes.ts";
 import { getSharesByOwner } from "../src/db/gets.ts";
 import { initDb } from "../src/db/init.ts";
@@ -1703,6 +1704,178 @@ describe("Routing Suite - route(request)", () => {
 			await deleteUserById(ceoId);
 			await deleteUserById(w1Id);
 			await deleteUserById(w2Id);
+		});
+	});
+
+	describe("19. WebStore Operations & NPC Consumer Sink (/store/price, /store/buy, /store/tick)", () => {
+		test("WebStore retail pricing and player food purchase with electricity operating overhead", async () => {
+			// Create CEO and found WebStore (Type 1, cost $750)
+			const ceoRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `store_ceo_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const ceoData = (await ceoRes.json()) as Record<string, unknown>;
+			const ceoToken = ceoData.random as string;
+			const ceoId = ceoData.id as number;
+			await updateUserCash(ceoId, 5000);
+
+			const storeRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ name: `Store_Co_${Date.now()}`, type: 2 }),
+				}),
+			);
+			const storeData = (await storeRes.json()) as Record<string, unknown>;
+			const storeId = Number(storeData.id);
+
+			// CEO sets Food price to $18
+			const priceRes = await route(
+				new Request("http://localhost/store/price", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ company_id: storeId, price: 18 }),
+				}),
+			);
+			const priceData = (await priceRes.json()) as {
+				status: string;
+				price: number;
+			};
+			expect(priceData.status).toBe("Success");
+			expect(priceData.price).toBe(18);
+
+			// Stock store with 50 Food and 100 Electricity
+			await addCompanyResource(storeId, Resources.Food, 50);
+			await addCompanyResource(storeId, Resources.Electricity, 100);
+
+			// Create Customer Player
+			const custRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `cust_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const custData = (await custRes.json()) as Record<string, unknown>;
+			const custToken = custData.random as string;
+			const custId = custData.id as number;
+			await updateUserCash(custId, 500);
+
+			// Customer buys 5 Food units
+			// Cost = 5 * $18 = $90
+			// Electricity used = 10 (base) + 5 = 15
+			const buyRes = await route(
+				new Request("http://localhost/store/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: custToken },
+					body: JSON.stringify({ company_id: storeId, quantity: 5 }),
+				}),
+			);
+			const buyResult = (await buyRes.json()) as {
+				status: string;
+				quantity: number;
+				price: number;
+				total_cost: number;
+				electricity_used: number;
+				buyer_cash: number;
+				store_cash: number;
+			};
+			expect(buyResult.status).toBe("Success");
+			expect(buyResult.quantity).toBe(5);
+			expect(buyResult.price).toBe(18);
+			expect(buyResult.total_cost).toBe(90);
+			expect(buyResult.electricity_used).toBe(15);
+			expect(buyResult.buyer_cash).toBe(410); // 500 - 90
+			expect(buyResult.store_cash).toBe(90);
+
+			// Verify store inventory: 45 Food (50 - 5), 85 Electricity (100 - 15)
+			const profileRes = await route(
+				new Request(`http://localhost/company?id=${storeId}`, {
+					method: "GET",
+					headers: { Auth: ceoToken },
+				}),
+			);
+			const profileInfo = (await profileRes.json()) as {
+				company: {
+					data: { inventory: Record<number, number> };
+				};
+			};
+			expect(profileInfo.company.data.inventory[Resources.Food]).toBe(45);
+			expect(profileInfo.company.data.inventory[Resources.Electricity]).toBe(
+				85,
+			);
+
+			await deleteCompanyById(storeId);
+			await deleteUserById(ceoId);
+			await deleteUserById(custId);
+		});
+
+		test("NPC consumer sink simulates purchase from cheapest WebStore (/store/tick)", async () => {
+			const ceoRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `npc_ceo_${Date.now()}`,
+						secret: "p",
+					}),
+				}),
+			);
+			const ceoData = (await ceoRes.json()) as Record<string, unknown>;
+			const ceoToken = ceoData.random as string;
+			const ceoId = ceoData.id as number;
+			await updateUserCash(ceoId, 5000);
+
+			const storeRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ name: `NpcStore_${Date.now()}`, type: 2 }),
+				}),
+			);
+			const storeId = Number(
+				((await storeRes.json()) as Record<string, unknown>).id,
+			);
+
+			// Set Food price to $10
+			await route(
+				new Request("http://localhost/store/price", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ company_id: storeId, price: 10 }),
+				}),
+			);
+
+			// Stock store with 100 Food and 200 Electricity
+			await addCompanyResource(storeId, Resources.Food, 100);
+			await addCompanyResource(storeId, Resources.Electricity, 200);
+
+			// Run NPC purchase tick
+			const tickRes = await route(
+				new Request("http://localhost/store/tick", {
+					method: "POST",
+				}),
+			);
+			const tickData = (await tickRes.json()) as {
+				purchased: boolean;
+				store_id: number;
+				quantity: number;
+				price: number;
+				revenue: number;
+				electricity_used: number;
+			};
+			expect(tickData.purchased).toBe(true);
+			expect(tickData.store_id).toBe(storeId);
+			expect(tickData.quantity).toBeGreaterThanOrEqual(1);
+			expect(tickData.quantity).toBeLessThanOrEqual(50);
+			expect(tickData.electricity_used).toBe(10 + tickData.quantity);
+			expect(tickData.revenue).toBe(tickData.quantity * 10);
+
+			await deleteCompanyById(storeId);
+			await deleteUserById(ceoId);
 		});
 	});
 });
