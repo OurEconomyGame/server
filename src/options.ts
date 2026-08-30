@@ -1,4 +1,8 @@
-import { isNapp9Domain, isNapp9Request } from "./users/domain.ts";
+import {
+	isLocalhostDomain,
+	isNapp9Domain,
+	isNapp9Request,
+} from "./users/domain.ts";
 
 const GET_ROUTES = new Set([
 	"/version",
@@ -43,9 +47,13 @@ export default async function handleOptions(
 			});
 		}
 		const origin = request.headers.get("origin");
+		const isAllowedOrigin =
+			origin &&
+			(isNapp9Domain(origin) ||
+				(process.env.DEBUG === "true" && isLocalhostDomain(origin)));
 		headers.set(
 			"Access-Control-Allow-Origin",
-			origin && isNapp9Domain(origin) ? origin : "https://napp9.com",
+			isAllowedOrigin && origin ? origin : "https://napp9.com",
 		);
 		headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
 		return new Response(null, { status: 204, headers });

@@ -113,26 +113,56 @@ describe("Routing Suite - route(request)", () => {
 
 	describe("4. POST /create/user (/signup)", () => {
 		test("rejects signup request from non-napp9.com domains with error code 666", async () => {
-			const req = new Request("http://localhost/signup", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Host: "localhost",
-					Origin: "http://localhost",
-				},
-				body: JSON.stringify({ hi: "some_user", secret: "pass" }),
-			});
-			const res = await route(req);
-			expect(res.status).toBe(403);
-			expect(res.headers.get("X-Error-Code")).toBe("666");
-			const data = (await res.json()) as {
-				status: string;
-				code: number;
-				error: number;
-			};
-			expect(data.code).toBe(666);
-			expect(data.error).toBe(666);
-			expect(data.status).toContain("*.napp9.com");
+			const originalDebug = process.env.DEBUG;
+			delete process.env.DEBUG;
+			try {
+				const req = new Request("http://localhost/signup", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Host: "localhost",
+						Origin: "http://localhost",
+					},
+					body: JSON.stringify({ hi: "some_user", secret: "pass" }),
+				});
+				const res = await route(req);
+				expect(res.status).toBe(403);
+				expect(res.headers.get("X-Error-Code")).toBe("666");
+				const data = (await res.json()) as {
+					status: string;
+					code: number;
+					error: number;
+				};
+				expect(data.code).toBe(666);
+				expect(data.error).toBe(666);
+				expect(data.status).toContain("*.napp9.com");
+			} finally {
+				process.env.DEBUG = originalDebug;
+			}
+		});
+
+		test("allows signup request from localhost when DEBUG=true", async () => {
+			const originalDebug = process.env.DEBUG;
+			process.env.DEBUG = "true";
+			try {
+				const uniqueName = `debug_user_${Date.now()}`;
+				const req = new Request("http://localhost/signup", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Host: "localhost",
+						Origin: "http://localhost",
+					},
+					body: JSON.stringify({ hi: uniqueName, secret: "pass123!" }),
+				});
+				const res = await route(req);
+				expect(res.status).toBe(200);
+				const data = (await res.json()) as Record<string, unknown>;
+				expect(typeof data.id).toBe("number");
+				expect(Number(data.id)).toBeGreaterThan(0);
+			} finally {
+				process.env.DEBUG = originalDebug;
+			}
 		});
 
 		test("rejects non-POST request method on *.napp9.com domain", async () => {
@@ -892,11 +922,11 @@ describe("Routing Suite - route(request)", () => {
 			);
 
 			// Disallowed domain
-			const reqDisallowed = new Request("http://localhost/signup", {
+			const reqDisallowed = new Request("https://evil.com/signup", {
 				method: "OPTIONS",
 				headers: {
-					Origin: "http://localhost",
-					Host: "localhost",
+					Origin: "https://evil.com",
+					Host: "evil.com",
 				},
 			});
 			const resDisallowed = await route(reqDisallowed);
@@ -908,6 +938,17 @@ describe("Routing Suite - route(request)", () => {
 			};
 			expect(disData.code).toBe(666);
 			expect(disData.status).toContain("*.napp9.com");
+
+			// Localhost preflight allowed when DEBUG=true
+			const reqLocalhost = new Request("http://localhost/signup", {
+				method: "OPTIONS",
+				headers: {
+					Origin: "http://localhost",
+					Host: "localhost",
+				},
+			});
+			const resLocalhost = await route(reqLocalhost);
+			expect(resLocalhost.status).toBe(204);
 		});
 
 		test("attaches Access-Control-Allow-Origin to GET/POST responses", async () => {
