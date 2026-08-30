@@ -1,10 +1,16 @@
 import details from "../package.json";
+import {
+	handleCompanyDeposit,
+	handleCompanyDividend,
+} from "./companies/capital/index.ts";
 import { foundCompany } from "./companies/found/found.ts";
 import { buyFacility } from "./companies/production/buy.ts";
 import { getCompanyInfo } from "./companies/read/get.ts";
 import { getAllCompaniesInfo } from "./companies/read/list.ts";
 import { getCompanyShareholders } from "./companies/read/shareholders.ts";
 import {
+	handleCompanyFire,
+	handleCompanyQuit,
 	handleCompanySetWage,
 	handleCompanyWork,
 } from "./companies/work/index.ts";
@@ -133,6 +139,34 @@ async function handleRequest(request: Request): Promise<Response> {
 					status: "POST method required to set company wage",
 				});
 			return Response.json(await handleCompanySetWage(postParams, auth_token));
+
+		case "/company/fire":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to fire a worker",
+				});
+			return Response.json(await handleCompanyFire(postParams, auth_token));
+
+		case "/company/quit":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to quit a company",
+				});
+			return Response.json(await handleCompanyQuit(postParams, auth_token));
+
+		case "/company/deposit":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to deposit funds",
+				});
+			return Response.json(await handleCompanyDeposit(postParams, auth_token));
+
+		case "/company/dividend":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to distribute dividends",
+				});
+			return Response.json(await handleCompanyDividend(postParams, auth_token));
 
 		case "/market/depth":
 			return Response.json(await handleMarketDepth(params));

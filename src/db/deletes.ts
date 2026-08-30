@@ -87,6 +87,13 @@ export async function deleteCompanyById(id: number): Promise<boolean> {
 			`,
 			{ id },
 		);
+		await query(
+			`
+			?[id] := *shares{id, owned_id}, owned_id == $id
+			:rm shares { id }
+			`,
+			{ id },
+		);
 		return true;
 	} catch (error: unknown) {
 		console.error(`Failed to delete company by ID ${id}:`, error);

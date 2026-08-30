@@ -1,8 +1,19 @@
 import { isNapp9Domain, isNapp9Request } from "./users/domain.ts";
 
+const GET_ROUTES = new Set([
+	"/version",
+	"/docs",
+	"/openapi.json",
+	"/list/users",
+	"/list/companies",
+	"/company",
+	"/company/shareholders",
+	"/portfolio",
+	"/market/depth",
+]);
+
 /**
  * Handles incoming HTTP OPTIONS requests with CORS preflight headers.
- * Restricts /signup preflights strictly to *.napp9.com domains with status 666 if disallowed.
  */
 export default async function handleOptions(
 	request: Request,
@@ -40,34 +51,9 @@ export default async function handleOptions(
 		return new Response(null, { status: 204, headers });
 	}
 
-	const getRoutes = [
-		"/version",
-		"/docs",
-		"/openapi.json",
-		"/list/users",
-		"/list/companies",
-		"/company",
-		"/company/shareholders",
-		"/portfolio",
-		"/market/depth",
-	];
-	const postRoutes = [
-		"/login",
-		"/found",
-		"/facility/buy",
-		"/company/work",
-		"/company/wage",
-		"/market/buy",
-		"/market/sell",
-		"/market/cancel",
-	];
-
-	if (getRoutes.includes(path)) {
-		headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-	} else if (postRoutes.includes(path)) {
-		headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-	} else {
-		headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-	}
+	headers.set(
+		"Access-Control-Allow-Methods",
+		GET_ROUTES.has(path) ? "GET, OPTIONS" : "POST, OPTIONS",
+	);
 	return new Response(null, { status: 204, headers });
 }

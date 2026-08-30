@@ -1488,4 +1488,221 @@ describe("Routing Suite - route(request)", () => {
 			await deleteUserById(workerId);
 		});
 	});
+
+	describe("18. Capital Management & Roster Resignation (/company/deposit, /company/dividend, /company/fire, /company/quit)", () => {
+		test("Player deposits funds into company treasury", async () => {
+			const uRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `dep_user_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const uData = (await uRes.json()) as Record<string, unknown>;
+			const uToken = uData.random as string;
+			const uId = uData.id as number;
+			await updateUserCash(uId, 3000);
+
+			const cRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ name: `Dep_Co_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const cId = Number(((await cRes.json()) as Record<string, unknown>).id);
+
+			// Deposit $750 into company treasury
+			const depRes = await route(
+				new Request("http://localhost/company/deposit", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ company_id: cId, amount: 750 }),
+				}),
+			);
+			const depData = (await depRes.json()) as {
+				status: string;
+				deposited: number;
+				user_cash: number;
+				company_cash: number;
+			};
+			expect(depData.status).toBe("Success");
+			expect(depData.deposited).toBe(750);
+			expect(depData.user_cash).toBe(1750); // 3000 - 500 (founding) - 750 (deposit) = 1750
+			expect(depData.company_cash).toBe(750);
+
+			await deleteCompanyById(cId);
+			await deleteUserById(uId);
+		});
+
+		test("CEO distributes dividend pro-rata to shareholders, non-CEO rejected", async () => {
+			const ceoRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `div_ceo_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const ceoData = (await ceoRes.json()) as Record<string, unknown>;
+			const ceoToken = ceoData.random as string;
+			const ceoId = ceoData.id as number;
+			await updateUserCash(ceoId, 5000);
+
+			const cRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ name: `Div_Co_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const cId = Number(((await cRes.json()) as Record<string, unknown>).id);
+			await updateCompanyCash(cId, 2000);
+
+			// Non-CEO tries to distribute dividend -> Rejected
+			const badDiv = await route(
+				new Request("http://localhost/company/dividend", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: "fake_token" },
+					body: JSON.stringify({ company_id: cId, amount: 500 }),
+				}),
+			);
+			const badDivData = (await badDiv.json()) as { status: string };
+			expect(badDivData.status).toContain("Only the CEO");
+
+			// CEO distributes $1000 dividend (CEO + company treasury = 2 shareholders)
+			const divRes = await route(
+				new Request("http://localhost/company/dividend", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ company_id: cId, amount: 1000 }),
+				}),
+			);
+			const divData = (await divRes.json()) as {
+				status: string;
+				dividend_distributed: number;
+				remaining_cash: number;
+				shareholders_paid: number;
+			};
+			expect(divData.status).toBe("Success");
+			expect(divData.dividend_distributed).toBe(1000);
+			expect(divData.remaining_cash).toBe(1000);
+			expect(divData.shareholders_paid).toBe(1);
+
+			await deleteCompanyById(cId);
+			await deleteUserById(ceoId);
+		});
+
+		test("CEO fires worker and Worker quits company", async () => {
+			const ceoRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `fire_ceo_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const ceoData = (await ceoRes.json()) as Record<string, unknown>;
+			const ceoToken = ceoData.random as string;
+			const ceoId = ceoData.id as number;
+			await updateUserCash(ceoId, 5000);
+
+			const cRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ name: `Fire_Co_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const cId = Number(((await cRes.json()) as Record<string, unknown>).id);
+			await updateCompanyCash(cId, 2000);
+
+			// Create Worker 1 and Worker 2
+			const w1Res = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `w1_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const w1Data = (await w1Res.json()) as Record<string, unknown>;
+			const w1Token = w1Data.random as string;
+			const w1Id = w1Data.id as number;
+
+			const w2Res = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `w2_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const w2Data = (await w2Res.json()) as Record<string, unknown>;
+			const w2Token = w2Data.random as string;
+			const w2Id = w2Data.id as number;
+
+			// Both workers report for work
+			await route(
+				new Request("http://localhost/company/work", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: w1Token },
+					body: JSON.stringify({ company_id: cId }),
+				}),
+			);
+			await route(
+				new Request("http://localhost/company/work", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: w2Token },
+					body: JSON.stringify({ company_id: cId }),
+				}),
+			);
+
+			// CEO fires worker 1
+			const fireRes = await route(
+				new Request("http://localhost/company/fire", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ company_id: cId, worker_id: w1Id }),
+				}),
+			);
+			const fireData = (await fireRes.json()) as {
+				status: string;
+				fired_worker_id: number;
+			};
+			expect(fireData.status).toBe("Success");
+			expect(fireData.fired_worker_id).toBe(w1Id);
+
+			// Worker 2 quits company
+			const quitRes = await route(
+				new Request("http://localhost/company/quit", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: w2Token },
+					body: JSON.stringify({ company_id: cId }),
+				}),
+			);
+			const quitData = (await quitRes.json()) as {
+				status: string;
+				quit_company_id: number;
+			};
+			expect(quitData.status).toBe("Success");
+			expect(quitData.quit_company_id).toBe(cId);
+
+			// Verify company worker roster is now empty
+			const compProfile = await route(
+				new Request(`http://localhost/company?id=${cId}`, {
+					method: "GET",
+					headers: { Auth: ceoToken },
+				}),
+			);
+			const compInfo = (await compProfile.json()) as {
+				company: {
+					data: { workers: number[]; worked: boolean[] };
+				};
+			};
+			expect(compInfo.company.data.workers).toEqual([]);
+			expect(compInfo.company.data.worked).toEqual([]);
+
+			await deleteCompanyById(cId);
+			await deleteUserById(ceoId);
+			await deleteUserById(w1Id);
+			await deleteUserById(w2Id);
+		});
+	});
 });
