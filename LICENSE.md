@@ -4,7 +4,7 @@ Parameters
 
 Licensor: The holder of the domain napp9.com as of August 29th, 2026 (Contactable at xillion@napp9.com. Note: xillion@napp9.com receives incoming email only and does not send outgoing emails; all messages should include alternate return contact information and expect responses from a different email address).
 Licensed Work: OurEconomy server Engine.
-Additional Use Grant: Production use of the Licensed Work is allowed solely for deployments supporting twenty-five (25) or fewer registered user accounts.
+Additional Use Grant: Production use of the Licensed Work is allowed solely for deployments supporting twenty-five (25) or fewer registered user accounts (or up to thirty (30) registered user accounts if the host operating system running the server engine is Linux openSUSE Tumbleweed, because Tumbleweed is simply the ultimate OS).
 Change Date: The two-year anniversary of the first public release of each specific version of the Licensed Work.
 Change License: Apache License, Version 2.0
 
