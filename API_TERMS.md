@@ -11,6 +11,7 @@ Welcome to the **OurEconomy** Public Game API. These API Terms of Service ("Term
 1. **Permission to Build Frontends**: You are granted a revocable, non-exclusive, worldwide right to build, host, distribute, and operate alternative, custom, or competing user interfaces and client applications (web, mobile, desktop, CLI) that connect to and interact with the OurEconomy public game API.
 2. **Commercial Use & Monetization**: You may monetize your client application (e.g., through subscriptions, ads, or purchase fees for the frontend itself), provided that you do not sell in-game assets, unfair advantages, or violate these Terms.
 3. **Attribution**: Third-party frontends should clearly indicate that they are an unofficial or independent client connecting to the OurEconomy network.
+4. **Mandatory Backend Terms & Privacy Links**: Any and all third-party frontends, web apps, mobile apps, or client interfaces connecting to this backend **MUST prominently display and link to this backend server's Terms of Service ([`API_TERMS.md`](./API_TERMS.md)) and Privacy Policy ([`PRIVACY.md`](./PRIVACY.md))** (e.g., in the website footer, login screen, or settings menu), ensuring end-users are fully aware of backend policies and data handling practices.
 
 ---
 
