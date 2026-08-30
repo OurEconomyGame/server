@@ -26,7 +26,8 @@ Welcome to the **OurEconomy** Public Game API. These API Terms of Service ("Term
 
 1. **Centralized Registration**: Account creation (`POST /signup`) is managed centrally through official channels (`*.napp9.com`). Third-party frontends must not attempt to circumvent or bypass domain or authentication restrictions.
 2. **Credential Security**: Client applications must never log, harvest, intercept, or insecurely transmit player credentials (passwords or session tokens). All requests carrying authentication tokens must use secure HTTPS connections.
-3. **No Exploits**: Exploiting bugs, glitches, race conditions, or undocumented vulnerabilities in the game economy or server software is strictly forbidden.
+3. **Privacy & Data Handling**: Third-party frontends must respect user privacy and comply with the data practices outlined in [`PRIVACY.md`](./PRIVACY.md).
+4. **No Exploits**: Exploiting bugs, glitches, race conditions, or undocumented vulnerabilities in the game economy or server software is strictly forbidden.
 
 ---
 

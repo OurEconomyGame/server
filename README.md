@@ -1,15 +1,45 @@
-# oureconomy
+# OurEconomy Backend Server Engine
 
-To install dependencies:
+High-performance, persistent multiplayer economic simulation backend powered by [Bun](https://bun.com) and [CozoDB](https://cozodb.org) (RocksDB storage engine).
 
+---
+
+## Getting Started
+
+### 1. Install Dependencies
 ```bash
 bun install
 ```
 
-To run:
-
+### 2. Run the Server
 ```bash
 bun run index.ts
 ```
 
-This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+### 3. Run Tests
+```bash
+DB_DIR=./test_run.db bun test --timeout 15000
+```
+
+---
+
+## Policies & Documentation
+
+- **[LICENSE.md](./LICENSE.md)**: Business Source License 1.1 (BSL 1.1) for the server engine.
+- **[CLA.md](./CLA.md)**: Contributor License Agreement.
+- **[API_TERMS.md](./API_TERMS.md)**: Public API Terms of Service & Competing Frontend License (unauthorized botting prohibited; commercial botting licenses available).
+- **[PRIVACY.md](./PRIVACY.md)**: Public API Privacy Policy & Data Handling.
+- **API Documentation**: Interactive Scalar API documentation is served at `/docs` when running the server, and full OpenAPI 3.0 specification is available at `GET /openapi.json`.
+
+---
+
+## Supporting & Funding
+
+OurEconomy is an independently built and maintained project. The maintainer pays for domains (`napp9.com`) out of pocket and hosts the simulation on self-purchased dedicated server hardware. 
+
+If you find this project valuable or wish to support ongoing server hosting and development costs, sponsorship and funding will be gratefully accepted via:
+- **GitHub Sponsors / Funding** *(coming soon)*
+- **Patreon** *(coming soon)*
+
+For inquiries or custom commercial botting licenses, contact via **napp9.com** or **xillion@napp9.com** *(Note: inbound-only receiving address; please include return contact info)*.
+
