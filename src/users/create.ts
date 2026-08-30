@@ -65,15 +65,17 @@ export async function createUser(
 /**
  * Retrieves the largest user ID currently in the database and returns it plus one.
  *
- * @returns A promise that resolves to the next sequential user ID (defaults to 1 if no users exist).
+ * @returns A promise that resolves to the next sequential user ID (defaults to 0 if no users exist or no ID 0 exists).
  */
 export async function getNextUserId(): Promise<number> {
 	try {
 		const result = await query<{ id: number }>(`?[id] := *user{id}`);
-		if (result.length === 0) return 1;
-		const maxId = Math.max(...result.map((r) => r.id));
-		return Number.isFinite(maxId) ? maxId + 1 : 1;
+		if (result.length === 0) return 0;
+		const ids = result.map((r) => r.id);
+		if (!ids.includes(0)) return 0;
+		const maxId = Math.max(...ids);
+		return Number.isFinite(maxId) ? maxId + 1 : 0;
 	} catch {
-		return 1;
+		return 0;
 	}
 }

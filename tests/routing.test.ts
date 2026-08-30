@@ -159,7 +159,7 @@ describe("Routing Suite - route(request)", () => {
 				expect(res.status).toBe(200);
 				const data = (await res.json()) as Record<string, unknown>;
 				expect(typeof data.id).toBe("number");
-				expect(Number(data.id)).toBeGreaterThan(0);
+				expect(Number(data.id)).toBeGreaterThanOrEqual(0);
 			} finally {
 				process.env.DEBUG = originalDebug;
 			}
@@ -204,7 +204,7 @@ describe("Routing Suite - route(request)", () => {
 			const data = (await res.json()) as Record<string, unknown>;
 			expect(String(data.status)).toContain("spontaniously materialised");
 			expect(typeof data.id).toBe("number");
-			expect(Number(data.id)).toBeGreaterThan(0);
+			expect(Number(data.id)).toBeGreaterThanOrEqual(0);
 			expect(typeof data.random).toBe("string");
 			expect(String(data.random).length).toBeGreaterThan(0);
 		});
