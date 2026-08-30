@@ -1190,6 +1190,103 @@
 					}
 				}
 			}
+		},
+		"/user/delete": {
+			"post": {
+				"summary": "Delete a user account and cascade cleanup (Self or Admin UID 0)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of user or Admin UID 0",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": false,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"user_id": {
+										"type": "integer",
+										"description": "Optional target user ID (admin only, defaults to caller ID)"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "User account deletion result",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"deleted_user_id": { "type": "number" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/company/delete": {
+			"post": {
+				"summary": "Delete and dissolve a company with cascading cleanup (CEO or Admin UID 0)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of company CEO or Admin UID 0",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["company_id"],
+								"properties": {
+									"company_id": {
+										"type": "integer",
+										"description": "Company ID to delete and dissolve"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Company deletion result",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"deleted_company_id": { "type": "number" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }

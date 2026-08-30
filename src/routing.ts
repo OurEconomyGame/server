@@ -4,6 +4,7 @@ import {
 	handleCompanyDeposit,
 	handleCompanyDividend,
 } from "./companies/capital/index.ts";
+import { handleCompanyDelete } from "./companies/delete/delete.ts";
 import { foundCompany } from "./companies/found/found.ts";
 import { buyFacility } from "./companies/production/buy.ts";
 import { getCompanyInfo } from "./companies/read/get.ts";
@@ -30,6 +31,7 @@ import {
 import handleOptions from "./options.ts";
 import { getUserPortfolio } from "./shares/portfolio.ts";
 import { createUser } from "./users/create.ts";
+import { handleUserDelete } from "./users/delete.ts";
 import { isNapp9Request } from "./users/domain.ts";
 import { getAllUsersPublicInfo } from "./users/list.ts";
 import { login } from "./users/login.ts";
@@ -219,6 +221,20 @@ async function handleRequest(request: Request): Promise<Response> {
 					status: "POST method required to inject cash",
 				});
 			return Response.json(await handleCashInject(postParams, auth_token));
+
+		case "/user/delete":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to delete user",
+				});
+			return Response.json(await handleUserDelete(postParams, auth_token));
+
+		case "/company/delete":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to delete company",
+				});
+			return Response.json(await handleCompanyDelete(postParams, auth_token));
 
 		default:
 			return new Response("You are utterless and hopelessly lost. Get a GPS.", {
