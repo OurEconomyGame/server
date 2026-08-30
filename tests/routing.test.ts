@@ -2256,4 +2256,117 @@ describe("Routing Suite - route(request)", () => {
 			expect(checkComp).toBeNull();
 		});
 	});
+
+	describe("24. User CEO Companies (/company/ceo, /companies/ceo)", () => {
+		test("rejects request without Auth token or user_id query param", async () => {
+			const req = new Request("http://localhost/company/ceo", { method: "GET" });
+			const res = await route(req);
+			expect(res.status).toBe(200);
+
+			const data = (await res.json()) as {
+				status: string;
+				user_id: number;
+				companies: unknown[];
+			};
+			expect(data.status).toContain("Unauthorized");
+			expect(data.companies).toHaveLength(0);
+		});
+
+		test("returns companies where authenticated user is CEO, including internal data", async () => {
+			const userRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `ceo_user_${Date.now()}`,
+						secret: "pass",
+					}),
+				}),
+			);
+			const userData = (await userRes.json()) as Record<string, unknown>;
+			const userToken = userData.random as string;
+			const userId = userData.id as number;
+			await updateUserCash(userId, 10000);
+
+			// Found 2 companies
+			const compRes1 = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: userToken },
+					body: JSON.stringify({
+						name: `CeoCorp1_${Date.now()}`,
+						type: 0,
+					}),
+				}),
+			);
+			const compId1 = Number(
+				((await compRes1.json()) as Record<string, unknown>).id,
+			);
+
+			const compRes2 = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: userToken },
+					body: JSON.stringify({
+						name: `CeoCorp2_${Date.now()}`,
+						type: 0,
+					}),
+				}),
+			);
+			const compId2 = Number(
+				((await compRes2.json()) as Record<string, unknown>).id,
+			);
+
+			// Query /company/ceo with Auth token
+			const req = new Request("http://localhost/company/ceo", {
+				method: "GET",
+				headers: { Auth: userToken },
+			});
+			const res = await route(req);
+			expect(res.status).toBe(200);
+
+			const data = (await res.json()) as {
+				status: string;
+				user_id: number;
+				companies: Array<{ id: number; ceo: number; data?: Record<string, unknown> }>;
+			};
+			expect(data.status).toBe("Success");
+			expect(data.user_id).toBe(userId);
+			expect(data.companies.length).toBeGreaterThanOrEqual(2);
+
+			const found1 = data.companies.find((c) => c.id === compId1);
+			const found2 = data.companies.find((c) => c.id === compId2);
+			expect(found1).toBeDefined();
+			expect(found2).toBeDefined();
+			expect(found1?.ceo).toBe(userId);
+			expect(found1?.data).toBeDefined(); // CEO sees internal data
+
+			// Query with alias /companies/ceo
+			const aliasReq = new Request("http://localhost/companies/ceo", {
+				method: "GET",
+				headers: { Auth: userToken },
+			});
+			const aliasRes = await route(aliasReq);
+			expect(aliasRes.status).toBe(200);
+			const aliasData = (await aliasRes.json()) as { status: string };
+			expect(aliasData.status).toBe("Success");
+
+			// Query by ?user_id without Auth token (public view, data stripped)
+			const pubReq = new Request(`http://localhost/company/ceo?user_id=${userId}`, {
+				method: "GET",
+			});
+			const pubRes = await route(pubReq);
+			expect(pubRes.status).toBe(200);
+			const pubData = (await pubRes.json()) as {
+				status: string;
+				user_id: number;
+				companies: Array<{ id: number; ceo: number; data?: Record<string, unknown> }>;
+			};
+			expect(pubData.status).toBe("Success");
+			expect(pubData.user_id).toBe(userId);
+			const pubComp = pubData.companies.find((c) => c.id === compId1);
+			expect(pubComp).toBeDefined();
+			expect(pubComp?.data).toBeUndefined(); // Non-authenticated caller does NOT see private data
+		});
+	});
 });

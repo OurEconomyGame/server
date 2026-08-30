@@ -5,6 +5,8 @@ const GET_ROUTES = new Set([
 	"/list/users",
 	"/list/companies",
 	"/company",
+	"/company/ceo",
+	"/companies/ceo",
 	"/company/shareholders",
 	"/portfolio",
 	"/market/depth",

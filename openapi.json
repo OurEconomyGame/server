@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.26.0"
+		"version": "0.27.0"
 	},
 	"paths": {
 		"/version": {
@@ -236,6 +236,60 @@
 												"data": {
 													"type": "object",
 													"description": "Included only if caller is the CEO"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/company/ceo": {
+			"get": {
+				"summary": "Get all companies where a user is CEO",
+				"parameters": [
+					{
+						"name": "user_id",
+						"in": "query",
+						"required": false,
+						"description": "Target User ID (defaults to authenticated user from Auth token)",
+						"schema": {
+							"type": "integer"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "List of companies where user is CEO",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string"
+										},
+										"user_id": {
+											"type": "integer"
+										},
+										"companies": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": { "type": "integer" },
+													"name": { "type": "string" },
+													"founder_id": { "type": "integer" },
+													"type": { "type": "integer" },
+													"last_accessed": { "type": "integer" },
+													"cash": { "type": "number" },
+													"created_at": { "type": "integer" },
+													"ceo": { "type": "integer" },
+													"shares_outstanding": { "type": "number" },
+													"data": { "type": "object" }
 												}
 											}
 										}

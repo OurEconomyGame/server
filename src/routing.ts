@@ -7,6 +7,7 @@ import {
 import { handleCompanyDelete } from "./companies/delete/delete.ts";
 import { foundCompany } from "./companies/found/found.ts";
 import { buyFacility } from "./companies/production/buy.ts";
+import { getCompaniesByCeo } from "./companies/read/ceo.ts";
 import { getCompanyInfo } from "./companies/read/get.ts";
 import { getAllCompaniesInfo } from "./companies/read/list.ts";
 import { getCompanyShareholders } from "./companies/read/shareholders.ts";
@@ -85,6 +86,10 @@ async function handleRequest(request: Request): Promise<Response> {
 
 		case "/company":
 			return Response.json(await getCompanyInfo(params, auth_token));
+
+		case "/company/ceo":
+		case "/companies/ceo":
+			return Response.json(await getCompaniesByCeo(params, auth_token));
 
 		case "/company/shareholders":
 			return Response.json(await getCompanyShareholders(params));
