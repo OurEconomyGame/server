@@ -45,9 +45,31 @@ For inquiries or custom commercial botting licenses, contact via **napp9.com** o
 
 ---
 
-## Craftsmanship & Licensing Enforcement
+## Craftsmanship vs. "AI Slop"
 
-- **Strict BSL & DMCA Enforcement**: The OurEconomy server engine is licensed under the [Business Source License 1.1](./LICENSE.md). Any unauthorized production deployments exceeding the Additional Use Grant (25 registered users), unlicensed redistribution, or license violations will be met with immediate DMCA takedown notices and copyright enforcement.
-- **Architectural Quality**: While 80–90% of this codebase was authored with AI pair-programming assistance, this codebase is engineered with strict human oversight, deterministic relational database modeling, exhaustive unit/integration testing, clean modularity, and strict TypeScript typing. It is as far from "AI slop" as possible.
+While approximately 80–90% of the raw code lines were drafted using AI pair-programming tooling, **this project is as far from "AI slop" as possible.**
+
+### Why Unguided AI Fails (The "AI Slop" Paradigm)
+Unguided, low-effort AI-generated code typically results in:
+- Fragile, un-tested pseudo-code relying on volatile in-memory Javascript objects pretending to be databases.
+- Hallucinated npm dependencies, brittle monolithic single-file dumps, and sloppy copy-paste patterns.
+- Subtle economic exploits, race conditions, floating-point rounding errors, and unhandled boundary cases.
+- Missing data migrations, broken cascading relationship cleanups, and lack of transaction safety.
+
+### What Real Guided Engineering Looks Like in OurEconomy
+Every subsystem in OurEconomy was deliberately architected, directed, refactored, and validated through intensive human-in-the-loop engineering:
+1. **Deterministic Relational Engine**: Uses [CozoDB](https://cozodb.org) on top of RocksDB with declarative Datalog queries, relational integrity constraints, and persistent disk-backed storage.
+2. **Double-Auction Financial Engine**: Full bid-ask orderbook matching with limit orders, partial fills, resting queues, price-surplus refunds, and automated escrow balance settlement.
+3. **Cascading Relational Consistency**: Complete lifecycle cleanup for company dissolutions, user account purges, pro-rata dividend distributions, share splits, and orphaned entity reassignment.
+4. **Exhaustive Zero-Mock Test Suite**: Over 86 automated end-to-end integration tests validating real database writes, HTTP routes, concurrency limits, and financial calculations.
+5. **Production Hardening**: Strict TypeScript typing, rate limiting, domain-scoped CORS, and internal server-side ticker scheduling without client-side exploitation vectors.
+
+---
+
+## Licensing & DMCA Enforcement
+
+- **Strict BSL 1.1 Terms**: The OurEconomy server engine is protected under the [Business Source License 1.1](./LICENSE.md).
+- **DMCA Enforcement**: Any unauthorized production deployments exceeding the Additional Use Grant (25 registered users), unlicensed commercial forks, or redistribution without compliance will be met with immediate DMCA takedown notices and copyright enforcement.
+
 
 
