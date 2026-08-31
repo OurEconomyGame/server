@@ -1,5 +1,6 @@
 import { getAllCompanies } from "../../db/gets.ts";
 import { updateCompanyById } from "../../db/updates.ts";
+import { addCompanyDataLog } from "../helpers/logs.ts";
 import { companyTypes } from "../helpers/types.ts";
 import { Resources } from "../production/resources.ts";
 import type { NpcPurchaseResult, WebStoreData } from "./types.ts";
@@ -59,6 +60,11 @@ export async function executeNpcPurchase(): Promise<NpcPurchaseResult> {
 	chosen.inv[Resources.Electricity] = chosen.elec - reqElec;
 	chosen.d.inventory = chosen.inv;
 	chosen.c.cash += rev;
+
+	addCompanyDataLog(
+		chosen.d,
+		`Sold ${qty} Food to NPC consumer for $${rev}`,
+	);
 
 	await updateCompanyById(chosen.c.id, {
 		cash: chosen.c.cash,

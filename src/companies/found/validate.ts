@@ -71,6 +71,7 @@ export function validateFoundingParams(params: unknown): ValidationResult {
 	const data: Record<string, unknown> = {
 		inventory: createEmptyInventory(),
 		facilities: [],
+		logs: [],
 	};
 
 	return {

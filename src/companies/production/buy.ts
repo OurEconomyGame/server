@@ -2,6 +2,7 @@ import { getCompanyById } from "../../db/gets.ts";
 import { updateCompanyById } from "../../db/updates.ts";
 import { getUserBySessionToken } from "../../sessions/check.ts";
 import { isCompanyCeo } from "../auth.ts";
+import { addCompanyDataLog } from "../helpers/logs.ts";
 import { companyTypes } from "../helpers/types.ts";
 import { BASE_RECIPIES } from "./base-recipies.ts";
 import { Facility, type IFacility } from "./facilities.ts";
@@ -130,6 +131,11 @@ export async function buyFacility(
 
 	const updatedFacilities = [...existingFacilities, facility.toJSON()];
 	const newCash = company.cash - cost;
+
+	addCompanyDataLog(
+		companyData,
+		`Purchased facility '${facilityName}' (${recipe.name}) for $${cost}`,
+	);
 
 	const updatedCompany = await updateCompanyById(company.id, {
 		cash: newCash,

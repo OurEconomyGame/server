@@ -1,6 +1,7 @@
 import { getCompanyById } from "../../db/gets.ts";
 import { updateCompanyById, updateUserById } from "../../db/updates.ts";
 import { getUserBySessionToken } from "../../sessions/check.ts";
+import { addCompanyDataLog } from "../helpers/logs.ts";
 import { companyTypes } from "../helpers/types.ts";
 import { Resources } from "../production/resources.ts";
 import type { StoreBuyResult, WebStoreData } from "./types.ts";
@@ -47,6 +48,11 @@ export async function buyFromWebstore(
 	inv[Resources.Food] = foodStock - quantity;
 	inv[Resources.Electricity] = elecStock - requiredElec;
 	data.inventory = inv;
+
+	addCompanyDataLog(
+		data,
+		`Sold ${quantity} Food to user ${user.name} for $${totalCost}`,
+	);
 
 	const uData = (user.data ?? {}) as { inventory?: Record<number, number> };
 	uData.inventory = uData.inventory ?? {};

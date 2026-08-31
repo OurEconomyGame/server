@@ -3247,4 +3247,80 @@ describe("Routing Suite - route(request)", () => {
 			await deleteSessionById(999994);
 		});
 	});
+
+	describe("30. Company Transaction Logs (data.logs)", () => {
+		test("records purchase and sale events as [text, timestamp] in company data.logs", async () => {
+			const uName = `logger_ceo_${Date.now()}`;
+			const signupRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: uName, secret: "pass123" }),
+				}),
+			);
+			const signupData = (await signupRes.json()) as Record<string, unknown>;
+			const uId = signupData.id as number;
+			const uToken = signupData.random as string;
+			await updateUserCash(uId, 20000);
+
+			// Found Production company
+			const compRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ name: `LogCorp_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const compId = Number(((await compRes.json()) as Record<string, unknown>).id);
+			await updateCompanyCash(compId, 10000);
+
+			// 1. Buy facility -> should log purchase
+			const buyFacRes = await route(
+				new Request("http://localhost/facility/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ company_id: compId, recipe: "water_pump" }),
+				}),
+			);
+			const buyFacData = (await buyFacRes.json()) as { facility_id: string };
+
+			// 2. Sell facility -> should log sale
+			await route(
+				new Request("http://localhost/facility/sell", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ company_id: compId, facility_id: buyFacData.facility_id }),
+				}),
+			);
+
+			// Check company data logs
+			const compDetailsRes = await route(
+				new Request(`http://localhost/company?id=${compId}`, {
+					method: "GET",
+					headers: { Auth: uToken },
+				}),
+			);
+			const compDetails = (await compDetailsRes.json()) as {
+				company: {
+					data: {
+						logs: Array<[string, number]>;
+					};
+				};
+			};
+
+			expect(Array.isArray(compDetails.company.data.logs)).toBe(true);
+			expect(compDetails.company.data.logs.length).toBe(2);
+
+			const log1 = compDetails.company.data.logs[0];
+			expect(log1?.[0]).toContain("Purchased facility");
+			expect(typeof log1?.[1]).toBe("number");
+
+			const log2 = compDetails.company.data.logs[1];
+			expect(log2?.[0]).toContain("Sold facility");
+			expect(typeof log2?.[1]).toBe("number");
+
+			await deleteCompanyById(compId);
+			await deleteUserById(uId);
+		});
+	});
 });
