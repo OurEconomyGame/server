@@ -1,6 +1,9 @@
 import { getAllCompanies } from "../../db/gets.ts";
 import { getUserBySessionToken } from "../../sessions/check.ts";
 
+import type { UserShareholding } from "../../users/get.ts";
+import type { ShareholderInfo } from "./shareholders.ts";
+
 export interface CompanyPublicInfo {
 	id: number;
 	name: string;
@@ -11,6 +14,8 @@ export interface CompanyPublicInfo {
 	created_at: number;
 	ceo: number;
 	shares_outstanding: number;
+	shareholders?: ShareholderInfo[];
+	shareholdings?: UserShareholding[];
 	data?: Record<string, unknown>;
 }
 

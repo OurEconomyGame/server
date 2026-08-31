@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.29.0"
+		"version": "0.30.0"
 	},
 	"paths": {
 		"/version": {
@@ -308,6 +308,34 @@
 												"created_at": { "type": "number" },
 												"ceo": { "type": "number" },
 												"shares_outstanding": { "type": "number" },
+												"shareholders": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"share_id": { "type": "number" },
+															"owner_id": { "type": "number" },
+															"owner_user": { "type": "boolean" },
+															"quantity": { "type": "number" },
+															"percentage": { "type": "number" }
+														}
+													}
+												},
+												"shareholdings": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"share_id": { "type": "number" },
+															"company_id": { "type": "number" },
+															"company_name": { "type": "string" },
+															"company_type": { "type": "number" },
+															"quantity": { "type": "number" },
+															"shares_outstanding": { "type": "number" },
+															"ownership_percentage": { "type": "number" }
+														}
+													}
+												},
 												"data": {
 													"type": "object",
 													"description": "Included only if caller is the CEO"

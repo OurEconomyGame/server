@@ -681,6 +681,11 @@ describe("Routing Suite - route(request)", () => {
 			expect(pubData.status).toBe("Success");
 			expect(pubData.company.id).toBe(compId);
 			expect(pubData.company.data).toBeUndefined();
+			expect(Array.isArray(pubData.company.shareholders)).toBe(true);
+			expect(pubData.company.shareholders.length).toBe(1);
+			expect(pubData.company.shareholders[0].owner_id).toBe(userId);
+			expect(pubData.company.shareholders[0].quantity).toBe(10000);
+			expect(Array.isArray(pubData.company.shareholdings)).toBe(true);
 
 			// CEO query by ID (includes data)
 			const ceoReq = new Request(`http://localhost/company?id=${compId}`, {
@@ -691,10 +696,16 @@ describe("Routing Suite - route(request)", () => {
 			expect(ceoRes.status).toBe(200);
 			const ceoData = (await ceoRes.json()) as {
 				status: string;
-				company: { id: number; data?: unknown };
+				company: {
+					id: number;
+					data?: unknown;
+					shareholders: Array<{ owner_id: number; quantity: number }>;
+					shareholdings: unknown[];
+				};
 			};
 			expect(ceoData.status).toBe("Success");
 			expect(ceoData.company.data).toBeDefined();
+			expect(ceoData.company.shareholders.length).toBe(1);
 
 			// Non-existent company
 			const notFoundReq = new Request("http://localhost/company?id=99999999", {
