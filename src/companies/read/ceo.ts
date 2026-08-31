@@ -48,6 +48,11 @@ export async function getCompaniesByCeo(
 	const ceoCompanies = allCompanies.filter((c) => c.ceo === targetUserId);
 
 	const result: CompanyPublicInfo[] = ceoCompanies.map((c) => {
+		const wage =
+			typeof c.data?.wage === "number" && Number.isFinite(c.data.wage)
+				? (c.data.wage as number)
+				: 10;
+
 		const info: CompanyPublicInfo = {
 			id: c.id,
 			name: c.name,
@@ -58,6 +63,7 @@ export async function getCompaniesByCeo(
 			created_at: c.created_at,
 			ceo: c.ceo,
 			shares_outstanding: c.shares_outstanding,
+			wage,
 		};
 
 		// Include private `data` if authenticated user is the CEO

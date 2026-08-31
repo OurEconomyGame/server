@@ -9,7 +9,7 @@
 	"peerDependencies": {
 		"typescript": "^5"
 	},
-	"version": "0.33.0",
+	"version": "0.34.0",
 	"license": "BSL-1.1",
 	"dependencies": {
 		"cozo-node": "^0.7.6",

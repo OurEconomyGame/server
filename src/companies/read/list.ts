@@ -14,6 +14,7 @@ export interface CompanyPublicInfo {
 	created_at: number;
 	ceo: number;
 	shares_outstanding: number;
+	wage: number;
 	shareholders?: ShareholderInfo[];
 	shareholdings?: UserShareholding[];
 	data?: Record<string, unknown>;
@@ -59,6 +60,11 @@ export async function getAllCompaniesInfo(
 	}
 
 	const result: CompanyPublicInfo[] = filtered.map((c) => {
+		const wage =
+			typeof c.data?.wage === "number" && Number.isFinite(c.data.wage)
+				? (c.data.wage as number)
+				: 10;
+
 		const info: CompanyPublicInfo = {
 			id: c.id,
 			name: c.name,
@@ -69,6 +75,7 @@ export async function getAllCompaniesInfo(
 			created_at: c.created_at,
 			ceo: c.ceo,
 			shares_outstanding: c.shares_outstanding,
+			wage,
 		};
 
 		// Only include private `data` if authenticated user is the CEO

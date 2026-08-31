@@ -90,7 +90,11 @@ export async function getCompanyInfo(
 			ownership_percentage: percentage,
 		});
 	}
-	shareholdings.sort((a, b) => b.quantity - a.quantity);
+	const wage =
+		typeof company.data?.wage === "number" &&
+		Number.isFinite(company.data.wage)
+			? (company.data.wage as number)
+			: 10;
 
 	const companyInfo: CompanyPublicInfo = {
 		id: company.id,
@@ -102,6 +106,7 @@ export async function getCompanyInfo(
 		created_at: company.created_at,
 		ceo: company.ceo,
 		shares_outstanding: company.shares_outstanding,
+		wage,
 		shareholders,
 		shareholdings,
 	};

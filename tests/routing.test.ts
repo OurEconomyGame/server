@@ -691,11 +691,27 @@ describe("Routing Suite - route(request)", () => {
 			expect(pubData.status).toBe("Success");
 			expect(pubData.company.id).toBe(compId);
 			expect(pubData.company.data).toBeUndefined();
+			expect(pubData.company.wage).toBe(10); // default wage is 10
 			expect(Array.isArray(pubData.company.shareholders)).toBe(true);
 			expect(pubData.company.shareholders.length).toBe(1);
 			expect(pubData.company.shareholders[0].owner_id).toBe(userId);
 			expect(pubData.company.shareholders[0].quantity).toBe(10000);
 			expect(Array.isArray(pubData.company.shareholdings)).toBe(true);
+
+			// CEO sets wage to $25
+			await route(
+				new Request("http://localhost/company/wage", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: token },
+					body: JSON.stringify({ company_id: compId, wage: 25 }),
+				}),
+			);
+
+			// Public query without Auth now reflects updated wage of $25
+			const pubWageRes = await route(new Request(`http://localhost/company?id=${compId}`, { method: "GET" }));
+			const pubWageData = (await pubWageRes.json()) as { company: { wage: number; data?: unknown } };
+			expect(pubWageData.company.wage).toBe(25);
+			expect(pubWageData.company.data).toBeUndefined();
 
 			// CEO query by ID (includes data)
 			const ceoReq = new Request(`http://localhost/company?id=${compId}`, {
@@ -709,12 +725,14 @@ describe("Routing Suite - route(request)", () => {
 				company: {
 					id: number;
 					data?: unknown;
+					wage: number;
 					shareholders: Array<{ owner_id: number; quantity: number }>;
 					shareholdings: unknown[];
 				};
 			};
 			expect(ceoData.status).toBe("Success");
 			expect(ceoData.company.data).toBeDefined();
+			expect(ceoData.company.wage).toBe(25);
 			expect(ceoData.company.shareholders.length).toBe(1);
 
 			// Non-existent company
