@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.27.0"
+		"version": "0.28.0"
 	},
 	"paths": {
 		"/version": {
@@ -625,7 +625,7 @@
 		},
 		"/company/work": {
 			"post": {
-				"summary": "Perform a daily work shift at a company (worker receives wage and triggers a random facility production cycle)",
+				"summary": "Perform a work shift at a company (worker receives wage and triggers facility production in descending order; players can work up to 10 times daily across any companies and a company supports daily shifts equal to its facility count)",
 				"parameters": [
 					{
 						"name": "Auth",

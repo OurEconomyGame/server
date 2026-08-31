@@ -1432,7 +1432,7 @@ describe("Routing Suite - route(request)", () => {
 			expect(workResult.production.output).toBe(1); // Water
 			expect(workResult.production.quantity).toBe(500);
 
-			// Worker tries to work again at same company today -> Rejected
+			// Worker tries to work again at same company today -> Exceeds single-facility capacity
 			const dupWork = await route(
 				new Request("http://localhost/company/work", {
 					method: "POST",
@@ -1441,9 +1441,9 @@ describe("Routing Suite - route(request)", () => {
 				}),
 			);
 			const dupWorkData = (await dupWork.json()) as { status: string };
-			expect(dupWorkData.status).toContain("already worked at this company");
+			expect(dupWorkData.status).toContain("maximum daily work capacity");
 
-			// Verify mapped arrays in company.data: workers has workerId, worked has true
+			// Verify company data updated
 			const compProfile = await route(
 				new Request(`http://localhost/company?id=${compId}`, {
 					method: "GET",
@@ -1453,15 +1453,12 @@ describe("Routing Suite - route(request)", () => {
 			const compInfo = (await compProfile.json()) as {
 				company: {
 					data: {
-						workers: number[];
-						worked: boolean[];
+						daily_shifts_count: number;
 						inventory: Record<number, number>;
 					};
 				};
 			};
-			expect(compInfo.company.data.workers).toContain(workerId);
-			const workerIdx = compInfo.company.data.workers.indexOf(workerId);
-			expect(compInfo.company.data.worked[workerIdx]).toBe(true);
+			expect(compInfo.company.data.daily_shifts_count).toBe(1);
 			expect(compInfo.company.data.inventory[1]).toBe(500); // 500 water
 
 			await deleteCompanyById(compId);
@@ -1469,7 +1466,7 @@ describe("Routing Suite - route(request)", () => {
 			await deleteUserById(workerId);
 		});
 
-		test("Worker slots are limited by facility count and execute facilities in descending order", async () => {
+		test("Worker slots are limited by facility count and execute facilities in descending order, player can work multiple times", async () => {
 			const ceoRes = await route(
 				new Request("https://app.napp9.com/signup", {
 					method: "POST",
@@ -1513,24 +1510,14 @@ describe("Routing Suite - route(request)", () => {
 				}),
 			);
 
-			// Create 3 Workers
+			// Create Worker
 			const w1 = (await (await route(new Request("https://app.napp9.com/signup", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ hi: `dw1_${Date.now()}`, secret: "p" }),
 			}))).json()) as Record<string, unknown>;
-			const w2 = (await (await route(new Request("https://app.napp9.com/signup", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ hi: `dw2_${Date.now()}`, secret: "p" }),
-			}))).json()) as Record<string, unknown>;
-			const w3 = (await (await route(new Request("https://app.napp9.com/signup", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ hi: `dw3_${Date.now()}`, secret: "p" }),
-			}))).json()) as Record<string, unknown>;
 
-			// Worker 1 works (slot 0 -> highest facility index: manual_grain_farm -> Grain)
+			// Same worker works Shift 1 at company (slot 0 -> highest facility index: manual_grain_farm -> Grain)
 			const res1 = (await (await route(new Request("http://localhost/company/work", {
 				method: "POST",
 				headers: { "Content-Type": "application/json", Auth: w1.random as string },
@@ -1540,29 +1527,27 @@ describe("Routing Suite - route(request)", () => {
 			expect(res1.production.facility).toBe("New Grain Farm");
 			expect(res1.production.output).toBe(2); // Grain
 
-			// Worker 2 works (slot 1 -> next facility index: water_pump -> Water)
+			// Same worker works Shift 2 at company (slot 1 -> next facility index: water_pump -> Water)
 			const res2 = (await (await route(new Request("http://localhost/company/work", {
 				method: "POST",
-				headers: { "Content-Type": "application/json", Auth: w2.random as string },
+				headers: { "Content-Type": "application/json", Auth: w1.random as string },
 				body: JSON.stringify({ company_id: compId }),
 			}))).json()) as { status: string; production: { facility: string; output: number } };
 			expect(res2.status).toBe("Success");
 			expect(res2.production.facility).toBe("Old Water Pump");
 			expect(res2.production.output).toBe(1); // Water
 
-			// Worker 3 tries to work (company only has 2 facilities -> 2/2 filled -> Rejected)
+			// Worker tries Shift 3 (company only has 2 facilities -> 2/2 shifts used today -> Rejected)
 			const res3 = (await (await route(new Request("http://localhost/company/work", {
 				method: "POST",
-				headers: { "Content-Type": "application/json", Auth: w3.random as string },
+				headers: { "Content-Type": "application/json", Auth: w1.random as string },
 				body: JSON.stringify({ company_id: compId }),
 			}))).json()) as { status: string };
-			expect(res3.status).toContain("no open worker positions (2/2 filled)");
+			expect(res3.status).toContain("maximum daily work capacity for its facilities (2/2 shifts used today)");
 
 			await deleteCompanyById(compId);
 			await deleteUserById(ceoId);
 			await deleteUserById(w1.id as number);
-			await deleteUserById(w2.id as number);
-			await deleteUserById(w3.id as number);
 		});
 	});
 
@@ -1776,21 +1761,6 @@ describe("Routing Suite - route(request)", () => {
 			};
 			expect(quitData.status).toBe("Success");
 			expect(quitData.quit_company_id).toBe(cId);
-
-			// Verify company worker roster is now empty
-			const compProfile = await route(
-				new Request(`http://localhost/company?id=${cId}`, {
-					method: "GET",
-					headers: { Auth: ceoToken },
-				}),
-			);
-			const compInfo = (await compProfile.json()) as {
-				company: {
-					data: { workers: number[]; worked: boolean[] };
-				};
-			};
-			expect(compInfo.company.data.workers).toEqual([]);
-			expect(compInfo.company.data.worked).toEqual([]);
 
 			await deleteCompanyById(cId);
 			await deleteUserById(ceoId);

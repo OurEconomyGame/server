@@ -25,17 +25,16 @@ export async function fireWorker(
 	if (!company) return { status: "Company not found" };
 
 	const cData = (company.data ?? {}) as CompanyWorkData;
-	cData.workers = Array.isArray(cData.workers) ? cData.workers : [];
-	cData.worked = Array.isArray(cData.worked) ? cData.worked : [];
-
-	const idx = cData.workers.indexOf(workerId);
-	if (idx === -1) {
-		return { status: "Worker is not employed at this company" };
+	if (Array.isArray(cData.workers)) {
+		const idx = cData.workers.indexOf(workerId);
+		if (idx !== -1) {
+			cData.workers.splice(idx, 1);
+			if (Array.isArray(cData.worked)) {
+				cData.worked.splice(idx, 1);
+			}
+			await updateCompanyById(companyId, { data: cData });
+		}
 	}
 
-	cData.workers.splice(idx, 1);
-	cData.worked.splice(idx, 1);
-
-	await updateCompanyById(companyId, { data: cData });
 	return { status: "Success", fired_worker_id: workerId };
 }

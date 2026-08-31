@@ -28,6 +28,7 @@ export interface CompanyWorkData {
 	wage?: number;
 	workers?: number[];
 	worked?: boolean[];
+	daily_shifts_count?: number;
 	last_work_day?: string;
 	[key: string]: unknown;
 }
