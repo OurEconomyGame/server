@@ -32,6 +32,7 @@ import {
 	handleMarketSell,
 } from "./market/index.ts";
 import {
+	handleDeleteMessage,
 	handleListMessages,
 	handleReadMessage,
 	handleReceiveMessages,
@@ -286,6 +287,11 @@ async function handleRequest(request: Request): Promise<Response> {
 		case "/message/receive":
 			return Response.json(
 				await handleReceiveMessages(postParams, params, auth_token),
+			);
+
+		case "/message/delete":
+			return Response.json(
+				await handleDeleteMessage(postParams, params, auth_token),
 			);
 
 		default:

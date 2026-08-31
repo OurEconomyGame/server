@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.42.0"
+		"version": "0.43.0"
 	},
 	"servers": [
 		{
@@ -1920,6 +1920,58 @@
 												}
 											}
 										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/message/delete": {
+			"post": {
+				"summary": "Delete a message by ID",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the sender, recipient, or Admin (UID 0)",
+						"schema": { "type": "string" }
+					},
+					{
+						"name": "message_id",
+						"in": "query",
+						"required": false,
+						"description": "Message numeric ID",
+						"schema": { "type": "integer" }
+					}
+				],
+				"requestBody": {
+					"required": false,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"message_id": { "type": "integer", "description": "Message ID to delete" },
+									"id": { "type": "integer", "description": "Message ID to delete" }
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Message deletion result",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"message_id": { "type": "integer" },
+										"deleted": { "type": "boolean" }
 									}
 								}
 							}

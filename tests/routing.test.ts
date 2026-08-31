@@ -3466,8 +3466,33 @@ describe("Routing Suite - route(request)", () => {
 			expect(receiveData.status).toBe("Success");
 			expect(receiveData.messages.some((m) => m.id === msgId)).toBe(true);
 
+			// 8. Bob deletes message (/message/delete?message_id=)
+			const deleteRes = await route(
+				new Request(`http://localhost/message/delete?message_id=${msgId}`, {
+					method: "POST",
+					headers: { Auth: u2Token },
+				}),
+			);
+			const deleteData = (await deleteRes.json()) as {
+				status: string;
+				message_id: number;
+				deleted: boolean;
+			};
+			expect(deleteData.status).toBe("Success");
+			expect(deleteData.deleted).toBe(true);
+			expect(deleteData.message_id).toBe(msgId);
+
+			// Verify message is gone
+			const verifyDeleted = await route(
+				new Request(`http://localhost/message/read?id=${msgId}`, {
+					method: "GET",
+					headers: { Auth: u2Token },
+				}),
+			);
+			const verifyDeletedData = (await verifyDeleted.json()) as { status: string };
+			expect(verifyDeletedData.status).toContain("not found");
+
 			// Clean up
-			await deleteMessageById(msgId);
 			await deleteSessionById(999993);
 			await deleteUserById(u1Id);
 			await deleteUserById(u2Id);
