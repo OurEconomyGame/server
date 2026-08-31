@@ -1,7 +1,7 @@
 import { getCompanyById } from "../../db/gets.ts";
 import { updateCompanyById, updateUserById } from "../../db/updates.ts";
 import { getUserBySessionToken } from "../../sessions/check.ts";
-import { executeRandomProduction } from "./produce.ts";
+import { executeProduction } from "./produce.ts";
 import { assignWorkerSlot } from "./slots.ts";
 import {
 	type CompanyWorkData,
@@ -48,7 +48,7 @@ export async function performWork(
 		return { status: `Company cannot afford to pay wage ($${wage})` };
 	}
 
-	const prod = executeRandomProduction(cData.facilities, cData.inventory);
+	const prod = executeProduction(cData.facilities, cData.inventory, slot.idx);
 	if (prod.error) {
 		return { status: "The Company is being IFFFY today", error: prod.error };
 	}

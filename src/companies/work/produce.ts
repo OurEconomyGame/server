@@ -2,11 +2,12 @@ import type { IFacility } from "../production/facilities.ts";
 import type { ProductionCycleResult } from "./types.ts";
 
 /**
- * Triggers a production cycle on a randomly selected active company facility.
+ * Triggers a production cycle on company facilities in descending order.
  */
-export function executeRandomProduction(
+export function executeProduction(
 	facilities: IFacility[] | undefined,
 	inventory: Record<number, number>,
+	workerIdx?: number,
 ): ProductionCycleResult {
 	if (!facilities || facilities.length === 0) {
 		return { error: "No facilities available to produce" };
@@ -17,7 +18,10 @@ export function executeRandomProduction(
 		return { error: "All facilities are currently inactive" };
 	}
 
-	const fac = active[Math.floor(Math.random() * active.length)]!;
+	// Process facilities in descending order (highest index down to 0)
+	const idx = typeof workerIdx === "number" && workerIdx >= 0 ? workerIdx : 0;
+	const targetIndex = active.length - 1 - (idx % active.length);
+	const fac = active[targetIndex]!;
 	const inputs = fac.recipe?.inputs ?? {};
 
 	for (const [resKey, reqQty] of Object.entries(inputs)) {
@@ -43,6 +47,13 @@ export function executeRandomProduction(
 	const level = Math.max(1, fac.level ?? 1);
 	const outQty = (fac.recipe.outputQuant ?? 1) * level;
 	inventory[outType] = (inventory[outType] ?? 0) + outQty;
+	fac.last_used_day = Math.floor(Date.now() / 86400000);
 
 	return { facility: fac.name, output: outType, quantity: outQty };
 }
+
+/**
+ * Backwards compatibility alias for executeProduction.
+ */
+export const executeRandomProduction = executeProduction;
+

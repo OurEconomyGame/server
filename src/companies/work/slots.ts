@@ -25,8 +25,14 @@ export function assignWorkerSlot(
 		return { idx: existing };
 	}
 
-	if (cData.workers.length >= 10) {
-		return { error: "Company has no open worker positions (10/10 filled)" };
+	const maxWorkers = Array.isArray(cData.facilities)
+		? cData.facilities.length
+		: 0;
+
+	if (cData.workers.length >= maxWorkers) {
+		return {
+			error: `Company has no open worker positions (${maxWorkers}/${maxWorkers} filled)`,
+		};
 	}
 
 	cData.workers.push(userId);

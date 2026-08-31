@@ -1468,6 +1468,102 @@ describe("Routing Suite - route(request)", () => {
 			await deleteUserById(ceoId);
 			await deleteUserById(workerId);
 		});
+
+		test("Worker slots are limited by facility count and execute facilities in descending order", async () => {
+			const ceoRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: `desc_ceo_${Date.now()}`, secret: "p" }),
+				}),
+			);
+			const ceoData = (await ceoRes.json()) as Record<string, unknown>;
+			const ceoToken = ceoData.random as string;
+			const ceoId = ceoData.id as number;
+			await updateUserCash(ceoId, 10000);
+
+			const compRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ name: `DescCo_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const compId = Number(((await compRes.json()) as Record<string, unknown>).id);
+			await updateCompanyCash(compId, 10000);
+
+			// Buy Facility 1: water_pump (output: Water = 1, qty: 500)
+			await route(
+				new Request("http://localhost/facility/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ company_id: compId, recipe: "water_pump", name: "Old Water Pump" }),
+				}),
+			);
+
+			// Stock water for Manual Grain Farm
+			await addCompanyResource(compId, 1, 1000);
+
+			// Buy Facility 2: manual_grain_farm (output: Grain = 2, qty: 150)
+			await route(
+				new Request("http://localhost/facility/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ company_id: compId, recipe: "manual_grain_farm", name: "New Grain Farm" }),
+				}),
+			);
+
+			// Create 3 Workers
+			const w1 = (await (await route(new Request("https://app.napp9.com/signup", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ hi: `dw1_${Date.now()}`, secret: "p" }),
+			}))).json()) as Record<string, unknown>;
+			const w2 = (await (await route(new Request("https://app.napp9.com/signup", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ hi: `dw2_${Date.now()}`, secret: "p" }),
+			}))).json()) as Record<string, unknown>;
+			const w3 = (await (await route(new Request("https://app.napp9.com/signup", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ hi: `dw3_${Date.now()}`, secret: "p" }),
+			}))).json()) as Record<string, unknown>;
+
+			// Worker 1 works (slot 0 -> highest facility index: manual_grain_farm -> Grain)
+			const res1 = (await (await route(new Request("http://localhost/company/work", {
+				method: "POST",
+				headers: { "Content-Type": "application/json", Auth: w1.random as string },
+				body: JSON.stringify({ company_id: compId }),
+			}))).json()) as { status: string; production: { facility: string; output: number } };
+			expect(res1.status).toBe("Success");
+			expect(res1.production.facility).toBe("New Grain Farm");
+			expect(res1.production.output).toBe(2); // Grain
+
+			// Worker 2 works (slot 1 -> next facility index: water_pump -> Water)
+			const res2 = (await (await route(new Request("http://localhost/company/work", {
+				method: "POST",
+				headers: { "Content-Type": "application/json", Auth: w2.random as string },
+				body: JSON.stringify({ company_id: compId }),
+			}))).json()) as { status: string; production: { facility: string; output: number } };
+			expect(res2.status).toBe("Success");
+			expect(res2.production.facility).toBe("Old Water Pump");
+			expect(res2.production.output).toBe(1); // Water
+
+			// Worker 3 tries to work (company only has 2 facilities -> 2/2 filled -> Rejected)
+			const res3 = (await (await route(new Request("http://localhost/company/work", {
+				method: "POST",
+				headers: { "Content-Type": "application/json", Auth: w3.random as string },
+				body: JSON.stringify({ company_id: compId }),
+			}))).json()) as { status: string };
+			expect(res3.status).toContain("no open worker positions (2/2 filled)");
+
+			await deleteCompanyById(compId);
+			await deleteUserById(ceoId);
+			await deleteUserById(w1.id as number);
+			await deleteUserById(w2.id as number);
+			await deleteUserById(w3.id as number);
+		});
 	});
 
 	describe("18. Capital Management & Roster Resignation (/company/deposit, /company/dividend, /company/fire, /company/quit)", () => {
@@ -1596,7 +1692,14 @@ describe("Routing Suite - route(request)", () => {
 			const cId = Number(((await cRes.json()) as Record<string, unknown>).id);
 			await updateCompanyCash(cId, 2000);
 
-			// Buy a facility for Fire_Co
+			// Buy 2 facilities for Fire_Co (allows 2 worker slots)
+			await route(
+				new Request("http://localhost/facility/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ company_id: cId, recipe: "water_pump" }),
+				}),
+			);
 			await route(
 				new Request("http://localhost/facility/buy", {
 					method: "POST",
