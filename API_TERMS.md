@@ -17,9 +17,13 @@ Welcome to the **OurEconomy** Public Game API. These API Terms of Service ("Term
 
 ## 2. Prohibition on Unauthorized Botting & Purchased Botting Licenses
 
-1. **Default Prohibition on Automated Gameplay**: All forms of unapproved automated play, algorithmic trading bots, automated worker scripts, auto-clickers, macros, headless script agents, or automated scrapers are **strictly prohibited** by default.
-2. **Commercial Botting License Requirement**: Automated gameplay, script agents, and botting are permitted **solely and exclusively** under an official **Commercial Botting License that MUST BE PURCHASED** and explicitly granted in writing by the server runner/operator (contactable via napp9.com / xillion@napp9.com; note: xillion@napp9.com is an inbound-only receiving address that does not send outgoing emails—please include alternate return contact information in all communications and expect replies from a different email address).
-3. **Enforcement & Penalties**: Any accounts, companies, sessions, or IP addresses found engaging in automated play without a valid, purchased botting license are subject to immediate termination, complete economic asset forfeiture, and permanent network-level banning without refund or notice.
+1. **Definition & Measurement of Botting (Request Frequency Amendment)**:
+   - Botting and automated usage on this API are measured **strictly by request frequency and server resource consumption**, rather than subjective behavioral heuristics (we do not measure whether an interaction pattern appears "human-like").
+   - The fundamental standard is: **Is this draining server resources faster than a human can?**
+   - If an automated script, tool, or bot operates at a rate that does not drain server resources faster than a human can, the server operator **will not prosecute, penalize, or enforce anti-botting sanctions** against that usage.
+   - Any automated tool, high-frequency script, or bot that exceeds normal human resource consumption rates is classified as unauthorized botting and remains strictly prohibited unless licensed.
+2. **Commercial Botting License Requirement**: High-frequency automated gameplay, high-rate script agents, and resource-intensive botting are permitted **solely and exclusively** under an official **Commercial Botting License that MUST BE PURCHASED** and explicitly granted in writing by the server runner/operator (contactable via napp9.com / xillion@napp9.com; note: xillion@napp9.com is an inbound-only receiving address that does not send outgoing emails—please include alternate return contact information in all communications and expect replies from a different email address).
+3. **Enforcement & Penalties**: Any accounts, companies, sessions, or IP addresses found engaging in automated play exceeding human resource consumption rates without a valid, purchased botting license are subject to immediate termination, complete economic asset forfeiture, and permanent network-level banning without refund or notice.
 
 ---
 
