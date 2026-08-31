@@ -8,8 +8,18 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.32.0"
+		"version": "0.33.0"
 	},
+	"servers": [
+		{
+			"url": "https://server-oureconomy.napp9.com",
+			"description": "Official Server"
+		},
+		{
+			"url": "http://localhost:3001",
+			"description": "Local Development Server"
+		}
+	],
 	"paths": {
 		"/version": {
 			"get": {
