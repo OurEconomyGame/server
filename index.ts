@@ -16,3 +16,4 @@ const server = serve({
 	},
 });
 console.log("Bun Server up for Our Economy Version: ", details.version);
+console.log(`Server available at: ${server.url}`);
