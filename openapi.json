@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.36.0"
+		"version": "0.37.0"
 	},
 	"servers": [
 		{
@@ -798,6 +798,62 @@
 										"balance": {
 											"type": "number"
 										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/facility/sell": {
+			"post": {
+				"summary": "Sell/decommission a production facility and refund its full cash value (CEO only)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of company CEO",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["company_id", "facility_id"],
+								"properties": {
+									"company_id": {
+										"type": "integer",
+										"description": "ID of the Production company"
+									},
+									"facility_id": {
+										"type": "string",
+										"description": "Unique facility ID to decommission and sell"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Facility sale confirmation and cash refund",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"facility_id": { "type": "string" },
+										"refund": { "type": "number" },
+										"balance": { "type": "number" },
+										"remaining_facilities": { "type": "number" }
 									}
 								}
 							}

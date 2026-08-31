@@ -1171,6 +1171,50 @@ describe("Routing Suite - route(request)", () => {
 			expect(compDetails.company.data.facilities[0]?.recipe.name).toBe(
 				"Geothermal Power Plant",
 			);
+
+			const facilityId = buyData.facility_id;
+
+			// Sell facility - unauthorized / non-CEO rejected
+			const nonCeoRes = await route(
+				new Request("http://localhost/facility/sell", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: "some_random_bad_token" },
+					body: JSON.stringify({ company_id: compId, facility_id: facilityId }),
+				}),
+			);
+			expect(((await nonCeoRes.json()) as { status: string }).status).toContain("ghosts");
+
+			// Sell facility - successfully sells, refunds $500, and returns new balance of $5000
+			const sellRes = await route(
+				new Request("http://localhost/facility/sell", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: token },
+					body: JSON.stringify({ company_id: compId, facility_id: facilityId }),
+				}),
+			);
+			expect(sellRes.status).toBe(200);
+			const sellData = (await sellRes.json()) as {
+				status: string;
+				facility_id: string;
+				refund: number;
+				balance: number;
+				remaining_facilities: number;
+			};
+			expect(sellData.status).toBe("Success");
+			expect(sellData.facility_id).toBe(facilityId);
+			expect(sellData.refund).toBe(500);
+			expect(sellData.balance).toBe(5000);
+			expect(sellData.remaining_facilities).toBe(0);
+
+			// Selling again fails with not found
+			const sellAgainRes = await route(
+				new Request("http://localhost/facility/sell", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: token },
+					body: JSON.stringify({ company_id: compId, facility_id: facilityId }),
+				}),
+			);
+			expect(((await sellAgainRes.json()) as { status: string }).status).toContain("Facility not found");
 		});
 	});
 

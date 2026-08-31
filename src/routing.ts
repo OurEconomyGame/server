@@ -7,6 +7,7 @@ import {
 import { handleCompanyDelete } from "./companies/delete/delete.ts";
 import { foundCompany } from "./companies/found/found.ts";
 import { buyFacility } from "./companies/production/buy.ts";
+import { sellFacility } from "./companies/production/sell.ts";
 import { getCompaniesByCeo } from "./companies/read/ceo.ts";
 import { getCompanyInfo } from "./companies/read/get.ts";
 import { getAllCompaniesInfo } from "./companies/read/list.ts";
@@ -135,6 +136,14 @@ async function handleRequest(request: Request): Promise<Response> {
 					status: "You cannot purchase facilities with carrier pigeons.",
 				});
 			return Response.json(await buyFacility(postParams, auth_token));
+
+		case "/facility/sell":
+		case "/facility/delete":
+			if (method !== "POST")
+				return Response.json({
+					status: "POST method required to sell facilities",
+				});
+			return Response.json(await sellFacility(postParams, auth_token));
 
 		case "/company/work":
 		case "/work":
