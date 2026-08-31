@@ -33,6 +33,7 @@ import handleOptions from "./options.ts";
 import { getUserPortfolio } from "./shares/portfolio.ts";
 import { createUser } from "./users/create.ts";
 import { handleUserDelete } from "./users/delete.ts";
+import { getUserPublicInfo } from "./users/get.ts";
 import { getAllUsersPublicInfo } from "./users/list.ts";
 import { login } from "./users/login.ts";
 
@@ -80,6 +81,9 @@ async function handleRequest(request: Request): Promise<Response> {
 
 		case "/list/users":
 			return Response.json(await getAllUsersPublicInfo(params));
+
+		case "/user":
+			return Response.json(await getUserPublicInfo(params));
 
 		case "/list/companies":
 			return Response.json(await getAllCompaniesInfo(params, auth_token));

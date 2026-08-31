@@ -2514,4 +2514,126 @@ describe("Routing Suite - route(request)", () => {
 			expect(pubComp?.data).toBeUndefined(); // Non-authenticated caller does NOT see private data
 		});
 	});
+
+	describe("25. Single User Public Profile (/user)", () => {
+		test("retrieves user public info and shareholdings by ?id and ?name, including ID 0", async () => {
+			const uName = `user_prof_${Date.now()}`;
+			const signupRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: uName, secret: "secret123" }),
+				}),
+			);
+			const signupData = (await signupRes.json()) as Record<string, unknown>;
+			const uId = signupData.id as number;
+			const uToken = signupData.random as string;
+			await updateUserCash(uId, 10000);
+
+			// User founds a company (grants 1000 shares to founder)
+			const cName = `UserCorp_${Date.now()}`;
+			const compRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ name: cName, type: 0 }),
+				}),
+			);
+			const compId = Number(((await compRes.json()) as Record<string, unknown>).id);
+
+			// Query by ?id
+			const resById = await route(
+				new Request(`http://localhost/user?id=${uId}`, { method: "GET" }),
+			);
+			expect(resById.status).toBe(200);
+			const dataById = (await resById.json()) as {
+				status: string;
+				user: {
+					id: number;
+					username: string;
+					joined: number;
+					active: number;
+					shareholdings: Array<{
+						share_id: number;
+						company_id: number;
+						company_name: string;
+						company_type: number;
+						quantity: number;
+						shares_outstanding: number;
+						ownership_percentage: number;
+					}>;
+					cash?: unknown;
+					data?: unknown;
+				} | null;
+			};
+			expect(dataById.status).toBe("Success");
+			expect(dataById.user).toBeDefined();
+			expect(dataById.user?.id).toBe(uId);
+			expect(dataById.user?.username).toBe(uName);
+			expect(typeof dataById.user?.joined).toBe("number");
+			expect(typeof dataById.user?.active).toBe("number");
+			expect(dataById.user?.cash).toBeUndefined();
+			expect(dataById.user?.data).toBeUndefined();
+			expect(dataById.user?.shareholdings.length).toBe(1);
+			expect(dataById.user?.shareholdings[0].company_id).toBe(compId);
+			expect(dataById.user?.shareholdings[0].company_name).toBe(cName);
+			expect(dataById.user?.shareholdings[0].quantity).toBe(10000);
+			expect(dataById.user?.shareholdings[0].ownership_percentage).toBe(100);
+
+			// Query by ?name
+			const resByName = await route(
+				new Request(`http://localhost/user?name=${uName}`, { method: "GET" }),
+			);
+			expect(resByName.status).toBe(200);
+			const dataByName = (await resByName.json()) as typeof dataById;
+			expect(dataByName.status).toBe("Success");
+			expect(dataByName.user?.id).toBe(uId);
+			expect(dataByName.user?.username).toBe(uName);
+
+			// Query root user (ID 0) works for ID 0
+			const resRootId = await route(
+				new Request("http://localhost/user?id=0", { method: "GET" }),
+			);
+			expect(resRootId.status).toBe(200);
+			const dataRootId = (await resRootId.json()) as typeof dataById;
+			expect(dataRootId.status).toBe("Success");
+			expect(dataRootId.user?.id).toBe(0);
+			expect(typeof dataRootId.user?.username).toBe("string");
+
+			// Query root user by name
+			const rootUsername = dataRootId.user?.username ?? "admin";
+			const resRootName = await route(
+				new Request(`http://localhost/user?name=${rootUsername}`, { method: "GET" }),
+			);
+			expect(resRootName.status).toBe(200);
+			const dataRootName = (await resRootName.json()) as typeof dataById;
+			expect(dataRootName.status).toBe("Success");
+			expect(dataRootName.user?.id).toBe(0);
+			expect(dataRootName.user?.username).toBe(rootUsername);
+
+			// Non-existent user
+			const notFoundRes = await route(
+				new Request("http://localhost/user?id=99999999", { method: "GET" }),
+			);
+			expect(notFoundRes.status).toBe(200);
+			const notFoundData = (await notFoundRes.json()) as {
+				status: string;
+				user: null;
+			};
+			expect(notFoundData.status).toBe("User not found");
+			expect(notFoundData.user).toBeNull();
+
+			// Missing query parameter
+			const missingRes = await route(
+				new Request("http://localhost/user", { method: "GET" }),
+			);
+			expect(missingRes.status).toBe(200);
+			const missingData = (await missingRes.json()) as {
+				status: string;
+				user: null;
+			};
+			expect(missingData.status).toBe("Missing search parameters");
+			expect(missingData.user).toBeNull();
+		});
+	});
 });
