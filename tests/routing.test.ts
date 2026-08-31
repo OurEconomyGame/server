@@ -1596,6 +1596,15 @@ describe("Routing Suite - route(request)", () => {
 			const cId = Number(((await cRes.json()) as Record<string, unknown>).id);
 			await updateCompanyCash(cId, 2000);
 
+			// Buy a facility for Fire_Co
+			await route(
+				new Request("http://localhost/facility/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: ceoToken },
+					body: JSON.stringify({ company_id: cId, recipe: "water_pump" }),
+				}),
+			);
+
 			// Create Worker 1 and Worker 2
 			const w1Res = await route(
 				new Request("https://app.napp9.com/signup", {

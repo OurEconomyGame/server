@@ -49,6 +49,9 @@ export async function performWork(
 	}
 
 	const prod = executeRandomProduction(cData.facilities, cData.inventory);
+	if (prod.error) {
+		return { status: "The Company is being IFFFY today", error: prod.error };
+	}
 	company.cash -= wage;
 	cData.worked![slot.idx] = true;
 	user.cash += wage;
