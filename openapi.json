@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.41.0"
+		"version": "0.42.0"
 	},
 	"servers": [
 		{
@@ -1717,6 +1717,209 @@
 										"works_used": { "type": "number" },
 										"works_left": { "oneOf": [{ "type": "number" }, { "type": "string" }] },
 										"works_max": { "oneOf": [{ "type": "number" }, { "type": "string" }] }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/message/send": {
+			"post": {
+				"summary": "Send a message to another user",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the sender",
+						"schema": { "type": "string" }
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["receiver_id", "content"],
+								"properties": {
+									"receiver_id": { "type": "integer", "description": "Recipient numeric user ID" },
+									"to": { "oneOf": [{ "type": "integer" }, { "type": "string" }], "description": "Recipient user ID or username" },
+									"subject": { "type": "string", "description": "Message subject line" },
+									"content": { "type": "string", "description": "Message content body" }
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Message send result",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"id": { "type": "integer" },
+										"sender_id": { "type": "integer" },
+										"receiver_id": { "type": "integer" },
+										"subject": { "type": "string" },
+										"content": { "type": "string" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/message/list": {
+			"get": {
+				"summary": "List message subjects and senders directed to the user (or any user if Admin UID 0)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the user or Admin (UID 0)",
+						"schema": { "type": "string" }
+					},
+					{
+						"name": "id",
+						"in": "query",
+						"required": false,
+						"description": "Optional target user ID (allowed for account owner or Admin UID 0)",
+						"schema": { "type": "integer" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "List of message summaries",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"user_id": { "type": "integer" },
+										"messages": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": { "type": "integer" },
+													"sender_id": { "type": "integer" },
+													"receiver_id": { "type": "integer" },
+													"subject": { "type": "string" }
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/message/read": {
+			"get": {
+				"summary": "Read full content of a specific message by ID",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the sender, recipient, or Admin (UID 0)",
+						"schema": { "type": "string" }
+					},
+					{
+						"name": "id",
+						"in": "query",
+						"required": true,
+						"description": "Message numeric ID",
+						"schema": { "type": "integer" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Full message content",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"message": {
+											"type": "object",
+											"properties": {
+												"id": { "type": "integer" },
+												"sender_id": { "type": "integer" },
+												"receiver_id": { "type": "integer" },
+												"subject": { "type": "string" },
+												"content": { "type": "string" }
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/message/receive": {
+			"get": {
+				"summary": "Receive message(s) directed to the user",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the recipient or Admin (UID 0)",
+						"schema": { "type": "string" }
+					},
+					{
+						"name": "id",
+						"in": "query",
+						"required": false,
+						"description": "Optional target user ID (allowed for owner or Admin UID 0)",
+						"schema": { "type": "integer" }
+					},
+					{
+						"name": "message_id",
+						"in": "query",
+						"required": false,
+						"description": "Optional specific message ID to fetch",
+						"schema": { "type": "integer" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Received messages",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"user_id": { "type": "integer" },
+										"messages": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": { "type": "integer" },
+													"sender_id": { "type": "integer" },
+													"receiver_id": { "type": "integer" },
+													"subject": { "type": "string" },
+													"content": { "type": "string" }
+												}
+											}
+										}
 									}
 								}
 							}

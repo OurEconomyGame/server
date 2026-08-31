@@ -260,3 +260,43 @@ export async function insertOffer(
 		return false;
 	}
 }
+
+/**
+ * Inserts a new message record into the database.
+ *
+ * @param id - Unique message ID.
+ * @param sender_id - User ID of the sender.
+ * @param receiver_id - User ID of the recipient.
+ * @param content - Text message body.
+ * @param subject - Message subject line.
+ * @returns A promise resolving to true on success, false on failure.
+ */
+export async function insertMessage(
+	id: number,
+	sender_id: number,
+	receiver_id: number,
+	content: string,
+	subject: string,
+): Promise<boolean> {
+	try {
+		await query(
+			`
+			?[id, sender_id, receiver_id, content, subject] <- [
+				[$id, $sender_id, $receiver_id, $content, $subject]
+			]
+			:insert message { id => sender_id, receiver_id, content, subject }
+			`,
+			{
+				id,
+				sender_id,
+				receiver_id,
+				content,
+				subject,
+			},
+		);
+		return true;
+	} catch (error: unknown) {
+		console.error("Failed to insert message:", error);
+		return false;
+	}
+}

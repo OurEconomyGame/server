@@ -31,6 +31,12 @@ import {
 	handleMarketDepth,
 	handleMarketSell,
 } from "./market/index.ts";
+import {
+	handleListMessages,
+	handleReadMessage,
+	handleReceiveMessages,
+	handleSendMessage,
+} from "./messages/index.ts";
 import handleOptions from "./options.ts";
 import { getUserPortfolio } from "./shares/portfolio.ts";
 import { createUser } from "./users/create.ts";
@@ -264,6 +270,23 @@ async function handleRequest(request: Request): Promise<Response> {
 		case "/use/food":
 			const { consumeFood } = await import("./users/consume.ts");
 			return Response.json(await consumeFood(auth_token));
+
+		case "/message/send":
+			return Response.json(await handleSendMessage(postParams, auth_token));
+
+		case "/message/list":
+		case "/message/lise":
+			return Response.json(await handleListMessages(params, auth_token));
+
+		case "/message/read":
+			return Response.json(
+				await handleReadMessage(postParams, params, auth_token),
+			);
+
+		case "/message/receive":
+			return Response.json(
+				await handleReceiveMessages(postParams, params, auth_token),
+			);
 
 		default:
 			return new Response("You are utterless and hopelessly lost. Get a GPS.", {

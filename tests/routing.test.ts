@@ -3323,4 +3323,154 @@ describe("Routing Suite - route(request)", () => {
 			await deleteUserById(uId);
 		});
 	});
+
+	describe("31. Messaging System (/message/send, /message/list, /message/lise, /message/read, /message/receive)", () => {
+		test("sends, lists, reads, and receives messages with admin read overrides", async () => {
+			const { insertSession } = await import("../src/db/inserts.ts");
+			const { deleteSessionById, deleteMessageById } = await import("../src/db/deletes.ts");
+
+			const adminToken = "admin_msg_tok_1";
+			await insertSession(999993, 0, adminToken, 0);
+
+			// Create User 1 (Alice)
+			const user1Name = `alice_msg_${Date.now()}`;
+			const res1 = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: user1Name, secret: "pass1" }),
+				}),
+			);
+			const u1Data = (await res1.json()) as Record<string, unknown>;
+			const u1Id = u1Data.id as number;
+			const u1Token = u1Data.random as string;
+
+			// Create User 2 (Bob)
+			const user2Name = `bob_msg_${Date.now()}`;
+			const res2 = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: user2Name, secret: "pass2" }),
+				}),
+			);
+			const u2Data = (await res2.json()) as Record<string, unknown>;
+			const u2Id = u2Data.id as number;
+			const u2Token = u2Data.random as string;
+
+			// 1. Alice sends a message to Bob
+			const sendRes = await route(
+				new Request("http://localhost/message/send", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: u1Token },
+					body: JSON.stringify({
+						receiver_id: u2Id,
+						subject: "Trade Proposal",
+						content: "Would you like to trade 10 Metal for 20 Food?",
+					}),
+				}),
+			);
+			expect(sendRes.status).toBe(200);
+			const sendData = (await sendRes.json()) as {
+				status: string;
+				id: number;
+				sender_id: number;
+				receiver_id: number;
+				subject: string;
+				content: string;
+			};
+			expect(sendData.status).toBe("Success");
+			expect(sendData.sender_id).toBe(u1Id);
+			expect(sendData.receiver_id).toBe(u2Id);
+			expect(sendData.subject).toBe("Trade Proposal");
+			const msgId = sendData.id;
+
+			// 2. Bob lists his messages (/message/list)
+			const listRes = await route(
+				new Request("http://localhost/message/list", {
+					method: "GET",
+					headers: { Auth: u2Token },
+				}),
+			);
+			const listData = (await listRes.json()) as {
+				status: string;
+				user_id: number;
+				messages: Array<{ id: number; sender_id: number; receiver_id: number; subject: string }>;
+			};
+			expect(listData.status).toBe("Success");
+			expect(listData.user_id).toBe(u2Id);
+			expect(listData.messages.some((m) => m.id === msgId && m.sender_id === u1Id && m.subject === "Trade Proposal")).toBe(true);
+
+			// 3. Alice tries to list Bob's messages -> should fail (unauthorized)
+			const unauthorizedListRes = await route(
+				new Request(`http://localhost/message/list?id=${u2Id}`, {
+					method: "GET",
+					headers: { Auth: u1Token },
+				}),
+			);
+			const unauthData = (await unauthorizedListRes.json()) as { status: string };
+			expect(unauthData.status).toContain("Unauthorized");
+
+			// 4. Admin lists Bob's messages via /message/lise?id= (alias & query support)
+			const adminListRes = await route(
+				new Request(`http://localhost/message/lise?id=${u2Id}`, {
+					method: "GET",
+					headers: { Auth: adminToken },
+				}),
+			);
+			const adminListData = (await adminListRes.json()) as {
+				status: string;
+				user_id: number;
+				messages: Array<{ id: number; sender_id: number; subject: string }>;
+			};
+			expect(adminListData.status).toBe("Success");
+			expect(adminListData.user_id).toBe(u2Id);
+			expect(adminListData.messages.some((m) => m.id === msgId)).toBe(true);
+
+			// 5. Bob reads message content (/message/read)
+			const readRes = await route(
+				new Request(`http://localhost/message/read?id=${msgId}`, {
+					method: "GET",
+					headers: { Auth: u2Token },
+				}),
+			);
+			const readData = (await readRes.json()) as {
+				status: string;
+				message: { id: number; content: string; subject: string };
+			};
+			expect(readData.status).toBe("Success");
+			expect(readData.message.content).toBe("Would you like to trade 10 Metal for 20 Food?");
+
+			// 6. Admin reads message content (/message/read)
+			const adminReadRes = await route(
+				new Request(`http://localhost/message/read?id=${msgId}`, {
+					method: "GET",
+					headers: { Auth: adminToken },
+				}),
+			);
+			const adminReadData = (await adminReadRes.json()) as { status: string; message: { id: number } };
+			expect(adminReadData.status).toBe("Success");
+			expect(adminReadData.message.id).toBe(msgId);
+
+			// 7. Bob receives message (/message/receive)
+			const receiveRes = await route(
+				new Request(`http://localhost/message/receive?id=${u2Id}`, {
+					method: "GET",
+					headers: { Auth: u2Token },
+				}),
+			);
+			const receiveData = (await receiveRes.json()) as {
+				status: string;
+				messages: Array<{ id: number; content: string }>;
+			};
+			expect(receiveData.status).toBe("Success");
+			expect(receiveData.messages.some((m) => m.id === msgId)).toBe(true);
+
+			// Clean up
+			await deleteMessageById(msgId);
+			await deleteSessionById(999993);
+			await deleteUserById(u1Id);
+			await deleteUserById(u2Id);
+		});
+	});
 });

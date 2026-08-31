@@ -181,3 +181,25 @@ export async function deleteOfferById(id: number): Promise<boolean> {
 		return false;
 	}
 }
+
+/**
+ * Deletes a message record by message ID.
+ *
+ * @param id - The numeric message ID to delete.
+ * @returns A promise that resolves to true if deleted, or false if not found or failed.
+ */
+export async function deleteMessageById(id: number): Promise<boolean> {
+	try {
+		await query(
+			`
+			?[id] <- [[$id]]
+			:rm message { id }
+			`,
+			{ id },
+		);
+		return true;
+	} catch (error: unknown) {
+		console.error(`Failed to delete message by ID ${id}:`, error);
+		return false;
+	}
+}

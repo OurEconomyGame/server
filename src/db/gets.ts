@@ -55,6 +55,14 @@ export interface OfferRecord {
 	unitPrice: number;
 }
 
+export interface MessageRecord {
+	id: number;
+	sender_id: number;
+	receiver_id: number;
+	content: string;
+	subject: string;
+}
+
 /**
  * Retrieves a session record by token.
  *
@@ -414,5 +422,68 @@ export async function getAllOffersByCompany(
 		?[id, company_id, resource, quantity, unitPrice] := *offer{id, company_id, resource, quantity, unitPrice}, company_id == $company_id
 		`,
 		{ company_id },
+	);
+}
+
+/**
+ * Retrieves a single message by ID.
+ *
+ * @param id - The numeric message ID.
+ * @returns A promise resolving to the MessageRecord if found, null otherwise.
+ */
+export async function getMessageById(id: number): Promise<MessageRecord | null> {
+	const messages = await query<MessageRecord>(
+		`
+		?[id, sender_id, receiver_id, content, subject] := *message{id, sender_id, receiver_id, content, subject}, id == $id
+		`,
+		{ id },
+	);
+	return messages.length > 0 ? (messages[0] ?? null) : null;
+}
+
+/**
+ * Retrieves all messages directed to a specific receiver ID.
+ *
+ * @param receiver_id - The recipient user ID.
+ * @returns A promise resolving to an array of matching MessageRecords.
+ */
+export async function getMessagesByReceiver(
+	receiver_id: number,
+): Promise<MessageRecord[]> {
+	return query<MessageRecord>(
+		`
+		?[id, sender_id, receiver_id, content, subject] := *message{id, sender_id, receiver_id, content, subject}, receiver_id == $receiver_id
+		`,
+		{ receiver_id },
+	);
+}
+
+/**
+ * Retrieves all messages sent by a specific sender ID.
+ *
+ * @param sender_id - The sender user ID.
+ * @returns A promise resolving to an array of matching MessageRecords.
+ */
+export async function getMessagesBySender(
+	sender_id: number,
+): Promise<MessageRecord[]> {
+	return query<MessageRecord>(
+		`
+		?[id, sender_id, receiver_id, content, subject] := *message{id, sender_id, receiver_id, content, subject}, sender_id == $sender_id
+		`,
+		{ sender_id },
+	);
+}
+
+/**
+ * Retrieves all messages in the database.
+ *
+ * @returns A promise resolving to an array of all MessageRecords.
+ */
+export async function getAllMessages(): Promise<MessageRecord[]> {
+	return query<MessageRecord>(
+		`
+		?[id, sender_id, receiver_id, content, subject] := *message{id, sender_id, receiver_id, content, subject}
+		`,
 	);
 }
