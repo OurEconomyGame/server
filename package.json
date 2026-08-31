@@ -9,7 +9,10 @@
 	"peerDependencies": {
 		"typescript": "^5"
 	},
-	"version": "0.41.0",
+	"version": "0.41.1",
+	"scripts": {
+		"migrate": "bun src/db/migrate.ts"
+	},
 	"license": "BSL-1.1",
 	"dependencies": {
 		"cozo-node": "^0.7.6",

@@ -249,4 +249,20 @@ describe("DB CRUD Operations Suite", () => {
 		expect(offerDeleted).toBe(true);
 		expect(await getOfferById(offerId)).toBeNull();
 	});
+
+	test("verifySchema succeeds on valid schema, and migrateSchema can be invoked manually", async () => {
+		const { verifySchema, EXPECTED_SCHEMA } = await import("../src/db/init.ts");
+		const { migrateSchema } = await import("../src/db/migrate.ts");
+
+		expect(EXPECTED_SCHEMA.company).toContain("cash");
+		expect(EXPECTED_SCHEMA.user).toContain("cash");
+		expect(EXPECTED_SCHEMA.order).toContain("resource");
+		expect(EXPECTED_SCHEMA.offer).toContain("resource");
+
+		// Should not throw on valid initialized database
+		await expect(verifySchema()).resolves.toBeUndefined();
+
+		// Standalone migration tool executes cleanly
+		await expect(migrateSchema()).resolves.toBeUndefined();
+	});
 });
