@@ -11,6 +11,7 @@ export interface IFacility {
 	constructionCost: RecipeInputs;
 	level: number;
 	active: boolean;
+	last_used_day: number;
 }
 
 /**
@@ -22,6 +23,7 @@ export class Facility implements IFacility {
 	public recipe: BaseRecipe;
 	public constructionCost: RecipeInputs;
 	public level: number;
+	public last_used_day: number;
 	public active: boolean;
 
 	constructor(
@@ -31,6 +33,7 @@ export class Facility implements IFacility {
 		constructionCost: Partial<RecipeInputs> = {},
 		level = 1,
 		active = true,
+		last_used_day = 0,
 	) {
 		this.id = id;
 		this.name = name;
@@ -55,6 +58,7 @@ export class Facility implements IFacility {
 		};
 		this.level = Math.max(1, level);
 		this.active = active;
+		this.last_used_day = last_used_day; //Basically forever ago.
 	}
 
 	/**
@@ -90,6 +94,7 @@ export class Facility implements IFacility {
 			constructionCost: { ...this.constructionCost },
 			level: this.level,
 			active: this.active,
+			last_used_day: this.last_used_day,
 		};
 	}
 
@@ -104,6 +109,7 @@ export class Facility implements IFacility {
 			json.constructionCost,
 			json.level,
 			json.active,
+			json.last_used_day,
 		);
 	}
 }
