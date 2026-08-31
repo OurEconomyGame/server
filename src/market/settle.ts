@@ -75,6 +75,28 @@ export async function addUserResource(
 }
 
 /**
+ * Deducts resource quantity from a user's inventory.
+ */
+export async function deductUserResource(
+	user_id: number,
+	resource: number,
+	quantity: number,
+): Promise<boolean> {
+	const user = await getUserById(user_id);
+	if (!user) return false;
+	const data = { ...((user.data as Record<string, unknown>) ?? {}) } as {
+		inventory?: Record<number, number>;
+	};
+	const inv = { ...(data.inventory ?? {}) };
+	const current = inv[resource] ?? 0;
+	if (current < quantity) return false;
+	inv[resource] = current - quantity;
+	data.inventory = inv;
+	const updated = await updateUserById(user_id, { data });
+	return updated !== null;
+}
+
+/**
  * Adds (or deducts if negative) cash to a user's personal balance.
  */
 export async function addUserCash(

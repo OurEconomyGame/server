@@ -71,7 +71,13 @@ export async function handleMarketBuy(
 		};
 	}
 
-	// 2. User Consumer Sink Order
+	// 2. User Consumer Sink Order (Admin UID 0 only)
+	if (user.id !== 0) {
+		return {
+			status: "Only the admin (UID 0) can place user consumer buy sinks",
+		};
+	}
+
 	const result = await executeUserBuy(user.id, resource, quantity, price);
 	if (!result.success) {
 		return { status: result.error ?? "Failed to execute user buy order" };

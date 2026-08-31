@@ -2,7 +2,12 @@ import { deleteOfferById, deleteOrderById } from "../db/deletes.ts";
 import { getOfferById, getOrderById } from "../db/gets.ts";
 import { getUserBySessionToken } from "../sessions/check.ts";
 import { isCompanyCeo } from "./auth.ts";
-import { addCompanyCash, addCompanyResource, addUserCash } from "./settle.ts";
+import {
+	addCompanyCash,
+	addCompanyResource,
+	addUserCash,
+	addUserResource,
+} from "./settle.ts";
 
 export interface CancelPayload {
 	company_id?: number;
@@ -80,7 +85,7 @@ export async function handleMarketCancel(
 		return { status: "Provide either order_id or offer_id to cancel" };
 	}
 
-	// 2. User order cancellation
+	// 2. User order / offer cancellation
 	if (typeof p.order_id === "number") {
 		const order = await getOrderById(p.order_id);
 		if (!order || order.company_id !== -user.id) {
@@ -94,6 +99,21 @@ export async function handleMarketCancel(
 			cancelled: "order",
 			id: order.id,
 			refunded_cash: refund,
+		};
+	}
+
+	if (typeof p.offer_id === "number") {
+		const offer = await getOfferById(p.offer_id);
+		if (!offer || offer.company_id !== -user.id) {
+			return { status: "Offer not found for this user" };
+		}
+		await addUserResource(user.id, offer.resource, offer.quantity);
+		await deleteOfferById(offer.id);
+		return {
+			status: "Success",
+			cancelled: "offer",
+			id: offer.id,
+			refunded_resource_qty: offer.quantity,
 		};
 	}
 

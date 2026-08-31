@@ -82,6 +82,7 @@ export async function executeUserBuy(
 
 	const totalMaxCost = quantity * unitPrice;
 	if (user.id === 0 && user.cash < totalMaxCost) {
+		await addUserCash(user_id, totalMaxCost - user.cash);
 		user.cash = totalMaxCost;
 	}
 

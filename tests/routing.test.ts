@@ -1966,8 +1966,57 @@ describe("Routing Suite - route(request)", () => {
 		});
 	});
 
-	describe("21. User Market Orders & Consumer Sinks (/market/buy, /market/cancel)", () => {
-		test("allows user to place buy orders without company_id, matching against market offers", async () => {
+	describe("21. User Market Orders & Consumer Sinks (/market/buy, /market/sell, /market/cancel)", () => {
+		test("rejects non-admin users from placing user buy or sell order sinks without company_id", async () => {
+			const userRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						hi: `regular_user_${Date.now()}`,
+						secret: "pass",
+					}),
+				}),
+			);
+			const userData = (await userRes.json()) as Record<string, unknown>;
+			const userToken = userData.random as string;
+			const userId = userData.id as number;
+			await updateUserCash(userId, 5000);
+
+			// Attempt user buy sink
+			const buyRes = await route(
+				new Request("http://localhost/market/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: userToken },
+					body: JSON.stringify({
+						resource: Resources.RawOre,
+						quantity: 10,
+						unitPrice: 5,
+					}),
+				}),
+			);
+			const buyData = (await buyRes.json()) as { status: string };
+			expect(buyData.status).toContain("Only the admin (UID 0) can place user consumer buy sinks");
+
+			// Attempt user sell sink
+			const sellRes = await route(
+				new Request("http://localhost/market/sell", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: userToken },
+					body: JSON.stringify({
+						resource: Resources.RawOre,
+						quantity: 10,
+						unitPrice: 5,
+					}),
+				}),
+			);
+			const sellData = (await sellRes.json()) as { status: string };
+			expect(sellData.status).toContain("Only the admin (UID 0) can place user sell order sinks");
+
+			await deleteUserById(userId);
+		});
+
+		test("allows Admin (UID 0) to place buy and sell sinks without company_id and cancel resting sinks", async () => {
 			// 1. Create a seller company with CEO
 			const ceoRes = await route(
 				new Request("https://app.napp9.com/signup", {
@@ -2012,29 +2061,17 @@ describe("Routing Suite - route(request)", () => {
 					}),
 				}),
 			);
-			expect((await sellRes.json() as Record<string, unknown>).status).toBe("Success");
+			expect(((await sellRes.json()) as Record<string, unknown>).status).toBe("Success");
 
-			// 2. Create consumer user
-			const buyerRes = await route(
-				new Request("https://app.napp9.com/signup", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						hi: `sink_consumer_${Date.now()}`,
-						secret: "pass",
-					}),
-				}),
-			);
-			const buyerData = (await buyerRes.json()) as Record<string, unknown>;
-			const buyerToken = buyerData.random as string;
-			const buyerId = buyerData.id as number;
-			await updateUserCash(buyerId, 1000);
+			// 2. Admin token for UID 0
+			const { createSession } = await import("../src/sessions/create.ts");
+			const adminToken = await createSession(0);
 
-			// 3. User places market buy order for 30 RawOre at $15 (higher than $12 offer)
+			// 3. Admin places market buy order sink for 30 RawOre at $15 (matches $12 offer)
 			const buyRes = await route(
 				new Request("http://localhost/market/buy", {
 					method: "POST",
-					headers: { "Content-Type": "application/json", Auth: buyerToken },
+					headers: { "Content-Type": "application/json", Auth: adminToken },
 					body: JSON.stringify({
 						resource: Resources.RawOre,
 						quantity: 30,
@@ -2053,21 +2090,11 @@ describe("Routing Suite - route(request)", () => {
 			expect(buyData.filled_quantity).toBe(30);
 			expect(buyData.remaining_quantity).toBe(0);
 
-			// Check seller company exists
-			const sellerComp = await getCompanyById(compId);
-			expect(typeof sellerComp?.cash).toBe("number");
-
-			// Check user received 30 RawOre in inventory and was charged correctly
-			const buyerUser = await getUserById(buyerId);
-			const buyerInv = (buyerUser?.data as { inventory?: Record<number, number> })?.inventory;
-			expect(buyerInv?.[Resources.RawOre]).toBe(30);
-			expect(buyerUser?.cash).toBeLessThanOrEqual(880);
-
-			// 4. User places resting order and cancels it
+			// 4. Admin places resting buy sink and cancels it
 			const restingBuyRes = await route(
 				new Request("http://localhost/market/buy", {
 					method: "POST",
-					headers: { "Content-Type": "application/json", Auth: buyerToken },
+					headers: { "Content-Type": "application/json", Auth: adminToken },
 					body: JSON.stringify({
 						resource: Resources.RawOre,
 						quantity: 10,
@@ -2085,29 +2112,65 @@ describe("Routing Suite - route(request)", () => {
 			const restingOrderId = restingBuyData.resting_order_id;
 			expect(typeof restingOrderId).toBe("number");
 
-			// Cancel resting order
-			const cancelRes = await route(
+			// Cancel resting buy order
+			const cancelBuyRes = await route(
 				new Request("http://localhost/market/cancel", {
 					method: "POST",
-					headers: { "Content-Type": "application/json", Auth: buyerToken },
+					headers: { "Content-Type": "application/json", Auth: adminToken },
 					body: JSON.stringify({
 						order_id: restingOrderId,
 					}),
 				}),
 			);
-			const cancelData = (await cancelRes.json()) as {
+			const cancelBuyData = (await cancelBuyRes.json()) as {
 				status: string;
 				cancelled: string;
-				refunded_cash: number;
 			};
-			expect(cancelData.status).toBe("Success");
-			expect(cancelData.cancelled).toBe("order");
-			expect(cancelData.refunded_cash).toBe(50);
+			expect(cancelBuyData.status).toBe("Success");
+			expect(cancelBuyData.cancelled).toBe("order");
+
+			// 5. Admin places resting sell sink and cancels it
+			const restingSellRes = await route(
+				new Request("http://localhost/market/sell", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: adminToken },
+					body: JSON.stringify({
+						resource: Resources.RawOre,
+						quantity: 25,
+						unitPrice: 100, // Above market
+					}),
+				}),
+			);
+			const restingSellData = (await restingSellRes.json()) as {
+				status: string;
+				resting_offer_id: number;
+				remaining_quantity: number;
+			};
+			expect(restingSellData.status).toBe("Success");
+			expect(restingSellData.remaining_quantity).toBe(25);
+			const restingOfferId = restingSellData.resting_offer_id;
+			expect(typeof restingOfferId).toBe("number");
+
+			// Cancel resting sell offer
+			const cancelSellRes = await route(
+				new Request("http://localhost/market/cancel", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: adminToken },
+					body: JSON.stringify({
+						offer_id: restingOfferId,
+					}),
+				}),
+			);
+			const cancelSellData = (await cancelSellRes.json()) as {
+				status: string;
+				cancelled: string;
+			};
+			expect(cancelSellData.status).toBe("Success");
+			expect(cancelSellData.cancelled).toBe("offer");
 
 			// Clean up
 			await deleteCompanyById(compId);
 			await deleteUserById(ceoId);
-			await deleteUserById(buyerId);
 		});
 	});
 
