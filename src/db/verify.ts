@@ -30,6 +30,7 @@ export const EXPECTED_SCHEMA: Record<string, string[]> = {
 	shares: ["id", "owner_id", "owner_user", "quantity", "owned_id"],
 	order: ["id", "company_id", "resource", "quantity", "unitPrice"],
 	offer: ["id", "company_id", "resource", "quantity", "unitPrice"],
+	message: ["id", "sender_id", "receiver_id", "content", "subject"],
 };
 
 /**
