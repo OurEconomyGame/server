@@ -13,13 +13,20 @@ export interface PortfolioHolding {
 
 /**
  * Retrieves the authenticated user's portfolio of shares across all owned companies.
+ * Admin (UID 0) can specify ?user_id= to view any user's portfolio.
  *
  * @param auth_token - Session token required for user authentication.
+ * @param params - Optional query parameters with target user_id for admin.
  * @returns Object with status and array of portfolio holdings.
  */
 export async function getUserPortfolio(
 	auth_token: string | null,
-): Promise<{ status: string; portfolio: PortfolioHolding[] }> {
+	params?: Record<string, string> | null,
+): Promise<{
+	status: string;
+	user_id?: number;
+	portfolio: PortfolioHolding[];
+}> {
 	const token = auth_token ?? "";
 	const user = await getUserBySessionToken(token);
 
@@ -27,7 +34,19 @@ export async function getUserPortfolio(
 		return { status: "Unauthorized", portfolio: [] };
 	}
 
-	const userShares = await getSharesByOwner(user.id, true);
+	let targetUserId = user.id;
+	if (
+		params?.user_id !== undefined ||
+		params?.id !== undefined ||
+		params?.user !== undefined
+	) {
+		const reqId = Number(params.user_id ?? params.id ?? params.user);
+		if (Number.isFinite(reqId) && (user.id === 0 || user.id === reqId)) {
+			targetUserId = reqId;
+		}
+	}
+
+	const userShares = await getSharesByOwner(targetUserId, true);
 	const holdings: PortfolioHolding[] = [];
 
 	for (const share of userShares) {
@@ -53,5 +72,5 @@ export async function getUserPortfolio(
 	// Sort holdings by quantity descending
 	holdings.sort((a, b) => b.quantity - a.quantity);
 
-	return { status: "Success", portfolio: holdings };
+	return { status: "Success", user_id: targetUserId, portfolio: holdings };
 }

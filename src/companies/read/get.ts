@@ -127,7 +127,7 @@ export async function getCompanyInfo(
 			{}) as Record<number, number>;
 	}
 
-	if (user && user.id === company.ceo) {
+	if (user && (user.id === company.ceo || user.id === 0)) {
 		companyInfo.data = company.data;
 	}
 

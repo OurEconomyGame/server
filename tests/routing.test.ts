@@ -3135,4 +3135,116 @@ describe("Routing Suite - route(request)", () => {
 			await deleteUserById(uId);
 		});
 	});
+
+	describe("29. Admin Infinite Read Access (UID 0)", () => {
+		test("allows admin to inspect private data across companies, users, portfolios, and work quotas", async () => {
+			const adminToken = "admin_infinite_read_token_1";
+			const { insertSession } = await import("../src/db/inserts.ts");
+			const { deleteSessionById } = await import("../src/db/deletes.ts");
+			await insertSession(999994, 0, adminToken, 0);
+
+			// Create regular user and company
+			const uName = `regular_ceo_${Date.now()}`;
+			const signupRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: uName, secret: "secret123" }),
+				}),
+			);
+			const signupData = (await signupRes.json()) as Record<string, unknown>;
+			const uId = signupData.id as number;
+			const uToken = signupData.random as string;
+			await updateUserCash(uId, 5000);
+
+			const compRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ name: `PrivateCorp_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const compId = Number(((await compRes.json()) as Record<string, unknown>).id);
+
+			// Regular non-CEO query -> no private company data
+			const nonCeoRes = await route(
+				new Request(`http://localhost/company?id=${compId}`, {
+					method: "GET",
+				}),
+			);
+			const nonCeoData = (await nonCeoRes.json()) as { company: { data?: unknown } };
+			expect(nonCeoData.company.data).toBeUndefined();
+
+			// Admin query -> gets private company data
+			const adminCompRes = await route(
+				new Request(`http://localhost/company?id=${compId}`, {
+					method: "GET",
+					headers: { Auth: adminToken },
+				}),
+			);
+			const adminCompData = (await adminCompRes.json()) as { company: { data?: unknown } };
+			expect(adminCompData.company.data).toBeDefined();
+
+			// Admin query /list/companies -> gets private company data
+			const adminListRes = await route(
+				new Request(`http://localhost/list/companies`, {
+					method: "GET",
+					headers: { Auth: adminToken },
+				}),
+			);
+			const adminListData = (await adminListRes.json()) as Array<{ id: number; data?: unknown }>;
+			const targetInList = adminListData.find((c) => c.id === compId);
+			expect(targetInList?.data).toBeDefined();
+
+			// Admin query /user -> gets private user profile (cash, email, data)
+			const adminUserRes = await route(
+				new Request(`http://localhost/user?id=${uId}`, {
+					method: "GET",
+					headers: { Auth: adminToken },
+				}),
+			);
+			const adminUserData = (await adminUserRes.json()) as {
+				user: { id: number; cash?: number; email?: string; data?: unknown };
+			};
+			expect(adminUserData.user.cash).toBe(4500); // 5000 - 500 founding fee
+			expect(adminUserData.user.email).toBeDefined();
+			expect(adminUserData.user.data).toBeDefined();
+
+			// Admin query /portfolio for target user
+			const adminPortRes = await route(
+				new Request(`http://localhost/portfolio?user_id=${uId}`, {
+					method: "GET",
+					headers: { Auth: adminToken },
+				}),
+			);
+			const adminPortData = (await adminPortRes.json()) as {
+				status: string;
+				user_id?: number;
+				portfolio: Array<{ company_id: number; quantity: number }>;
+			};
+			expect(adminPortData.status).toBe("Success");
+			expect(adminPortData.user_id).toBe(uId);
+			expect(adminPortData.portfolio.length).toBeGreaterThanOrEqual(1);
+
+			// Admin query /user/work for target user
+			const adminWorkRes = await route(
+				new Request(`http://localhost/user/work?user_id=${uId}`, {
+					method: "GET",
+					headers: { Auth: adminToken },
+				}),
+			);
+			const adminWorkData = (await adminWorkRes.json()) as {
+				status: string;
+				user_id: number;
+				works_left: number | string;
+			};
+			expect(adminWorkData.status).toBe("Success");
+			expect(adminWorkData.user_id).toBe(uId);
+			expect(adminWorkData.works_left).toBe(20);
+
+			await deleteCompanyById(compId);
+			await deleteUserById(uId);
+			await deleteSessionById(999994);
+		});
+	});
 });

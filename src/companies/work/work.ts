@@ -1,5 +1,5 @@
 import { getServerResetEpoch } from "../../admin/reset.ts";
-import { getCompanyById } from "../../db/gets.ts";
+import { getCompanyById, getUserById } from "../../db/gets.ts";
 import { updateCompanyById, updateUserById } from "../../db/updates.ts";
 import { getUserBySessionToken } from "../../sessions/check.ts";
 import { executeProduction } from "./produce.ts";
@@ -134,26 +134,44 @@ export interface UserWorkStatusResponse {
 }
 
 /**
- * Retrieves the authenticated user's current daily work shift status and remaining shifts.
+ * Retrieves the daily work quota status for a player.
+ * Admin (UID 0) can specify ?user_id= to check any user's daily work limits.
  *
- * @param authToken - Session token required for user authentication.
+ * @param authToken - Session token from request headers.
+ * @param params - Optional query parameters with target user_id for admin.
  * @returns Work shift usage, remaining work shifts, and company IDs worked today.
  */
 export async function getUserWorkStatus(
 	authToken: string | null,
+	params?: Record<string, string> | null,
 ): Promise<UserWorkStatusResponse> {
 	if (!authToken) {
 		return { status: "Authentication token required" };
 	}
 
-	const user = await getUserBySessionToken(authToken);
-	if (!user) {
+	const caller = await getUserBySessionToken(authToken);
+	if (!caller) {
 		return { status: "Invalid session token" };
+	}
+
+	let targetUser = caller;
+	if (
+		params?.user_id !== undefined ||
+		params?.id !== undefined ||
+		params?.user !== undefined
+	) {
+		const reqId = Number(params.user_id ?? params.id ?? params.user);
+		if (Number.isFinite(reqId) && (caller.id === 0 || caller.id === reqId)) {
+			const found = await getUserById(reqId);
+			if (found) {
+				targetUser = found;
+			}
+		}
 	}
 
 	const today = getTodayUtc();
 	const resetEpoch = getServerResetEpoch();
-	const uData = (user.data ?? {}) as {
+	const uData = (targetUser.data ?? {}) as {
 		daily_works?: UserDailyWork;
 		last_reset_epoch?: number;
 	};
@@ -170,12 +188,12 @@ export async function getUserWorkStatus(
 			? uData.daily_works!.companies
 			: [];
 
-	const isAdmin = user.id === 0;
+	const isAdmin = targetUser.id === 0;
 
 	return {
 		status: "Success",
-		user_id: user.id,
-		username: user.name,
+		user_id: targetUser.id,
+		username: targetUser.name,
 		works_used: count,
 		works_left: isAdmin ? "unlimited" : Math.max(0, 20 - count),
 		works_max: isAdmin ? "unlimited" : 20,

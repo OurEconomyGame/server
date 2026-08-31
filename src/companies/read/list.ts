@@ -95,8 +95,8 @@ export async function getAllCompaniesInfo(
 			info.inventory = (c.data?.inventory ?? {}) as Record<number, number>;
 		}
 
-		// Only include private `data` if authenticated user is the CEO
-		if (user && user.id === c.ceo) {
+		// Only include private `data` if authenticated user is the CEO or Admin
+		if (user && (user.id === c.ceo || user.id === 0)) {
 			info.data = c.data;
 		}
 

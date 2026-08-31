@@ -26,7 +26,7 @@ export async function isCompanyCeo(
 		return false;
 	}
 
-	return company.ceo === user.id;
+	return company.ceo === user.id || user.id === 0;
 }
 
 export default isCompanyCeo;

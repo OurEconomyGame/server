@@ -80,8 +80,8 @@ export async function getCompaniesByCeo(
 			info.inventory = (c.data?.inventory ?? {}) as Record<number, number>;
 		}
 
-		// Include private `data` if authenticated user is the CEO
-		if (authUser && authUser.id === c.ceo) {
+		// Include private `data` if authenticated user is the CEO or Admin
+		if (authUser && (authUser.id === c.ceo || authUser.id === 0)) {
 			info.data = c.data;
 		}
 

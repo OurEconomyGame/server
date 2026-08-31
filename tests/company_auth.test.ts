@@ -76,10 +76,17 @@ describe("Company & Market Auth Wrapper (isCompanyCeo)", () => {
 		expect(await isCompanyCeo(otherToken, companyId)).toBe(false);
 		expect(await isMarketCompanyCeo(otherToken, companyId)).toBe(false);
 
+		// Admin user (UID 0) -> true
+		const adminToken = "admin_auth_test_tok";
+		await insertSession(80003, 0, adminToken, 0);
+		expect(await isCompanyCeo(adminToken, companyId)).toBe(true);
+		expect(await isMarketCompanyCeo(adminToken, companyId)).toBe(true);
+
 		// Clean up
 		await deleteCompanyById(companyId);
 		await deleteSessionById(80001);
 		await deleteSessionById(80002);
+		await deleteSessionById(80003);
 		await deleteUserById(ceoUserId);
 		await deleteUserById(otherUserId);
 	});

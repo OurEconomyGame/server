@@ -87,14 +87,14 @@ async function handleRequest(request: Request): Promise<Response> {
 			return new Response(Bun.file("./openapi.json"));
 
 		case "/list/users":
-			return Response.json(await getAllUsersPublicInfo(params));
+			return Response.json(await getAllUsersPublicInfo(params, auth_token));
 
 		case "/user":
-			return Response.json(await getUserPublicInfo(params));
+			return Response.json(await getUserPublicInfo(params, auth_token));
 
 		case "/user/work":
 		case "/work/status":
-			return Response.json(await getUserWorkStatus(auth_token));
+			return Response.json(await getUserWorkStatus(auth_token, params));
 
 		case "/list/companies":
 			return Response.json(await getAllCompaniesInfo(params, auth_token));
@@ -110,7 +110,7 @@ async function handleRequest(request: Request): Promise<Response> {
 			return Response.json(await getCompanyShareholders(params));
 
 		case "/portfolio":
-			return Response.json(await getUserPortfolio(auth_token));
+			return Response.json(await getUserPortfolio(auth_token, params));
 
 		case "/signup":
 			if (method !== "POST")

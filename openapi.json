@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.39.0"
+		"version": "0.40.0"
 	},
 	"servers": [
 		{
@@ -124,10 +124,19 @@
 				"summary": "Get a user's public info and shareholdings by id or name",
 				"parameters": [
 					{
+						"name": "Auth",
+						"in": "header",
+						"required": false,
+						"description": "Optional session token to expose private details if caller is the user or Admin (UID 0)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "id",
 						"in": "query",
 						"required": false,
-						"description": "User ID to search for",
+						"description": "User numeric ID",
 						"schema": {
 							"type": "integer"
 						}
@@ -136,7 +145,7 @@
 						"name": "name",
 						"in": "query",
 						"required": false,
-						"description": "Username to search for",
+						"description": "User username",
 						"schema": {
 							"type": "string"
 						}
@@ -144,7 +153,7 @@
 				],
 				"responses": {
 					"200": {
-						"description": "Public user info and shareholdings",
+						"description": "User info and shareholdings (includes cash, email, data, inventory if owner or admin)",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -168,6 +177,18 @@
 												},
 												"active": {
 													"type": "number"
+												},
+												"cash": {
+													"type": "number"
+												},
+												"email": {
+													"type": "string"
+												},
+												"inventory": {
+													"type": "object"
+												},
+												"data": {
+													"type": "object"
 												},
 												"shareholdings": {
 													"type": "array",

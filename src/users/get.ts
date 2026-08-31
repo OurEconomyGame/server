@@ -6,6 +6,7 @@ import {
 	type UserRecord,
 } from "../db/gets.ts";
 import { insertUser } from "../db/inserts.ts";
+import { getUserBySessionToken } from "../sessions/check.ts";
 
 export interface UserShareholding {
 	share_id: number;
@@ -23,6 +24,10 @@ export interface UserPublicProfile {
 	joined: number;
 	active: number;
 	shareholdings: UserShareholding[];
+	cash?: number;
+	email?: string;
+	data?: Record<string, unknown>;
+	inventory?: Record<number, number>;
 }
 
 export interface GetUserResponse {
@@ -32,12 +37,15 @@ export interface GetUserResponse {
 
 /**
  * Retrieves public information for a single user by ID or Username, including their shareholdings.
+ * If authenticated by the user or admin (UID 0), includes private fields (cash, email, data, inventory).
  *
  * @param params - Search parameters containing `id` or `name`.
- * @returns An object with status and public user profile or null.
+ * @param auth_token - Optional session token for private field visibility.
+ * @returns An object with status and user profile or null.
  */
 export async function getUserPublicInfo(
 	params?: Record<string, string> | null,
+	auth_token?: string | null,
 ): Promise<GetUserResponse> {
 	if (
 		!params ||
@@ -120,14 +128,26 @@ export async function getUserPublicInfo(
 	// Sort shareholdings by quantity descending
 	shareholdings.sort((a, b) => b.quantity - a.quantity);
 
+	const authUser = auth_token ? await getUserBySessionToken(auth_token) : null;
+	const isOwnerOrAdmin = authUser && (authUser.id === user.id || authUser.id === 0);
+
+	const profile: UserPublicProfile = {
+		id: user.id,
+		username: user.name,
+		joined: user.created_at,
+		active: user.last_accessed,
+		shareholdings,
+	};
+
+	if (isOwnerOrAdmin) {
+		profile.cash = user.cash;
+		profile.email = user.email;
+		profile.data = user.data;
+		profile.inventory = (user.data?.inventory ?? {}) as Record<number, number>;
+	}
+
 	return {
 		status: "Success",
-		user: {
-			id: user.id,
-			username: user.name,
-			joined: user.created_at,
-			active: user.last_accessed,
-			shareholdings,
-		},
+		user: profile,
 	};
 }
