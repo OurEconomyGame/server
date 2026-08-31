@@ -89,13 +89,15 @@ export async function sellFacility(
 	}
 
 	const targetFacility = existingFacilities[targetIndex];
+	if (targetFacility === null || targetFacility === undefined)
+		return { status: "Facility is in the void, if it ever existed that is?" };
 	const recipeInstance = new BaseRecipe(
 		targetFacility.recipe.name,
 		targetFacility.recipe.inputs,
 		targetFacility.recipe.outputType,
 		targetFacility.recipe.outputQuant,
 	);
-	const refund = calculateFacilityCost(recipeInstance);
+	const refund = calculateFacilityCost(recipeInstance) / 10;
 
 	const updatedFacilities = existingFacilities.filter(
 		(_, idx) => idx !== targetIndex,

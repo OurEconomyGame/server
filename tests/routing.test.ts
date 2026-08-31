@@ -1202,8 +1202,8 @@ describe("Routing Suite - route(request)", () => {
 			};
 			expect(sellData.status).toBe("Success");
 			expect(sellData.facility_id).toBe(facilityId);
-			expect(sellData.refund).toBe(500);
-			expect(sellData.balance).toBe(5000);
+			expect(sellData.refund).toBe(50);
+			expect(sellData.balance).toBe(4550);
 			expect(sellData.remaining_facilities).toBe(0);
 
 			// Selling again fails with not found

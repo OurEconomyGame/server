@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.37.0"
+		"version": "0.38.0"
 	},
 	"servers": [
 		{
@@ -808,7 +808,7 @@
 		},
 		"/facility/sell": {
 			"post": {
-				"summary": "Sell/decommission a production facility and refund its full cash value (CEO only)",
+				"summary": "Sell/decommission a production facility and receive a 10% cash refund (CEO only)",
 				"parameters": [
 					{
 						"name": "Auth",
