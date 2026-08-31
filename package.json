@@ -9,7 +9,7 @@
 	"peerDependencies": {
 		"typescript": "^5"
 	},
-	"version": "0.41.1",
+	"version": "0.41.2",
 	"scripts": {
 		"migrate": "bun src/db/migrate.ts"
 	},

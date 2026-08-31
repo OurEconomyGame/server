@@ -251,7 +251,7 @@ describe("DB CRUD Operations Suite", () => {
 	});
 
 	test("verifySchema succeeds on valid schema, and migrateSchema can be invoked manually", async () => {
-		const { verifySchema, EXPECTED_SCHEMA } = await import("../src/db/init.ts");
+		const { verifySchema, EXPECTED_SCHEMA } = await import("../src/db/verify.ts");
 		const { migrateSchema } = await import("../src/db/migrate.ts");
 
 		expect(EXPECTED_SCHEMA.company).toContain("cash");
