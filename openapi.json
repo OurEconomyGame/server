@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.30.0"
+		"version": "0.31.0"
 	},
 	"paths": {
 		"/version": {
@@ -158,6 +158,47 @@
 													}
 												}
 											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/work": {
+			"get": {
+				"summary": "Get authenticated user's work shift status and remaining shifts for the day",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the user",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "User work status and remaining daily shifts",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"user_id": { "type": "integer" },
+										"username": { "type": "string" },
+										"works_used": { "type": "integer" },
+										"works_left": { "oneOf": [{ "type": "integer" }, { "type": "string" }] },
+										"works_max": { "oneOf": [{ "type": "integer" }, { "type": "string" }] },
+										"date": { "type": "string" },
+										"companies_worked": {
+											"type": "array",
+											"items": { "type": "integer" }
 										}
 									}
 								}

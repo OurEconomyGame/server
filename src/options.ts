@@ -4,6 +4,8 @@ const GET_ROUTES = new Set([
 	"/openapi.json",
 	"/list/users",
 	"/user",
+	"/user/work",
+	"/work/status",
 	"/list/companies",
 	"/company",
 	"/company/ceo",

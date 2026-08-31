@@ -33,7 +33,7 @@ export async function performWork(
 	if (uData.daily_works?.date !== today) {
 		uData.daily_works = { date: today, count: 0, companies: [] };
 	}
-	if (uData.daily_works.count >= 10) {
+	if (user.id !== 0 && uData.daily_works.count >= 10) {
 		return { status: "Player has reached daily work limit (10 works/day)" };
 	}
 
@@ -99,3 +99,57 @@ export async function performWork(
 		production: prod,
 	};
 }
+
+export interface UserWorkStatusResponse {
+	status: string;
+	user_id?: number;
+	username?: string;
+	works_used?: number;
+	works_left?: number | string;
+	works_max?: number | string;
+	date?: string;
+	companies_worked?: number[];
+}
+
+/**
+ * Retrieves the authenticated user's current daily work shift status and remaining shifts.
+ *
+ * @param authToken - Session token required for user authentication.
+ * @returns Work shift usage, remaining work shifts, and company IDs worked today.
+ */
+export async function getUserWorkStatus(
+	authToken: string | null,
+): Promise<UserWorkStatusResponse> {
+	if (!authToken) {
+		return { status: "Authentication token required" };
+	}
+
+	const user = await getUserBySessionToken(authToken);
+	if (!user) {
+		return { status: "Invalid session token" };
+	}
+
+	const today = getTodayUtc();
+	const uData = (user.data ?? {}) as { daily_works?: UserDailyWork };
+	const count =
+		uData.daily_works?.date === today ? (uData.daily_works.count ?? 0) : 0;
+	const companies =
+		uData.daily_works?.date === today &&
+		Array.isArray(uData.daily_works.companies)
+			? uData.daily_works.companies
+			: [];
+
+	const isAdmin = user.id === 0;
+
+	return {
+		status: "Success",
+		user_id: user.id,
+		username: user.name,
+		works_used: count,
+		works_left: isAdmin ? "unlimited" : Math.max(0, 10 - count),
+		works_max: isAdmin ? "unlimited" : 10,
+		date: today,
+		companies_worked: companies,
+	};
+}
+

@@ -2647,4 +2647,136 @@ describe("Routing Suite - route(request)", () => {
 			expect(missingData.user).toBeNull();
 		});
 	});
+
+	describe("26. User Work Status & Admin Unlimited Shifts (/user/work, /work/status)", () => {
+		test("authenticated user can view their remaining daily shifts and updates correctly after working", async () => {
+			const uName = `work_check_${Date.now()}`;
+			const signupRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: uName, secret: "secret123" }),
+				}),
+			);
+			const signupData = (await signupRes.json()) as Record<string, unknown>;
+			const uId = signupData.id as number;
+			const uToken = signupData.random as string;
+			await updateUserCash(uId, 10000);
+
+			// Unauthenticated query -> rejected
+			const unauthRes = await route(
+				new Request("http://localhost/user/work", { method: "GET" }),
+			);
+			const unauthData = (await unauthRes.json()) as { status: string };
+			expect(unauthData.status).toBe("Authentication token required");
+
+			// Initial work status -> 0 used, 10 left, 10 max
+			const initRes = await route(
+				new Request("http://localhost/user/work", {
+					method: "GET",
+					headers: { Auth: uToken },
+				}),
+			);
+			expect(initRes.status).toBe(200);
+			const initData = (await initRes.json()) as {
+				status: string;
+				user_id: number;
+				username: string;
+				works_used: number;
+				works_left: number;
+				works_max: number;
+				companies_worked: number[];
+			};
+			expect(initData.status).toBe("Success");
+			expect(initData.user_id).toBe(uId);
+			expect(initData.username).toBe(uName);
+			expect(initData.works_used).toBe(0);
+			expect(initData.works_left).toBe(10);
+			expect(initData.works_max).toBe(10);
+			expect(initData.companies_worked).toEqual([]);
+
+			// Also test alias /work/status
+			const aliasRes = await route(
+				new Request("http://localhost/work/status", {
+					method: "GET",
+					headers: { Auth: uToken },
+				}),
+			);
+			expect(aliasRes.status).toBe(200);
+			const aliasData = (await aliasRes.json()) as typeof initData;
+			expect(aliasData.status).toBe("Success");
+			expect(aliasData.works_left).toBe(10);
+
+			// User founds a company with 2 facilities and works
+			const compRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ name: `WorkCo_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const compId = Number(((await compRes.json()) as Record<string, unknown>).id);
+			await updateCompanyCash(compId, 10000);
+
+			await route(
+				new Request("http://localhost/facility/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ company_id: compId, recipe: "water_pump" }),
+				}),
+			);
+
+			// Work 1 shift
+			await route(
+				new Request("http://localhost/company/work", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ company_id: compId }),
+				}),
+			);
+
+			// Check status after 1 shift
+			const postWorkRes = await route(
+				new Request("http://localhost/user/work", {
+					method: "GET",
+					headers: { Auth: uToken },
+				}),
+			);
+			const postWorkData = (await postWorkRes.json()) as typeof initData;
+			expect(postWorkData.works_used).toBe(1);
+			expect(postWorkData.works_left).toBe(9);
+			expect(postWorkData.companies_worked).toEqual([compId]);
+
+			await deleteCompanyById(compId);
+			await deleteUserById(uId);
+		});
+
+		test("Admin (User ID 0) has unlimited daily work shifts and status returns unlimited", async () => {
+			const adminToken = "admin_super_secret_session_token_123";
+			const now = Math.floor(Date.now() / 1000);
+			const { insertSession } = await import("../src/db/inserts.ts");
+			await insertSession(999991, now, adminToken, 0);
+
+			const adminStatusRes = await route(
+				new Request("http://localhost/user/work", {
+					method: "GET",
+					headers: { Auth: adminToken },
+				}),
+			);
+			expect(adminStatusRes.status).toBe(200);
+			const adminStatus = (await adminStatusRes.json()) as {
+				status: string;
+				user_id: number;
+				works_left: string;
+				works_max: string;
+			};
+			expect(adminStatus.status).toBe("Success");
+			expect(adminStatus.user_id).toBe(0);
+			expect(adminStatus.works_left).toBe("unlimited");
+			expect(adminStatus.works_max).toBe("unlimited");
+
+			const { deleteSessionById } = await import("../src/db/deletes.ts");
+			await deleteSessionById(999991);
+		});
+	});
 });

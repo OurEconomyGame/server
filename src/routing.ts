@@ -20,6 +20,7 @@ import {
 	handleCompanyQuit,
 	handleCompanySetWage,
 	handleCompanyWork,
+	getUserWorkStatus,
 } from "./companies/work/index.ts";
 import { handleDocs } from "./docs.ts";
 import parseAuthHeader from "./header_parse.ts";
@@ -84,6 +85,10 @@ async function handleRequest(request: Request): Promise<Response> {
 
 		case "/user":
 			return Response.json(await getUserPublicInfo(params));
+
+		case "/user/work":
+		case "/work/status":
+			return Response.json(await getUserWorkStatus(auth_token));
 
 		case "/list/companies":
 			return Response.json(await getAllCompaniesInfo(params, auth_token));
