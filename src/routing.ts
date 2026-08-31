@@ -246,6 +246,10 @@ async function handleRequest(request: Request): Promise<Response> {
 			const { handleAdminResetDay } = await import("./admin/reset.ts");
 			return Response.json(await handleAdminResetDay(auth_token));
 
+		case "/use/food":
+			const { consumeFood } = await import("./users/consume.ts");
+			return Response.json(await consumeFood(auth_token));
+
 		default:
 			return new Response("You are utterless and hopelessly lost. Get a GPS.", {
 				status: 404,

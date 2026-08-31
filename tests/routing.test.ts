@@ -2932,4 +2932,128 @@ describe("Routing Suite - route(request)", () => {
 			await deleteUserById(uId);
 		});
 	});
+
+	describe("28. Consumable Food & Daily Work Limit Reset (/use/food)", () => {
+		test("rejects when unauthenticated or when player has no food", async () => {
+			const unauthRes = await route(new Request("http://localhost/use/food", { method: "POST" }));
+			expect(unauthRes.status).toBe(200);
+			expect(((await unauthRes.json()) as { status: string }).status).toBe("Authentication token required");
+
+			const uName = `hungry_user_${Date.now()}`;
+			const signupRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: uName, secret: "pass123" }),
+				}),
+			);
+			const signupData = (await signupRes.json()) as Record<string, unknown>;
+			const uId = signupData.id as number;
+			const uToken = signupData.random as string;
+
+			const noFoodRes = await route(
+				new Request("http://localhost/use/food", {
+					method: "POST",
+					headers: { Auth: uToken },
+				}),
+			);
+			expect(noFoodRes.status).toBe(200);
+			expect(((await noFoodRes.json()) as { status: string }).status).toContain("Insufficient food. Available: 0");
+
+			await deleteUserById(uId);
+		});
+
+		test("consumes food and resets player's daily work limits", async () => {
+			const uName = `farmer_eater_${Date.now()}`;
+			const signupRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: uName, secret: "pass123" }),
+				}),
+			);
+			const signupData = (await signupRes.json()) as Record<string, unknown>;
+			const uId = signupData.id as number;
+			const uToken = signupData.random as string;
+			await updateUserCash(uId, 10000);
+
+			// Found company with water pump and work 1 shift
+			const compRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ name: `FoodCo_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const compId = Number(((await compRes.json()) as Record<string, unknown>).id);
+			await updateCompanyCash(compId, 10000);
+
+			await route(
+				new Request("http://localhost/facility/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ company_id: compId, recipe: "water_pump" }),
+				}),
+			);
+
+			// Work 1 shift
+			await route(
+				new Request("http://localhost/company/work", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ company_id: compId }),
+				}),
+			);
+
+			// Check work status (1 used, 19 left)
+			const statusBefore = await route(
+				new Request("http://localhost/user/work", {
+					method: "GET",
+					headers: { Auth: uToken },
+				}),
+			);
+			expect(((await statusBefore.json()) as { works_used: number }).works_used).toBe(1);
+
+			// Grant player 2 food units via addUserResource helper
+			const { addUserResource } = await import("../src/market/settle.ts");
+			await addUserResource(uId, 0, 2);
+
+			// Consume 1 food
+			const useFoodRes = await route(
+				new Request("http://localhost/use/food", {
+					method: "POST",
+					headers: { Auth: uToken },
+				}),
+			);
+			expect(useFoodRes.status).toBe(200);
+			const useFoodData = (await useFoodRes.json()) as {
+				status: string;
+				food_consumed: number;
+				food_remaining: number;
+				works_used: number;
+				works_left: number;
+				works_max: number;
+			};
+			expect(useFoodData.status).toBe("Success");
+			expect(useFoodData.food_consumed).toBe(1);
+			expect(useFoodData.food_remaining).toBe(1);
+			expect(useFoodData.works_used).toBe(0);
+			expect(useFoodData.works_left).toBe(20);
+			expect(useFoodData.works_max).toBe(20);
+
+			// Verify status check endpoint reflects reset
+			const statusAfter = await route(
+				new Request("http://localhost/user/work", {
+					method: "GET",
+					headers: { Auth: uToken },
+				}),
+			);
+			const statusAfterData = (await statusAfter.json()) as { works_used: number; works_left: number };
+			expect(statusAfterData.works_used).toBe(0);
+			expect(statusAfterData.works_left).toBe(20);
+
+			await deleteCompanyById(compId);
+			await deleteUserById(uId);
+		});
+	});
 });

@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.35.0"
+		"version": "0.36.0"
 	},
 	"servers": [
 		{
@@ -1549,6 +1549,41 @@
 										"epoch": { "type": "number" },
 										"reset_in_next_minutes": { "type": "number" },
 										"max_daily_jobs": { "type": "number" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/use/food": {
+			"post": {
+				"summary": "Consume 1 food unit from player inventory to reset daily work shift limit",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the player",
+						"schema": { "type": "string" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Food consumption and reset result",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"user_id": { "type": "integer" },
+										"food_consumed": { "type": "number" },
+										"food_remaining": { "type": "number" },
+										"works_used": { "type": "number" },
+										"works_left": { "oneOf": [{ "type": "number" }, { "type": "string" }] },
+										"works_max": { "oneOf": [{ "type": "number" }, { "type": "string" }] }
 									}
 								}
 							}
