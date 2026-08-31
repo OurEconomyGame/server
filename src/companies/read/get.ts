@@ -111,6 +111,22 @@ export async function getCompanyInfo(
 		shareholdings,
 	};
 
+	// WebStore companies expose public inventory and pricing
+	if (company.type === 2) {
+		const price =
+			typeof company.data?.price === "number" &&
+			Number.isFinite(company.data.price)
+				? (company.data.price as number)
+				: typeof company.data?.food_price === "number" &&
+						Number.isFinite(company.data.food_price)
+					? (company.data.food_price as number)
+					: 10;
+		companyInfo.price = price;
+		companyInfo.food_price = price;
+		companyInfo.inventory = (company.data?.inventory ??
+			{}) as Record<number, number>;
+	}
+
 	if (user && user.id === company.ceo) {
 		companyInfo.data = company.data;
 	}

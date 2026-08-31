@@ -1953,6 +1953,41 @@ describe("Routing Suite - route(request)", () => {
 				85,
 			);
 
+			// Public query (no Auth header) sees price and inventory
+			const pubStoreRes = await route(
+				new Request(`http://localhost/company?id=${storeId}`, {
+					method: "GET",
+				}),
+			);
+			const pubStoreInfo = (await pubStoreRes.json()) as {
+				company: {
+					price: number;
+					food_price: number;
+					inventory: Record<number, number>;
+					data?: unknown;
+				};
+			};
+			expect(pubStoreInfo.company.data).toBeUndefined();
+			expect(pubStoreInfo.company.price).toBe(18);
+			expect(pubStoreInfo.company.food_price).toBe(18);
+			expect(pubStoreInfo.company.inventory[Resources.Food]).toBe(45);
+			expect(pubStoreInfo.company.inventory[Resources.Electricity]).toBe(85);
+
+			// Direct GET /store/price query
+			const getStorePriceRes = await route(
+				new Request(`http://localhost/store/price?company_id=${storeId}`, {
+					method: "GET",
+				}),
+			);
+			const getStorePriceData = (await getStorePriceRes.json()) as {
+				status: string;
+				price: number;
+				inventory: Record<number, number>;
+			};
+			expect(getStorePriceData.status).toBe("Success");
+			expect(getStorePriceData.price).toBe(18);
+			expect(getStorePriceData.inventory[Resources.Food]).toBe(45);
+
 			await deleteCompanyById(storeId);
 			await deleteUserById(ceoId);
 			await deleteUserById(custId);

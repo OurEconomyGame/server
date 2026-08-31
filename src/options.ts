@@ -13,6 +13,9 @@ const GET_ROUTES = new Set([
 	"/companies/ceo",
 	"/company/shareholders",
 	"/portfolio",
+	"/store",
+	"/store/price",
+	"/store/inventory",
 	"/market/depth",
 ]);
 

@@ -15,6 +15,9 @@ export interface CompanyPublicInfo {
 	ceo: number;
 	shares_outstanding: number;
 	wage: number;
+	price?: number;
+	food_price?: number;
+	inventory?: Record<number, number>;
 	shareholders?: ShareholderInfo[];
 	shareholdings?: UserShareholding[];
 	data?: Record<string, unknown>;
@@ -77,6 +80,20 @@ export async function getAllCompaniesInfo(
 			shares_outstanding: c.shares_outstanding,
 			wage,
 		};
+
+		// WebStore companies expose public inventory and pricing
+		if (c.type === 2) {
+			const price =
+				typeof c.data?.price === "number" && Number.isFinite(c.data.price)
+					? (c.data.price as number)
+					: typeof c.data?.food_price === "number" &&
+							Number.isFinite(c.data.food_price)
+						? (c.data.food_price as number)
+						: 10;
+			info.price = price;
+			info.food_price = price;
+			info.inventory = (c.data?.inventory ?? {}) as Record<number, number>;
+		}
 
 		// Only include private `data` if authenticated user is the CEO
 		if (user && user.id === c.ceo) {

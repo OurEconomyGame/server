@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.38.0"
+		"version": "0.39.0"
 	},
 	"servers": [
 		{
@@ -311,6 +311,18 @@
 												"type": "number",
 												"description": "Shift wage paid to workers per daily shift (defaults to 10)"
 											},
+											"price": {
+												"type": "number",
+												"description": "Public retail food price for WebStore companies"
+											},
+											"food_price": {
+												"type": "number",
+												"description": "Public retail food price for WebStore companies"
+											},
+											"inventory": {
+												"type": "object",
+												"description": "Public resource stock for WebStore companies"
+											},
 											"data": {
 												"type": "object",
 												"description": "Included only if caller is the CEO"
@@ -383,6 +395,18 @@
 												"wage": {
 													"type": "number",
 													"description": "Shift wage paid to workers per daily shift (defaults to 10)"
+												},
+												"price": {
+													"type": "number",
+													"description": "Public retail food price for WebStore companies"
+												},
+												"food_price": {
+													"type": "number",
+													"description": "Public retail food price for WebStore companies"
+												},
+												"inventory": {
+													"type": "object",
+													"description": "Public resource stock for WebStore companies"
 												},
 												"shareholders": {
 													"type": "array",
@@ -1138,6 +1162,38 @@
 			}
 		},
 		"/store/price": {
+			"get": {
+				"summary": "Get public retail price and inventory for a WebStore",
+				"parameters": [
+					{
+						"name": "company_id",
+						"in": "query",
+						"required": true,
+						"description": "ID of the WebStore company",
+						"schema": { "type": "integer" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Public store pricing and inventory",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"company_id": { "type": "number" },
+										"name": { "type": "string" },
+										"price": { "type": "number" },
+										"food_price": { "type": "number" },
+										"inventory": { "type": "object" }
+									}
+								}
+							}
+						}
+					}
+				}
+			},
 			"post": {
 				"summary": "Set the Food retail selling price for a WebStore (CEO only)",
 				"parameters": [

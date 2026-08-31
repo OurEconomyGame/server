@@ -66,6 +66,20 @@ export async function getCompaniesByCeo(
 			wage,
 		};
 
+		// WebStore companies expose public inventory and pricing
+		if (c.type === 2) {
+			const price =
+				typeof c.data?.price === "number" && Number.isFinite(c.data.price)
+					? (c.data.price as number)
+					: typeof c.data?.food_price === "number" &&
+							Number.isFinite(c.data.food_price)
+						? (c.data.food_price as number)
+						: 10;
+			info.price = price;
+			info.food_price = price;
+			info.inventory = (c.data?.inventory ?? {}) as Record<number, number>;
+		}
+
 		// Include private `data` if authenticated user is the CEO
 		if (authUser && authUser.id === c.ceo) {
 			info.data = c.data;

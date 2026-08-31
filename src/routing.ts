@@ -188,7 +188,13 @@ async function handleRequest(request: Request): Promise<Response> {
 				});
 			return Response.json(await handleCompanyDividend(postParams, auth_token));
 
+		case "/store":
 		case "/store/price":
+		case "/store/inventory":
+			if (method === "GET") {
+				const { handleGetStoreInfo } = await import("./companies/webstore/get.ts");
+				return Response.json(await handleGetStoreInfo(params));
+			}
 			if (method !== "POST")
 				return Response.json({
 					status: "POST method required to set store price",
