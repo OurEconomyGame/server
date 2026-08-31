@@ -218,7 +218,45 @@ export async function migrateSchema(): Promise<void> {
 		console.warn("[DB Migration] Skipping offer migration:", err);
 	}
 
-	// 5. User ID 1 to 0 migration (if user ID 1 is the only user and no ID 0 exists)
+	// 5. Message relation creation (ensure 'message' table exists)
+	try {
+		const res = (await db.run("::columns message")) as {
+			rows: Array<[string, boolean, number, string, boolean]>;
+		};
+		if (!res || !Array.isArray(res.rows) || res.rows.length === 0) {
+			console.log("[DB Migration] Creating 'message' relation...");
+			await db.run(`
+				:create message {
+					id: Int
+					=>
+					sender_id: Int,
+					receiver_id: Int,
+					content: String,
+					subject: String
+				}
+			`);
+			console.log("[DB Migration] 'message' relation created.");
+		}
+	} catch {
+		try {
+			console.log("[DB Migration] Creating 'message' relation...");
+			await db.run(`
+				:create message {
+					id: Int
+					=>
+					sender_id: Int,
+					receiver_id: Int,
+					content: String,
+					subject: String
+				}
+			`);
+			console.log("[DB Migration] 'message' relation created.");
+		} catch (err) {
+			console.warn("[DB Migration] Could not create 'message' relation:", err);
+		}
+	}
+
+	// 6. User ID 1 to 0 migration (if user ID 1 is the only user and no ID 0 exists)
 	try {
 		const userRes = (await db.run(
 			`?[id, name, pass_hash, email, last_accessed, cash, data, created_at] := *user{id, name, pass_hash, email, last_accessed, cash, data, created_at}`,
