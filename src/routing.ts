@@ -240,6 +240,12 @@ async function handleRequest(request: Request): Promise<Response> {
 				});
 			return Response.json(await handleCompanyDelete(postParams, auth_token));
 
+		case "/admin/reset":
+		case "/admin/reset-day":
+		case "/admin/reset-counters":
+			const { handleAdminResetDay } = await import("./admin/reset.ts");
+			return Response.json(await handleAdminResetDay(auth_token));
+
 		default:
 			return new Response("You are utterless and hopelessly lost. Get a GPS.", {
 				status: 404,

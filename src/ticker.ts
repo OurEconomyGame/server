@@ -1,10 +1,12 @@
+import { scrubDailyCountersProgressive } from "./admin/reset.ts";
 import { executeNpcPurchase } from "./companies/webstore/npc.ts";
 
 /**
- * Runs a single tick of server-side operations (e.g. NPC civilian store purchases).
+ * Runs a single tick of server-side operations (e.g. NPC civilian store purchases and progressive daily counter resets).
  */
 export async function runServerTick() {
 	try {
+		await scrubDailyCountersProgressive();
 		return await executeNpcPurchase();
 	} catch (error) {
 		console.error("[Ticker] Error during server tick:", error);

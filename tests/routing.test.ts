@@ -2698,7 +2698,7 @@ describe("Routing Suite - route(request)", () => {
 			const unauthData = (await unauthRes.json()) as { status: string };
 			expect(unauthData.status).toBe("Authentication token required");
 
-			// Initial work status -> 0 used, 10 left, 10 max
+			// Initial work status -> 0 used, 20 left, 20 max
 			const initRes = await route(
 				new Request("http://localhost/user/work", {
 					method: "GET",
@@ -2719,8 +2719,8 @@ describe("Routing Suite - route(request)", () => {
 			expect(initData.user_id).toBe(uId);
 			expect(initData.username).toBe(uName);
 			expect(initData.works_used).toBe(0);
-			expect(initData.works_left).toBe(10);
-			expect(initData.works_max).toBe(10);
+			expect(initData.works_left).toBe(20);
+			expect(initData.works_max).toBe(20);
 			expect(initData.companies_worked).toEqual([]);
 
 			// Also test alias /work/status
@@ -2733,7 +2733,7 @@ describe("Routing Suite - route(request)", () => {
 			expect(aliasRes.status).toBe(200);
 			const aliasData = (await aliasRes.json()) as typeof initData;
 			expect(aliasData.status).toBe("Success");
-			expect(aliasData.works_left).toBe(10);
+			expect(aliasData.works_left).toBe(20);
 
 			// User founds a company with 2 facilities and works
 			const compRes = await route(
@@ -2772,7 +2772,7 @@ describe("Routing Suite - route(request)", () => {
 			);
 			const postWorkData = (await postWorkRes.json()) as typeof initData;
 			expect(postWorkData.works_used).toBe(1);
-			expect(postWorkData.works_left).toBe(9);
+			expect(postWorkData.works_left).toBe(19);
 			expect(postWorkData.companies_worked).toEqual([compId]);
 
 			await deleteCompanyById(compId);
@@ -2805,6 +2805,131 @@ describe("Routing Suite - route(request)", () => {
 
 			const { deleteSessionById } = await import("../src/db/deletes.ts");
 			await deleteSessionById(999991);
+		});
+	});
+
+	describe("27. Admin Server-Wide Day Reset (/admin/reset, /admin/reset-day)", () => {
+		test("rejects unauthorized non-admin users", async () => {
+			const uName = `regular_user_${Date.now()}`;
+			const signupRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: uName, secret: "secret123" }),
+				}),
+			);
+			const signupData = (await signupRes.json()) as Record<string, unknown>;
+			const uId = signupData.id as number;
+			const uToken = signupData.random as string;
+
+			const unauthRes = await route(new Request("http://localhost/admin/reset", { method: "POST" }));
+			expect(unauthRes.status).toBe(200);
+			expect((await unauthRes.json() as { status: string }).status).toBe("Authentication token required");
+
+			const nonAdminRes = await route(
+				new Request("http://localhost/admin/reset", {
+					method: "POST",
+					headers: { Auth: uToken },
+				}),
+			);
+			expect(nonAdminRes.status).toBe(200);
+			expect((await nonAdminRes.json() as { status: string }).status).toBe("Only the admin can reset daily counters");
+
+			await deleteUserById(uId);
+		});
+
+		test("Admin can trigger server-wide day counter reset and resets player work status", async () => {
+			const uName = `shift_worker_${Date.now()}`;
+			const signupRes = await route(
+				new Request("https://app.napp9.com/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ hi: uName, secret: "secret123" }),
+				}),
+			);
+			const signupData = (await signupRes.json()) as Record<string, unknown>;
+			const uId = signupData.id as number;
+			const uToken = signupData.random as string;
+			await updateUserCash(uId, 10000);
+
+			const compRes = await route(
+				new Request("http://localhost/found", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ name: `ResetWorkCo_${Date.now()}`, type: 0 }),
+				}),
+			);
+			const compId = Number(((await compRes.json()) as Record<string, unknown>).id);
+			await updateCompanyCash(compId, 10000);
+
+			await route(
+				new Request("http://localhost/facility/buy", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ company_id: compId, recipe: "water_pump" }),
+				}),
+			);
+
+			// Work 1 shift
+			await route(
+				new Request("http://localhost/company/work", {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Auth: uToken },
+					body: JSON.stringify({ company_id: compId }),
+				}),
+			);
+
+			// Verify 1 shift used
+			const beforeResetRes = await route(
+				new Request("http://localhost/user/work", {
+					method: "GET",
+					headers: { Auth: uToken },
+				}),
+			);
+			const beforeData = (await beforeResetRes.json()) as { works_used: number; works_left: number };
+			expect(beforeData.works_used).toBe(1);
+			expect(beforeData.works_left).toBe(19);
+
+			// Admin triggers server-wide reset
+			const adminToken = "admin_reset_token_999";
+			const now = Math.floor(Date.now() / 1000);
+			const { insertSession } = await import("../src/db/inserts.ts");
+			await insertSession(999992, now, adminToken, 0);
+
+			const resetRes = await route(
+				new Request("http://localhost/admin/reset", {
+					method: "POST",
+					headers: { Auth: adminToken },
+				}),
+			);
+			expect(resetRes.status).toBe(200);
+			const resetData = (await resetRes.json()) as {
+				status: string;
+				epoch: number;
+				reset_in_next_minutes: number;
+				max_daily_jobs: number;
+			};
+			expect(resetData.status).toBe("Success");
+			expect(resetData.reset_in_next_minutes).toBe(10);
+			expect(resetData.max_daily_jobs).toBe(20);
+			expect(typeof resetData.epoch).toBe("number");
+
+			// Query work status after reset -> counters are reset (0 used, 20 left)
+			const afterResetRes = await route(
+				new Request("http://localhost/user/work", {
+					method: "GET",
+					headers: { Auth: uToken },
+				}),
+			);
+			const afterData = (await afterResetRes.json()) as { works_used: number; works_left: number; works_max: number };
+			expect(afterData.works_used).toBe(0);
+			expect(afterData.works_left).toBe(20);
+			expect(afterData.works_max).toBe(20);
+
+			const { deleteSessionById } = await import("../src/db/deletes.ts");
+			await deleteSessionById(999992);
+			await deleteCompanyById(compId);
+			await deleteUserById(uId);
 		});
 	});
 });

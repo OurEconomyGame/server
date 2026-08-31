@@ -1,3 +1,4 @@
+import { getServerResetEpoch } from "../../admin/reset.ts";
 import { getCompanyById } from "../../db/gets.ts";
 import { updateCompanyById, updateUserById } from "../../db/updates.ts";
 import { getUserBySessionToken } from "../../sessions/check.ts";
@@ -11,7 +12,7 @@ import {
 
 /**
  * Performs a work shift for a player at a company.
- * A player can work up to 10 times a day total across any companies.
+ * A player can work up to 20 times a day total across any companies.
  * A company can support as many work shifts per day as it has active facilities.
  */
 export async function performWork(
@@ -29,15 +30,29 @@ export async function performWork(
 	if (!company) return { status: "Company not found" };
 
 	const today = getTodayUtc();
-	const uData = (user.data ?? {}) as { daily_works?: UserDailyWork };
-	if (uData.daily_works?.date !== today) {
+	const resetEpoch = getServerResetEpoch();
+	const uData = (user.data ?? {}) as {
+		daily_works?: UserDailyWork;
+		last_reset_epoch?: number;
+	};
+
+	const isUserReset =
+		uData.daily_works?.date !== today ||
+		(typeof uData.last_reset_epoch === "number" &&
+			uData.last_reset_epoch < resetEpoch) ||
+		(uData.last_reset_epoch === undefined && resetEpoch > 0);
+
+	if (isUserReset) {
 		uData.daily_works = { date: today, count: 0, companies: [] };
+		uData.last_reset_epoch = resetEpoch;
 	}
-	if (user.id !== 0 && uData.daily_works.count >= 10) {
-		return { status: "Player has reached daily work limit (10 works/day)" };
+	if (user.id !== 0 && uData.daily_works.count >= 20) {
+		return { status: "Player has reached daily work limit (20 works/day)" };
 	}
 
-	const cData = (company.data ?? {}) as CompanyWorkData;
+	const cData = (company.data ?? {}) as CompanyWorkData & {
+		last_reset_epoch?: number;
+	};
 	cData.inventory = cData.inventory ?? {};
 	const facilities = Array.isArray(cData.facilities) ? cData.facilities : [];
 	const activeFacilities = facilities.filter((f) => f.active !== false);
@@ -52,9 +67,16 @@ export async function performWork(
 		};
 	}
 
-	if (cData.last_work_day !== today) {
+	const isCompanyReset =
+		cData.last_work_day !== today ||
+		(typeof cData.last_reset_epoch === "number" &&
+			cData.last_reset_epoch < resetEpoch) ||
+		(cData.last_reset_epoch === undefined && resetEpoch > 0);
+
+	if (isCompanyReset) {
 		cData.last_work_day = today;
 		cData.daily_shifts_count = 0;
+		cData.last_reset_epoch = resetEpoch;
 	} else {
 		cData.daily_shifts_count =
 			typeof cData.daily_shifts_count === "number"
@@ -130,13 +152,22 @@ export async function getUserWorkStatus(
 	}
 
 	const today = getTodayUtc();
-	const uData = (user.data ?? {}) as { daily_works?: UserDailyWork };
-	const count =
-		uData.daily_works?.date === today ? (uData.daily_works.count ?? 0) : 0;
+	const resetEpoch = getServerResetEpoch();
+	const uData = (user.data ?? {}) as {
+		daily_works?: UserDailyWork;
+		last_reset_epoch?: number;
+	};
+
+	const isReset =
+		uData.daily_works?.date !== today ||
+		(typeof uData.last_reset_epoch === "number" &&
+			uData.last_reset_epoch < resetEpoch) ||
+		(uData.last_reset_epoch === undefined && resetEpoch > 0);
+
+	const count = !isReset ? (uData.daily_works?.count ?? 0) : 0;
 	const companies =
-		uData.daily_works?.date === today &&
-		Array.isArray(uData.daily_works.companies)
-			? uData.daily_works.companies
+		!isReset && Array.isArray(uData.daily_works?.companies)
+			? uData.daily_works!.companies
 			: [];
 
 	const isAdmin = user.id === 0;
@@ -146,8 +177,8 @@ export async function getUserWorkStatus(
 		user_id: user.id,
 		username: user.name,
 		works_used: count,
-		works_left: isAdmin ? "unlimited" : Math.max(0, 10 - count),
-		works_max: isAdmin ? "unlimited" : 10,
+		works_left: isAdmin ? "unlimited" : Math.max(0, 20 - count),
+		works_max: isAdmin ? "unlimited" : 20,
 		date: today,
 		companies_worked: companies,
 	};

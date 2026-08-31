@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.34.0"
+		"version": "0.35.0"
 	},
 	"servers": [
 		{
@@ -808,7 +808,7 @@
 		},
 		"/company/work": {
 			"post": {
-				"summary": "Perform a work shift at a company (worker receives wage and triggers facility production in descending order; players can work up to 10 times daily across any companies and a company supports daily shifts equal to its facility count)",
+				"summary": "Perform a work shift at a company (worker receives wage and triggers facility production in descending order; players can work up to 20 times daily across any companies and a company supports daily shifts equal to its facility count)",
 				"parameters": [
 					{
 						"name": "Auth",
@@ -1517,6 +1517,38 @@
 									"properties": {
 										"status": { "type": "string" },
 										"deleted_company_id": { "type": "number" }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/admin/reset": {
+			"post": {
+				"summary": "Reset all server-wide company and user daily counters over a progressive 10-minute window (Admin only, user ID 0)",
+				"parameters": [
+					{
+						"name": "Auth",
+						"in": "header",
+						"required": true,
+						"description": "Session token of the root administrator (user ID 0)",
+						"schema": { "type": "string" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Server reset confirmation",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": { "type": "string" },
+										"epoch": { "type": "number" },
+										"reset_in_next_minutes": { "type": "number" },
+										"max_daily_jobs": { "type": "number" }
 									}
 								}
 							}
