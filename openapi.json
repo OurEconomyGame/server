@@ -8,7 +8,7 @@
 			"name": "BSL 1.1 / API Terms of Service",
 			"url": "https://raw.githubusercontent.com/OurEconomyGame/server/main/LICENSE.md"
 		},
-		"version": "0.31.0"
+		"version": "0.32.0"
 	},
 	"paths": {
 		"/version": {
@@ -43,6 +43,23 @@
 					},
 					"403": {
 						"description": "Forbidden if accessed remotely"
+					}
+				}
+			}
+		},
+		"/terms": {
+			"get": {
+				"summary": "Get API Terms of Service & Client Policy in plain text",
+				"responses": {
+					"200": {
+						"description": "Returns API_TERMS.md markdown content as plain text",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
 					}
 				}
 			}

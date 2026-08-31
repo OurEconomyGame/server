@@ -77,6 +77,11 @@ async function handleRequest(request: Request): Promise<Response> {
 		case "/docs":
 			return handleDocs(request);
 
+		case "/terms":
+			return new Response(Bun.file("./API_TERMS.md"), {
+				headers: { "Content-Type": "text/plain; charset=utf-8" },
+			});
+
 		case "/openapi.json":
 			return new Response(Bun.file("./openapi.json"));
 

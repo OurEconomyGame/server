@@ -29,7 +29,17 @@ describe("Routing Suite - route(request)", () => {
 		});
 	});
 
-	describe("2. GET /openapi.json", () => {
+	describe("2. GET /terms & GET /openapi.json", () => {
+		test("serves API_TERMS.md as plain text on GET /terms", async () => {
+			const req = new Request("http://localhost/terms", { method: "GET" });
+			const res = await route(req);
+			expect(res.status).toBe(200);
+			expect(res.headers.get("Content-Type")).toContain("text/plain");
+			const text = await res.text();
+			expect(text).toContain("OurEconomy Public API Terms of Service");
+			expect(text).toContain("Is this draining server resources faster than a human can?");
+		});
+
 		test("serves openapi specification file with all endpoints", async () => {
 			const req = new Request("http://localhost/openapi.json", {
 				method: "GET",

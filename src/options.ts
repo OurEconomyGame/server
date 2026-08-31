@@ -1,6 +1,7 @@
 const GET_ROUTES = new Set([
 	"/version",
 	"/docs",
+	"/terms",
 	"/openapi.json",
 	"/list/users",
 	"/user",
