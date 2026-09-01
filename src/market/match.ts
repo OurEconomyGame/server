@@ -7,11 +7,7 @@ import { deleteOfferById, deleteOrderById } from "../db/deletes.ts";
 import { updateOfferById, updateOrderById } from "../db/updates.ts";
 import { getAllOffersByResource } from "./offers.ts";
 import { getAllOrdersByResource } from "./orders.ts";
-import {
-	addCompanyCash,
-	addUserResource,
-	deliverResource,
-} from "./settle.ts";
+import { addCompanyCash, addUserResource, deliverResource } from "./settle.ts";
 
 /**
  * Matches an incoming buy order (for a company) against existing sell offers.
@@ -30,7 +26,6 @@ export async function matchBuyOffers(
 
 	for (const offer of offers) {
 		if (offer.unitPrice > unitPrice || remaining <= 0) break;
-		if (offer.company_id === company_id) continue;
 
 		const matchQty = Math.min(remaining, offer.quantity);
 		const tradeCash = matchQty * offer.unitPrice;
