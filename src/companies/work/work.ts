@@ -2,6 +2,11 @@ import { getServerResetEpoch } from "../../admin/reset.ts";
 import { getCompanyById, getUserById } from "../../db/gets.ts";
 import { updateCompanyById, updateUserById } from "../../db/updates.ts";
 import { getUserBySessionToken } from "../../sessions/check.ts";
+import { addCompanyDataLog } from "../helpers/logs.ts";
+import {
+	RESOURCE_NAMES,
+	type Resources,
+} from "../production/resources.ts";
 import { executeProduction } from "./produce.ts";
 import {
 	type CompanyWorkData,
@@ -109,6 +114,15 @@ export async function performWork(
 		uData.daily_works.companies = [];
 	}
 	uData.daily_works.companies.push(companyId);
+
+	const workerName = user.name ? `${user.name} (UID ${user.id})` : `User ${user.id}`;
+	const facName = prod.facility ?? "facility";
+	const outResName =
+		typeof prod.output === "number"
+			? (RESOURCE_NAMES[prod.output as Resources] ?? `Resource ${prod.output}`)
+			: "goods";
+	const logMessage = `Worked at ${facName} by ${workerName} (produced ${prod.quantity ?? 0} ${outResName}, paid $${wage} wage)`;
+	addCompanyDataLog(cData, logMessage);
 
 	await updateCompanyById(companyId, { cash: company.cash, data: cData });
 	await updateUserById(user.id, { cash: user.cash, data: uData });

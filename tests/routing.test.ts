@@ -1538,11 +1538,14 @@ describe("Routing Suite - route(request)", () => {
 					data: {
 						daily_shifts_count: number;
 						inventory: Record<number, number>;
+						logs: Array<[string, number]>;
 					};
 				};
 			};
 			expect(compInfo.company.data.daily_shifts_count).toBe(1);
 			expect(compInfo.company.data.inventory[1]).toBe(500); // 500 water
+			expect(Array.isArray(compInfo.company.data.logs)).toBe(true);
+			expect(compInfo.company.data.logs.some((l) => l[0].includes("Worked at") && l[0].includes("paid $20 wage"))).toBe(true);
 
 			await deleteCompanyById(compId);
 			await deleteUserById(ceoId);
